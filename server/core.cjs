@@ -1,7 +1,7 @@
 'use strict';
 /** Authoritative, in-memory arena simulation. Three completely isolated rooms. */
-const MODES={ffa:{name:'FREE FOR ALL',initialMass:1000,bots:12},dual:{name:'DUAL',initialMass:1000,bots:12},mega:{name:'MEGA',initialMass:5000,bots:12}};
-const WIDTH=4800,MAX_CELLS=16,AUTO_SPLIT_MASS=25500;
+const MODES={ffa:{name:'FREE FOR ALL',initialMass:1000,bots:10},dual:{name:'DUAL',initialMass:1000,bots:10},mega:{name:'MEGA',initialMass:5000,bots:10}};
+const WIDTH=4800,MAX_CELLS=64,AUTO_SPLIT_MASS=25500;
 const C={clamp:(n,min,max)=>Math.max(min,Math.min(max,n)),rand:(a,b)=>Math.random()*(b-a)+a,radius:m=>Math.max(13,Math.sqrt(Math.max(1,m))*2.45)};
 const COLORS=['#ffb388','#b595fc','#86f6cd','#fa9dd7','#7cc3ed'];
 const BOTS=['Pulsar','Neon','Rebel','Orbit','Meteor','Drift','Zenith','Astra','Noctis','Nova','Quasar','Vector'];
@@ -20,19 +20,20 @@ function join(room,name,tag,slot=0){const p=makePlayer(room.mode,name,tag,false,
 function point(room,p,x,y){if(Number.isFinite(x)&&Number.isFinite(y)){p.target.x=C.clamp(x,0,WIDTH);p.target.y=C.clamp(y,0,WIDTH);}}
 function split(room,p){let free=MAX_CELLS-p.cells.length;if(!free)return;for(const c of [...p.cells]){if(!free||c.mass<80)continue;
   const dx=p.target.x-c.x,dy=p.target.y-c.y,len=Math.hypot(dx,dy)||1;const nextMass=c.mass/2;c.mass=nextMass;
-  const child=cell(C.clamp(c.x+dx/len*C.radius(nextMass)*.8,0,WIDTH),C.clamp(c.y+dy/len*C.radius(nextMass)*.8,0,WIDTH),nextMass,c.color);
-  child.vx=dx/len*470;child.vy=dy/len*470;child.mergeAt=room.time+9;c.mergeAt=room.time+9;p.cells.push(child);free--;
+  const child=cell(C.clamp(c.x+dx/len*C.radius(nextMass)*1.1,0,WIDTH),C.clamp(c.y+dy/len*C.radius(nextMass)*1.1,0,WIDTH),nextMass,c.color);
+  child.vx=dx/len*620;child.vy=dy/len*620;child.mergeAt=room.time+13;c.mergeAt=room.time+13;p.cells.push(child);free--;
 }}
 function feed(room,p){for(const c of p.cells){if(c.mass<100)continue;const dx=p.target.x-c.x,dy=p.target.y-c.y,len=Math.hypot(dx,dy)||1;c.mass-=22;room.food.push({x:C.clamp(c.x+dx/len*(C.radius(c.mass)+24),0,WIDTH),y:C.clamp(c.y+dy/len*(C.radius(c.mass)+24),0,WIDTH),mass:22,color:'#bdfdff'});}}
 function step(room,dt=1/30){dt=Math.min(.08,Math.max(0,dt));room.time+=dt;
   for(const p of room.players.values()){
     if(!p.cells.length)continue;
     if(p.npc){if(Math.random()<.015)p.heading=C.rand(0,Math.PI*2);const head=p.cells[0];p.target={x:C.clamp(head.x+Math.cos(p.heading)*500,0,WIDTH),y:C.clamp(head.y+Math.sin(p.heading)*500,0,WIDTH)};}
-    for(const c of [...p.cells]){const dx=p.target.x-c.x,dy=p.target.y-c.y,length=Math.hypot(dx,dy),speed=C.clamp(400-Math.sqrt(c.mass)*2.2,80,355)*(p.npc?.75:1);
+    for(const c of [...p.cells]){const dx=p.target.x-c.x,dy=p.target.y-c.y,length=Math.hypot(dx,dy),speed=C.clamp(520/Math.pow(Math.max(c.mass,25),0.18),78,420)*(p.npc?.74:1);
       if(length>3){const movement=Math.min(length,speed*dt);c.x+=dx/length*movement;c.y+=dy/length*movement;}
       c.x=C.clamp(c.x+c.vx*dt,10,WIDTH-10);c.y=C.clamp(c.y+c.vy*dt,10,WIDTH-10);c.vx*=Math.pow(.83,dt*30);c.vy*=Math.pow(.83,dt*30);
       if(c.mass>=AUTO_SPLIT_MASS&&p.cells.length<MAX_CELLS)split(room,p);
     }
+    if(p.cells.length>1){for(let i=0;i<p.cells.length;i++)for(let j=i+1;j<p.cells.length;j++){const a=p.cells[i],b=p.cells[j];const dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy)||.001;const minGap=C.radius(a.mass)+C.radius(b.mass)+8;if(dist<minGap){const push=(minGap-dist)*.5;const ux=dx/dist,uy=dy/dist;a.x=C.clamp(a.x-ux*push,10,WIDTH-10);a.y=C.clamp(a.y-uy*push,10,WIDTH-10);b.x=C.clamp(b.x+ux*push,10,WIDTH-10);b.y=C.clamp(b.y+uy*push,10,WIDTH-10);}}}
     if(p.cells.length>1)for(let i=0;i<p.cells.length;i++)for(let j=i+1;j<p.cells.length;j++){const a=p.cells[i],b=p.cells[j];if(room.time>a.mergeAt&&room.time>b.mergeAt&&Math.hypot(a.x-b.x,a.y-b.y)<C.radius(a)*.55){a.mass+=b.mass;p.cells.splice(j,1);j--;}}
     if(Math.random()<.004)for(const c of p.cells)c.mass*=.9985;
   }

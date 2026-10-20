@@ -14,10 +14,11 @@ const valueSafe = (saved={}) => {
 };
 
 let settings = (()=>{ try { return valueSafe(JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null')); } catch { return cloneDefaults(); }})();
-let mode='ffa', playing=false, activeSlot=0, remote=null, hudVisible=true, chatChannel='all', isSettingsOpen=false, frameTime=performance.now();
+let mode='ffa', playing=false, spectating=false, spectateTargetId='', activeSlot=0, remote=null, hudVisible=true, chatChannel='all', isSettingsOpen=false, frameTime=performance.now();
 let nickname='Vintage Player', tag='';
 let showDeaths=false, remoteSnapshot=null;
 let pointer={x:innerWidth/2+100,y:innerHeight/2}, rightDown=false;
+let pointerOverField=false, draggingCamera=false, dragPointer=null;
 let settingsTab='game', settingsPage='Render';
 
 const arena = new LocalArena();
@@ -37,7 +38,28 @@ function applySettings(){
   $('chat').classList.toggle('hidden', !settings.showChat || !hudVisible);
   $('help-panel').classList.toggle('hidden', !settings.showHelp || !hudVisible);
 }
-function setLobbyState(isLobby){ document.body.classList.toggle('show-lobby', !!isLobby); }
+function setLobbyState(isLobby){ document.body.classList.toggle('show-lobby', !!isLobby); document.body.classList.toggle('is-spectating', !isLobby&&spectating); }
+function setCameraControlsVisible(){
+  const active=(playing||spectating) && !document.body.classList.contains('show-lobby');
+  $('zoom-panel').classList.toggle('hidden', !active);
+  $('spectate-hud').classList.toggle('hidden', !spectating);
+  document.body.classList.toggle('is-spectating',spectating);
+  $('zoom-value').textContent=Math.round(settings.zoom*100)+'%';
+}
+function adjustZoom(factor,x=innerWidth/2,y=innerHeight/2){
+  if(!playing&&!spectating)return;
+  const before=spectating?renderer.toWorld(x,y):null;
+  const next=clampClient(settings.zoom*factor, spectating?.3:.35, spectating?3.5:3.2);
+  settings.zoom=next;
+  if(spectating){
+    renderer.zoom=next;
+    renderer.cam.x=clampClient(before.x-(x-renderer.screenW/2)/next,0,WORLD_SIZE);
+    renderer.cam.y=clampClient(before.y-(y-renderer.screenH/2)/next,0,WORLD_SIZE);
+  }
+  $('zoom-value').textContent=Math.round(next*100)+'%';
+  saveSettings();
+}
+const clampClient=(v,min,max)=>Math.max(min,Math.min(max,v));
 function toast(msg){ const d=document.createElement('div'); d.className='toast'; d.textContent=msg; $('toast-area').appendChild(d); setTimeout(()=>d.remove(),3200); }
 
 function updateMode(next){
@@ -46,17 +68,19 @@ function updateMode(next){
   document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('selected', b.dataset.mode===mode));
   $('top-mode').textContent = mode.toUpperCase() + ' · EUROPE';
   $('mode-label').textContent = MODES[mode].title + ' MODE';
-  if(!playing) arena.reset(mode, nickname, tag, mode !== 'mega', settings);
+  if(!playing && !spectating) arena.reset(mode, nickname, tag, true, settings);
+  document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
 }
 
 function enterLobby(){
-  playing=false; remote?.disconnect(); remote=null; remoteSnapshot=null;
+  playing=false; spectating=false; spectateTargetId=''; remote?.disconnect(); remote=null; remoteSnapshot=null;
   setLobbyState(true);
   $('lobby').classList.remove('hidden'); $('gameover').classList.add('hidden');
   $('top-mode').textContent = mode.toUpperCase() + ' · EUROPE';
   $('connection-status').innerHTML = '<i></i> DEMO MODE';
   $('connection-status').classList.remove('online');
   $('chat-online').textContent = 'LOCAL';
+  setCameraControlsVisible();
 }
 
 function beginGame(){
@@ -64,10 +88,11 @@ function beginGame(){
   $('nickname').value = nickname; $('team-tag').value = tag;
   $('chat-tag-label').textContent = tag ? ('#'+tag.toUpperCase()) : 'NO TAG';
   updateProfileName();
-  activeSlot=0; remoteSnapshot=null; showDeaths=false; playing=true;
+  activeSlot=0; remoteSnapshot=null; showDeaths=false; spectating=false; spectateTargetId=''; playing=true;
   setLobbyState(false);
+  setCameraControlsVisible();
   $('lobby').classList.add('hidden'); $('gameover').classList.add('hidden'); clearChat();
-  const multi = mode !== 'mega';
+  const multi = true;
   arena.reset(mode, nickname, tag, multi, settings);
   remote?.disconnect(); remote=null;
   const wsUrl = String(window.VINTAGE_CONFIG?.wsUrl || '').trim();
@@ -85,13 +110,16 @@ function beginGame(){
 
 class RemoteArena{
   constructor(url,opts){ this.url=url; this.opts=opts; this.sockets=[]; this.myIds=[]; this.latest=null; this.connected=false; }
-  connect(){ const total=this.opts.multi?2:1; for(let n=0;n<total;n++) this.open(n); }
+  connect(){ const total=this.opts.spectator?1:(this.opts.multi?2:1); for(let n=0;n<total;n++) this.open(n); }
   open(slot){
     let ws; try{ ws=new WebSocket(this.url); }catch{ toast('Invalid WebSocket server URL'); return; }
     this.sockets[slot]=ws;
-    ws.addEventListener('open',()=>{ ws.send(JSON.stringify({type:'join', mode:this.opts.mode, name:slot?this.opts.nickname+' II':this.opts.nickname, tag:this.opts.tag})); });
+    ws.addEventListener('open',()=>{ const packet=this.opts.spectator?{type:'spectate',mode:this.opts.mode}:{type:'join',mode:this.opts.mode,name:slot?this.opts.nickname+' II':this.opts.nickname,tag:this.opts.tag};ws.send(JSON.stringify(packet)); });
     ws.addEventListener('message',e=>{
       let payload; try{ payload=JSON.parse(e.data); }catch{ return; }
+      if(payload.type==='spectator_welcome'){
+        this.connected=true; $('connection-status').innerHTML='<i></i> LIVE SPECTATE'; $('connection-status').classList.add('online'); $('chat-online').textContent='LIVE';
+      }
       if(payload.type==='welcome'){
         this.myIds[slot]=payload.playerId; this.connected=true;
         $('connection-status').innerHTML='<i></i> ONLINE'; $('connection-status').classList.add('online'); $('chat-online').textContent='LIVE';
@@ -102,9 +130,9 @@ class RemoteArena{
       if(payload.type==='error' && slot===0) toast(payload.message || 'Server error');
     });
     ws.addEventListener('close',()=>{
-      if(slot===0 && playing && remote===this){
+      if(slot===0 && (playing||spectating) && remote===this){
         this.connected=false; $('connection-status').innerHTML='<i></i> OFFLINE'; $('connection-status').classList.remove('online'); $('chat-online').textContent='OFFLINE';
-        toast('Connection lost — returning to local demo'); remote?.disconnect(); remote=null; remoteSnapshot=null; arena.reset(mode,nickname,tag,this.opts.multi,settings);
+        toast('Connection lost — switched to local preview'); remote?.disconnect(); remote=null; remoteSnapshot=null; arena.reset(mode,nickname,tag,this.opts.multi,settings,this.opts.spectator); 
       }
     });
     ws.addEventListener('error',()=>{ if(slot===0) toast('WebSocket connection failed'); });
@@ -144,8 +172,26 @@ function sendMessage(text){
 }
 
 function activeId(){ return remote ? (remote.myIds[Math.min(activeSlot,remote.myIds.length-1)]||remote.myIds[0]) : (arena.myIds[Math.min(activeSlot,arena.myIds.length-1)]||arena.myIds[0]); }
-function changeSlot(){ const max=remote?remote.myIds.length:arena.myIds.length; if(max<2){ toast('Enable multi in FFA or Dual to switch cells'); return; } activeSlot=(activeSlot+1)%max; toast('Controlling '+(activeSlot===0?'Connect 1':'Connect 2')); }
-function doAction(action){ if(!playing||isSettingsOpen) return; const id=activeId(); if(remote?.connected){ remote.sendAction(activeSlot,action); } else { if(action==='split') arena.split(id,settings); if(action==='feed') arena.feed(id); } }
+function selectedId(snapshot){ return spectating ? null : activeId(); }
+function beginSpectate(){
+  spectating=true; playing=false; showDeaths=false; spectateTargetId=''; rightDown=false; draggingCamera=false;
+  setLobbyState(false); $('lobby').classList.add('hidden'); $('gameover').classList.add('hidden');
+  const wsUrl=String(window.VINTAGE_CONFIG?.wsUrl || '').trim();
+  remote?.disconnect(); remote=null; remoteSnapshot=null;
+  arena.reset(mode, 'Spectator', '', false, settings, true);
+  renderer.cam={x:WORLD_SIZE/2,y:WORLD_SIZE/2};
+  renderer.zoom=clampClient(settings.zoom,.3,3.5);
+  if(wsUrl && /^wss?:\/\//i.test(wsUrl)){
+    remote=new RemoteArena(wsUrl,{mode,nickname:'Spectator',tag:'',multi:false,spectator:true});
+    remote.connect(); $('connection-status').innerHTML='<i></i> CONNECTING'; $('chat-online').textContent='CONNECTING';
+  }else{
+    $('connection-status').innerHTML='<i></i> DEMO MODE'; $('chat-online').textContent='LOCAL';
+    addChat('system','Free camera: move mouse to explore, drag to pan, wheel to zoom.','all');
+  }
+  setCameraControlsVisible();
+}
+function changeSlot(){ const max=remote?remote.myIds.length:arena.myIds.length; if(max<2){ toast('Multi already works automatically in all modes'); return; } activeSlot=(activeSlot+1)%max; toast('Controlling '+(activeSlot===0?'Connect 1':'Connect 2')); }
+function doAction(action){ if(!playing||spectating||isSettingsOpen) return; const id=activeId(); if(remote?.connected){ remote.sendAction(activeSlot,action); } else { if(action==='split') arena.split(id,settings); if(action==='feed') arena.feed(id); } }
 function repeatAction(action,count){ for(let i=0;i<count;i++) doAction(action); }
 function stopMovement(){
   if(remote?.connected){
@@ -159,12 +205,13 @@ function stopMovement(){
   }
   toast('Movement stopped');
 }
-function setZoomLevel(level){ const values=[0.55,0.75,0.95,1.15,1.35]; settings.zoom = values[level-1] || 1; saveSettings(); toast('Zoom level '+level); }
+function setZoomLevel(level){ const values=[0.55,0.75,0.95,1.15,1.35]; settings.zoom = values[level-1] || 1; saveSettings(); setCameraControlsVisible(); toast('Zoom level '+level); }
 function toggleSetting(key,label){ settings[key]=!settings[key]; saveSettings(); if(label) toast(label+' '+(settings[key]?'enabled':'disabled')); }
 function triggerCommand(index){ const msg=settings.chatCommands[index]; if(msg) sendMessage(msg); }
-function gameover(){ showDeaths=true; playing=false; $('gameover').classList.remove('hidden'); $('death-score').textContent='Better luck next time. Return stronger.'; if(settings.autoRespawn) setTimeout(()=>{ if(showDeaths && !$('gameover').classList.contains('hidden')) beginGame(); },1800); }
+function gameover(){ showDeaths=true; playing=false; spectating=false; $('gameover').classList.remove('hidden'); $('death-score').textContent='Better luck next time. Return stronger.'; if(settings.autoRespawn) setTimeout(()=>{ if(showDeaths && !$('gameover').classList.contains('hidden')) beginGame(); },1800); }
 function updateHUD(snapshot){
-  const me=snapshot?.players?.find(p=>p.id===activeId());
+  const focusId=selectedId(snapshot);
+  const me=snapshot?.players?.find(p=>p.id===focusId);
   const score=(me?.cells||[]).reduce((s,c)=>s+c.mass,0);
   $('mass-label').textContent=Math.floor(score).toLocaleString('en-US');
   $('cell-label').textContent=(me?.cells?.length||0)+' CELL'+((me?.cells?.length||0)===1?'':'S');
@@ -174,7 +221,7 @@ function updateHUD(snapshot){
   $('player-count').textContent=(snapshot?.players?.filter(p=>p.cells?.length)?.length||0)+' PLAYERS';
   const container=$('board-entries'); container.replaceChildren();
   for(let i=0;i<rows.length;i++){
-    const p=rows[i],line=document.createElement('div'); line.className='leader-entry'+(p.id===activeId()?' is-me':'');
+    const p=rows[i],line=document.createElement('div'); line.className='leader-entry'+(p.id===focusId?' is-me':'');
     const place=document.createElement('span'),n=document.createElement('b'),m=document.createElement('em');
     place.textContent=String(i+1).padStart(2,'0'); n.textContent=p.name; m.textContent=p.total>=1000?(p.total/1000).toFixed(1)+'k':Math.floor(p.total).toString();
     line.append(place,n,m); container.appendChild(line);
@@ -184,14 +231,24 @@ function updateHUD(snapshot){
 let controlAt=0, hudAt=0;
 function gameLoop(now){
   const dt=Math.min(.05,(now-frameTime)/1000||.016); frameTime=now;
-  if(playing && !isSettingsOpen){
+  if((playing || spectating) && !isSettingsOpen){
+    if(spectating && !draggingCamera && pointerOverField){
+      const edge=(pos,size)=>{const n=(pos/size-.5)*2,dead=.23;return Math.sign(n)*Math.pow(Math.max(0,Math.abs(n)-dead)/(1-dead),1.55)};
+      const speed=780*dt/Math.max(renderer.zoom,.35);
+      renderer.cam.x=clampClient(renderer.cam.x+edge(pointer.x,innerWidth)*speed,0,WORLD_SIZE);
+      renderer.cam.y=clampClient(renderer.cam.y+edge(pointer.y,innerHeight)*speed,0,WORLD_SIZE);
+    }
     const world=renderer.toWorld(pointer.x,pointer.y);
     const slot=(rightDown && settings.rightClickMove && (remote?.myIds.length || arena.myIds.length)>1)?1:activeSlot;
-    if(remote?.connected){ if(now-controlAt>60){ remote.sendControl(slot,world); controlAt=now; } }
-    else { const id=arena.myIds[slot] || activeId(); arena.setTarget(id,world.x,world.y); arena.tick(dt,settings); }
-  }else if(!playing && !showDeaths){ arena.tick(dt*.45,settings); }
+    if(playing){
+      if(remote?.connected){ if(now-controlAt>60){ remote.sendControl(slot,world); controlAt=now; } }
+      else { const id=arena.myIds[slot] || activeId(); arena.setTarget(id,world.x,world.y); }
+    }
+    if(!remote?.connected) arena.tick(dt,settings);
+  }else if(!showDeaths){ arena.tick(dt*.45,settings); }
   const snap = remote?.connected ? (remoteSnapshot || {players:[],food:[],viruses:[],worldSize:WORLD_SIZE}) : arena.snapshot;
-  renderer.draw(snap, activeId(), settings, playing, dt);
+  const focusId=selectedId(snap);
+  renderer.draw(snap, focusId, settings, playing, dt, spectating);
   if(now-hudAt>280){ hudAt=now; updateHUD(snap); if(playing && snap.players && snap.players.length && !(snap.players.find(p=>p.id===activeId())?.cells?.length)){ gameover(); } }
   requestAnimationFrame(gameLoop);
 }
@@ -216,7 +273,9 @@ const S = {
       {key:'foodSize',label:'Food size',type:'range',min:.5,max:2,step:.1},
     ],
     Camera:[
-      {key:'zoom',label:'Camera zoom',type:'range',min:.5,max:1.6,step:.1},
+      {key:'zoom',label:'Camera zoom',type:'range',min:.3,max:3.2,step:.1},
+      {key:'wheelZoom',label:'Mouse wheel zoom',type:'toggle'},
+      {key:'wheelZoomSensitivity',label:'Wheel zoom sensitivity',type:'range',min:.4,max:2,step:.1},
       {key:'cameraSmoothing',label:'Camera smoothing',type:'range',min:.02,max:.6,step:.02},
       {key:'mouseSensitivity',label:'Mouse movement speed',type:'range',min:.5,max:1.8,step:.1},
     ],
@@ -257,12 +316,12 @@ const S = {
       {key:'keySaveReplay',label:'Save replay',type:'coming'},
       {key:'keyChat',label:'Chat',type:'key'},
       {key:'keyChatToggle',label:'Toggle chat mode',type:'key'},
-      {key:'keySpectateMode',label:'Toggle spectate mode',type:'coming'},
+      {key:'keySpectateMode',label:'Toggle spectate mode',type:'key'},
       {key:'keySplit',label:'Split',type:'key'},
       {key:'keyDoubleSplit',label:'Double split',type:'key'},
-      {key:'keyTripleSplit',label:'Triple split',type:'coming'},
+      {key:'keyTripleSplit',label:'Triple split',type:'key'},
       {key:'keySplit16',label:'Split 16',type:'key'},
-      {key:'keySplit32',label:'Split 32',type:'coming'},
+      {key:'keySplit32',label:'Split 32',type:'key'},
       {key:'keySplit64',label:'Split 64',type:'key'},
       {key:'keyFeed',label:'Feed',type:'key'},
       {key:'keyMacroFeed',label:'Macro feed',type:'key'},
@@ -334,7 +393,7 @@ function renderSettingRow(area,item){
   } else if(item.type==='range'){
     const field=document.createElement('input'); field.type='range'; field.min=item.min; field.max=item.max; field.step=item.step; field.value=settings[item.key];
     const v=document.createElement('span'); v.className='setting-value'; v.textContent=settings[item.key];
-    field.oninput=()=>{ settings[item.key]=Number(field.value); v.textContent=field.value; saveSettings(); };
+    field.oninput=()=>{ settings[item.key]=Number(field.value); v.textContent=field.value; saveSettings(); if(item.key==='zoom')setCameraControlsVisible(); };
     box.append(field,v);
   } else if(item.type==='color'){
     const field=document.createElement('input'); field.type='color'; field.value=settings[item.key]; field.oninput=()=>{ settings[item.key]=field.value; saveSettings(); }; box.append(field);
@@ -389,14 +448,18 @@ window.addEventListener('keydown',e=>{
   if(document.activeElement === $('chat-input')){ if(k==='ESCAPE'){ document.activeElement.blur(); e.preventDefault(); } return; }
   if(k===settings.keyMenu){ enterLobby(); e.preventDefault(); return; }
   if(k===settings.keySettings){ showSettings(); e.preventDefault(); return; }
-  if(!playing || isEditing()) return;
+  if((!playing && !spectating) || isEditing()) return;
   if(k===settings.keyChat){ $('chat-input').focus(); e.preventDefault(); return; }
   if(k===settings.keyChatToggle){ chatChannel = chatChannel==='all' ? 'tag' : 'all'; updateChatTabs(); e.preventDefault(); return; }
   if(k===settings.keyHUD){ hudVisible=!hudVisible; applySettings(); e.preventDefault(); return; }
+  if(k===settings.keySpectateMode){ spectating ? enterLobby() : beginSpectate(); e.preventDefault(); return; }
+  if(spectating){ return; }
   if(k===settings.keySwitch){ changeSlot(); e.preventDefault(); return; }
   if(k===settings.keySplit){ doAction('split'); e.preventDefault(); return; }
   if(k===settings.keyDoubleSplit){ repeatAction('split',2); e.preventDefault(); return; }
+  if(k===settings.keyTripleSplit){ repeatAction('split',3); e.preventDefault(); return; }
   if(k===settings.keySplit16){ repeatAction('split',4); e.preventDefault(); return; }
+  if(k===settings.keySplit32){ repeatAction('split',5); e.preventDefault(); return; }
   if(k===settings.keySplit64){ repeatAction('split',6); e.preventDefault(); return; }
   if(k===settings.keyFeed){ doAction('feed'); e.preventDefault(); return; }
   if(k===settings.keyMacroFeed){ repeatAction('feed',4); e.preventDefault(); return; }
@@ -418,6 +481,11 @@ $('back-to-lobby').onclick=enterLobby;
 $('menu-btn').onclick=enterLobby;
 $('settings-btn').onclick=showSettings;
 $('lobby-settings-btn').onclick=showSettings;
+$('spectate-btn').onclick=beginSpectate;
+$('spectate-exit').onclick=enterLobby;
+$('zoom-in').onclick=()=>adjustZoom(1.18);
+$('zoom-out').onclick=()=>adjustZoom(1/1.18);
+$('zoom-reset').onclick=()=>adjustZoom(1/Math.max(settings.zoom,.01));
 $('close-settings').onclick=hideSettings;
 $('settings-done').onclick=hideSettings;
 $('settings-overlay').addEventListener('click',e=>{ if(e.target===$('settings-overlay')) hideSettings(); });
@@ -427,16 +495,36 @@ document.querySelectorAll('#settings-tabs button').forEach(b=>b.onclick=()=>{ se
 document.querySelectorAll('.soon-btn').forEach(btn=>btn.addEventListener('click',e=>{ const msg=btn.dataset.soon; if(msg){ e.preventDefault(); toast(msg); } }));
 document.querySelectorAll('.region-tab').forEach(btn=>btn.addEventListener('click',()=>{ if(btn.classList.contains('soon-btn')) return; document.querySelectorAll('.region-tab').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); }));
 $('nickname').addEventListener('input', updateProfileName);
-window.addEventListener('pointermove',e=>{ pointer={x:e.clientX,y:e.clientY}; });
+window.addEventListener('pointermove',e=>{
+  pointer={x:e.clientX,y:e.clientY}; pointerOverField=e.target===$('arena');
+  if(draggingCamera && spectating && dragPointer){
+    renderer.cam.x=clampClient(renderer.cam.x+(dragPointer.x-e.clientX)/Math.max(renderer.zoom,.2),0,WORLD_SIZE);
+    renderer.cam.y=clampClient(renderer.cam.y+(dragPointer.y-e.clientY)/Math.max(renderer.zoom,.2),0,WORLD_SIZE);
+    dragPointer={x:e.clientX,y:e.clientY};
+  }
+});
+window.addEventListener('wheel',e=>{
+  if(!settings.wheelZoom || !(playing||spectating) || isSettingsOpen) return;
+  e.preventDefault();
+  adjustZoom(Math.exp(-Math.sign(e.deltaY)*.14*(settings.wheelZoomSensitivity||1)),e.clientX,e.clientY);
+},{passive:false});
 $('arena').addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('contextmenu',e=>{ if(playing && settings.rightClickMove) e.preventDefault(); });
-window.addEventListener('pointerdown',e=>{ if(e.target===$('arena') && e.button===2 && playing && settings.rightClickMove){ rightDown=true; e.preventDefault(); } });
-window.addEventListener('pointerup',e=>{ if(e.button===2) rightDown=false; });
-window.addEventListener('blur',()=>{ rightDown=false; });
+window.addEventListener('pointerdown',e=>{
+  if(e.target!==$('arena'))return;
+  if(spectating && e.button===0){draggingCamera=true;dragPointer={x:e.clientX,y:e.clientY};document.body.classList.add('dragging-camera');e.preventDefault();return;}
+  if(playing && e.button===2 && settings.rightClickMove){rightDown=true;e.preventDefault();}
+});
+window.addEventListener('pointerup',e=>{
+  if(e.button===2)rightDown=false;
+  if(e.button===0){draggingCamera=false;dragPointer=null;document.body.classList.remove('dragging-camera');}
+});
+window.addEventListener('blur',()=>{rightDown=false;draggingCamera=false;dragPointer=null;document.body.classList.remove('dragging-camera');});
 window.addEventListener('resize',()=>renderer.resize());
 
 applySettings();
 setLobbyState(true);
 updateProfileName();
 updateMode('ffa');
+setCameraControlsVisible();
 requestAnimationFrame(gameLoop);

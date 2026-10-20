@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#081420" />
+  <meta name="theme-color" content="#10131b" />
   <meta name="description" content="Vintage — FFA, Dual and Mega cell game." />
   <title>VINTAGE</title>
   <link rel="stylesheet" href="/styles.css" />
@@ -13,7 +13,7 @@
   <div id="noise"></div>
 
   <header class="topbar">
-    <div class="brand" aria-label="Vintage"><span class="brand-glyph">V</span><span>VINTAGE<small>GAME</small></span></div>
+    <div class="brand" aria-label="Vintage"><span class="brand-glyph">V</span><span>VINTAGE<small>EST. 2026</small></span></div>
     <div id="top-mode" class="mode-pill">FFA · EUROPE</div>
     <div class="top-actions">
       <span id="connection-status" class="connection-pill"><i></i> DEMO MODE</span>
@@ -35,7 +35,7 @@
   </section>
 
   <div id="minimap" class="hud-panel minimap"><canvas id="minimap-canvas" width="150" height="150"></canvas><span>GRID MAP</span></div>
-  <div id="help-panel" class="help-panel"><b>SPACE</b> Split <b>W</b> Feed <b>TAB</b> Dual toggle <b>RMB</b> Move 2nd cell <b>ENTER</b> Chat</div>
+  <div id="help-panel" class="help-panel"><b>SPACE</b> Split <b>W</b> Feed <b>TAB</b> Switch multi <b>RMB</b> Multi 2 <b>WHEEL</b> Zoom</div>
   <div id="toast-area" aria-live="polite"></div>
 
   <aside id="chat" class="hud-panel chatbox">
@@ -46,85 +46,75 @@
   </aside>
 
   <main id="lobby" class="lobby">
-    <div class="lobby-fx fx-one"></div>
-    <div class="lobby-fx fx-two"></div>
-    <div class="lobby-fx fx-three"></div>
-    <div class="hero-logo">VINTAGE</div>
-
-    <div class="lobby-grid">
-      <section class="menu-panel left-panel">
-        <div class="section-head">
-          <h3>LOGIN</h3>
-          <span>Account access</span>
-        </div>
-        <div class="login-row">
-          <button type="button" class="login-btn discord soon-btn" data-soon="Discord login is coming soon">Discord Login</button>
-          <button type="button" class="login-btn facebook soon-btn" data-soon="Facebook login is coming soon">Facebook Login</button>
-        </div>
-
-        <div class="section-head skin-head">
-          <h3>SKINS</h3>
-          <span>Coming soon</span>
-        </div>
-        <div class="skin-showcase compact">
-          <button type="button" class="arrow-btn soon-btn" data-soon="Skin browser is coming soon">‹</button>
-          <div class="skin-slot soon-slot"><span>NO SKIN</span><b>SOON</b></div>
-          <div class="skin-slot soon-slot"><span>NO SKIN</span><b>SOON</b></div>
-          <button type="button" class="arrow-btn soon-btn" data-soon="Skin browser is coming soon">›</button>
-        </div>
-      </section>
-
-      <section class="menu-panel center-panel">
-        <div class="center-top swapped-inputs">
-          <input id="nickname" autocomplete="nickname" maxlength="18" placeholder="Player name" value="Vintage Player" />
-          <input id="team-tag" maxlength="8" placeholder="Tag" />
-        </div>
-
-        <div class="mode-picks big-modes" role="group" aria-label="Game mode">
-          <button class="mode-choice selected" data-mode="ffa">
-            <small>MODE</small><strong>Free For All</strong><span>1,000 Mass</span>
-          </button>
-          <button class="mode-choice" data-mode="dual">
-            <small>MODE</small><strong>Dual</strong><span>1,000 Mass</span>
-          </button>
-          <button class="mode-choice" data-mode="mega">
-            <small>MODE</small><strong>Mega</strong><span>5,000 Mass</span>
-          </button>
-        </div>
-
-        <div class="auto-multi-note">MULTI IS ENABLED AUTOMATICALLY IN FFA / DUAL</div>
-
-        <div class="center-actions single-column">
-          <div class="play-stack large-stack">
-            <button id="play-btn" class="main-btn play-blue">Play</button>
-            <button id="spectate-btn" class="main-btn play-yellow soon-btn" data-soon="Spectate will be available soon">Spectate</button>
-            <button id="lobby-settings-btn" class="main-btn play-red">Settings</button>
+    <div class="lobby-atmosphere" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="lobby-wrap">
+      <div class="lobby-intro">
+        <div class="lobby-eyebrow"><span class="live-dot"></span> YOUR WORLD. YOUR LEGACY. <span class="lobby-eyebrow-line"></span> BUILD 0.6</div>
+        <h1 class="hero-logo">VINTAGE<span class="hero-dot">.</span></h1>
+        <p>Three game modes. One legendary experience.</p>
+      </div>
+      <div class="lobby-grid">
+        <section class="menu-panel left-panel" aria-label="Profile and cosmetics">
+          <div class="panel-topline"><span class="panel-overline">01 / PROFILE</span><span class="panel-status">DEVELOPMENT</span></div>
+          <h2 class="panel-title">Make it yours<span>.</span></h2>
+          <p class="panel-description">Connect your account and build your identity.</p>
+          <div class="login-row">
+            <button type="button" class="login-btn discord soon-btn" data-soon="Discord login is coming soon"><span class="auth-icon">◈</span> Discord <small>SOON</small></button>
+            <button type="button" class="login-btn facebook soon-btn" data-soon="Facebook login is coming soon"><span class="auth-icon">f</span> Facebook <small>SOON</small></button>
           </div>
-        </div>
+          <div class="panel-separator"></div>
+          <div class="panel-miniheading"><h3>CELL COLLECTION</h3><span>0 / 2</span></div>
+          <div class="skin-gallery">
+            <div class="skin-slot skin-red"><div class="skin-orb">V</div><span>SKIN 01</span><b>COMING SOON</b></div>
+            <div class="skin-slot skin-blue"><div class="skin-orb">V</div><span>SKIN 02</span><b>COMING SOON</b></div>
+          </div>
+          <p class="panel-footnote">Premium skins and profiles are under development.</p>
+        </section>
 
-        <div class="center-meta"><span>v1.0.0</span><span>Vintage Client</span><span>Development Build</span></div>
-      </section>
+        <section class="menu-panel center-panel" aria-label="Start a game">
+          <div class="panel-topline"><span class="panel-overline">02 / PLAY</span><span class="panel-status"><i></i> READY</span></div>
+          <h2 class="panel-title">Enter your world<span>.</span></h2>
+          <p class="panel-description">Pick a mode and take control.</p>
+          <div class="center-top swapped-inputs">
+            <label class="field-wrap name-field"><span>PLAYER NAME</span><input id="nickname" autocomplete="nickname" maxlength="18" placeholder="Enter name" value="Vintage Player" /></label>
+            <label class="field-wrap tag-field"><span>TAG</span><input id="team-tag" maxlength="8" placeholder="Tag" /></label>
+          </div>
+          <div class="select-caption">CHOOSE GAME MODE <span>3 AVAILABLE</span></div>
+          <div class="mode-picks big-modes" role="group" aria-label="Game mode">
+            <button class="mode-choice selected" data-mode="ffa" aria-pressed="true"><span class="mode-art"><i class="art-cell a"></i><i class="art-cell b"></i></span><strong>FFA</strong><small>Free For All</small><span class="mode-mass">1K MASS</span></button>
+            <button class="mode-choice" data-mode="dual" aria-pressed="false"><span class="mode-art dual-art"><i class="art-cell a"></i><i class="art-cell b"></i></span><strong>DUAL</strong><small>Multibox battle</small><span class="mode-mass">1K MASS</span></button>
+            <button class="mode-choice" data-mode="mega" aria-pressed="false"><span class="mode-art mega-art"><i class="art-cell a"></i><i class="art-cell b"></i></span><strong>MEGA</strong><small>Heavyweight</small><span class="mode-mass">5K MASS</span></button>
+          </div>
+          <div class="lobby-actions">
+            <button id="play-btn" class="main-btn play-blue"><span class="play-symbol">▶</span><span>PLAY NOW</span><span class="action-arrow">↗</span></button>
+            <button id="spectate-btn" class="main-btn play-yellow"><span>◉</span><span>FREE SPECTATE</span></button>
+          </div>
+          <button id="lobby-settings-btn" class="settings-lobby-btn"><span>⚙</span> SETTINGS &amp; CONTROLS <span>›</span></button>
+        </section>
 
-      <section class="menu-panel right-panel">
-        <div class="server-header"><h3>Servers</h3></div>
-        <div class="region-tabs">
-          <button class="region-tab active">Europe</button>
-          <button class="region-tab soon-btn" data-soon="North America list is coming soon">North America</button>
-          <button class="region-tab soon-btn" data-soon="Asia list is coming soon">Asia</button>
-        </div>
-        <div class="server-table">
-          <div class="server-head-row"><span>Name</span><span>Players</span><span>Game mode</span></div>
-          <button class="server-row selected" data-mode="ffa"><span>Vintage FFA</span><span>42/200</span><span>Free For All</span></button>
-          <button class="server-row" data-mode="dual"><span>Vintage Dual</span><span>16/50</span><span>Dual</span></button>
-          <button class="server-row" data-mode="mega"><span>Vintage Mega</span><span>22/50</span><span>Mega</span></button>
-          <button class="server-row soon-btn" data-soon="Classic mode is coming soon"><span>Classic</span><span>Coming Soon</span><span>Extra Mode</span></button>
-          <button class="server-row soon-btn" data-soon="Instant merge is coming soon"><span>Future</span><span>Coming Soon</span><span>Instant Merge</span></button>
-          <button class="server-row soon-btn" data-soon="Self feed is coming soon"><span>Storm</span><span>Coming Soon</span><span>Self Feed</span></button>
-        </div>
-      </section>
+        <section class="menu-panel right-panel" aria-label="Game servers">
+          <div class="panel-topline"><span class="panel-overline">03 / SERVERS</span><span class="panel-status"><i></i> 3 MODES</span></div>
+          <h2 class="panel-title">Choose a server<span>.</span></h2>
+          <p class="panel-description">Isolated worlds, built for competition.</p>
+          <div class="region-tabs"><button class="region-tab active">EUROPE</button><button class="region-tab soon-btn" data-soon="North America is coming soon">NA · SOON</button><button class="region-tab soon-btn" data-soon="Asia is coming soon">ASIA · SOON</button></div>
+          <div class="server-table">
+            <div class="server-head-row"><span>GAME MODE</span><span>LOCAL AI</span></div>
+            <button class="server-row selected" data-mode="ffa" aria-pressed="true"><span><b class="server-led"></b><strong>Vintage FFA</strong><small>Free For All</small></span><em>10 BOTS</em></button>
+            <button class="server-row" data-mode="dual" aria-pressed="false"><span><b class="server-led"></b><strong>Vintage Dual</strong><small>Multibox mode</small></span><em>10 BOTS</em></button>
+            <button class="server-row" data-mode="mega" aria-pressed="false"><span><b class="server-led"></b><strong>Vintage Mega</strong><small>High-mass world</small></span><em>10 BOTS</em></button>
+          </div>
+          <div class="server-note"><span class="server-note-icon">i</span><p>Preview uses local bots. Live player counts will appear when the dedicated multiplayer server is connected.</p></div>
+        </section>
+      </div>
+      <div class="lobby-bottom"><span>VINTAGE / DEVELOPMENT PREVIEW</span><span>WHEEL TO ZOOM IN GAME · FREE MOUSE SPECTATE</span></div>
     </div>
   </main>
 
+  <section id="spectate-hud" class="spectate-hud hidden" aria-label="Free spectate controls">
+    <div class="spectate-head"><span class="spectate-pulse"></span><div><strong>FREE CAMERA</strong><small>Move mouse toward screen edges to explore · drag to pan · scroll to zoom</small></div></div>
+    <button id="spectate-exit" class="spectate-exit">EXIT SPECTATE <span>✕</span></button>
+  </section>
+  <div id="zoom-panel" class="zoom-panel hidden" aria-label="Camera zoom controls"><button id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-value">100%</span><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-reset" aria-label="Reset zoom" title="Reset zoom">⟲</button></div>
   <section id="gameover" class="gameover hidden"><div class="gameover-card"><small>THE MATCH NEVER SLEEPS</small><h2>YOU WERE EATEN</h2><p id="death-score"></p><button id="respawn-btn" class="main-btn play-blue">Respawn</button><button id="back-to-lobby" class="link-button">BACK TO LOBBY</button></div></section>
 
   <div id="settings-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Game settings">

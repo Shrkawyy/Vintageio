@@ -1,67 +1,46 @@
-# VINTAGE — Cell Arena (Development Preview)
+# VINTAGE v0.6 — GitHub / Vercel development build
 
-An independent Vintage Arena project based on the provided UI reference screenshots. The project is **not** a source export of the existing ChatGPT Site, which wasn't available for source download.
+An independent cell game built from the Vintage project files and your reference screenshots. This is a complete **frontend + optional Node.js WebSocket backend** source package. Do not confuse the local preview with a publicly hosted multiplayer game.
 
-## What is implemented
+## What's new in v0.6
 
-- Original dark navy / ice blue Vintage UI: new lobby, three modes, animated game canvas, HUD, leaderboard, chat, radar.
-- Three independent game worlds/rooms: `ffa`, `dual`, `mega`. Changing the mode switches the room and resets its world, not just the label.
-- Initial player mass: FFA = 1,000; Dual = 1,000; Mega = 5,000. With two multi player connections, each starts at the mode's own initial mass.
-- Player-controlled movement towards the mouse, Space to split, W to eject mass, Q to switch controlled multibox connection, hold right mouse to steer the second multi connection (if available).
-- Automatic split at 25,500 mass toward the player's pointer, maximum 16 cells per player; physics is simplified for this development version.
-- AI opponents, pellets, simple eating mechanics, death/respawn, camera tracking and minimap.
-- Gameplay, theme, controls, and JSON import/export settings; changes are stored in localStorage and used by the game.
-- `All` chat for the current game room and `Tag` chat for same-tag players in that room when connected to a real backend.
-- A separate Node.js WebSocket backend for real two-browser multiplayer in the same room.
+- Entirely refreshed custom burgundy/red Vintage lobby with responsive panels, animated rings, subtle light effects, streamlined login and skin placeholders, and larger FFA / Dual / Mega selections.
+- **Free Spectate** (mouse-only): choose **FREE SPECTATE** in the lobby; move the mouse toward a screen edge to roam; hold the left mouse button and drag to pan; roll the mouse wheel to zoom. Click **EXIT SPECTATE** to return to the lobby. No keyboard shortcuts are required.
+- **True observer-mode WebSocket protocol:** online spectators receive room snapshots and do not create game-player slots. The backend also cleans up spectators on disconnect and keeps their data scoped to the selected game room.
+- **Mouse wheel zoom during play** (and Spectate), plus visible + / − / reset controls. Zoom amount is adjustable in **Settings → Game → Camera** and saved locally.
+- 10 local AI opponents in **each** isolated mode; Mega supports two-player multibox connections; FFA and Dual retain the same automatic multibox behavior.
+- The existing hotkeys, split functions, settings, leaderboard, tag chat, skins/login **Coming Soon** placeholders, and room separation are preserved.
 
-### What is still required for an official launch
+**Scope note:** gameplay physics remain an independently developed approximation, not an exact reverse-engineered implementation of Senpa. We can continue adjusting movement, split velocity, merging, collision and consumption based on reproducible examples. "Professional lobby" here means the new visual/UX treatment, not a claim of feature parity with an established live game.
 
-The live multiplayer backend must be deployed independently on an always-on host; hosting only the frontend on Vercel gives you a **local playable demo**, not online multiplayer. Production-grade authentication, accounts, databases, cosmetics, moderation, cheat protection, persistence, ranking, replays and performance optimization are **not implemented**. Collision/merging rules are a development approximation rather than a commercial-grade authoritative physics model. The current ChatGPT Site deployment is not modified by this package.
+## Put this update on your existing GitHub + Vercel project
 
-## Structure
+1. Extract the ZIP into a folder.
+2. Open your existing Vintageio GitHub repository, and replace/update the files **at the repository root**. In particular, keep `vercel.json` at the root and `index.html` inside `public/`. You do **not** need to create a second repository.
+3. If you use Git locally, from the repository folder:
 
-```text
-Vintage-Arena/
-├── public/
-│   ├── index.html     # Page / responsive lobby and settings UI
-│   ├── styles.css     # Vintage visual design
-│   ├── game.js        # Local game engine, drawing and default settings
-│   ├── client.js      # UI wiring, input, chat, WebSocket client
-│   └── config.js      # Optional backend WebSocket URL
-├── server/
-│   ├── core.cjs       # Real-time game rooms and authoritative physics
-│   ├── index.js       # HTTP health endpoint and WebSocket server
-│   └── package.json   # ws dependency and scripts
-├── tests/
-│   └── server.test.cjs
-├── vercel.json
-└── README.md
-```
+   ```bash
+   git add .
+   git commit -m "Vintage v0.6 free spectate and mouse zoom"
+   git push origin main
+   ```
 
-## Deploy the website to GitHub + Vercel (no purchased domain needed)
+4. Your Vercel deployment connected to `main` should rebuild automatically. Framework: **Other**; root directory `.`, output directory `public`, no build command needed.
+5. Open the Vercel URL and hard-refresh (**Ctrl+F5**) if the older CSS is cached.
 
-1. Extract the ZIP. Create a NEW GitHub repository named `Vintage-Arena`.
-2. Upload all files **inside** the `Vintage-Arena` folder, keeping `vercel.json` and the `public` folder in the repository root.
-3. On https://vercel.com/new choose **Import Git Repository** and select your new repo.
-4. Framework Preset: **Other**. Root Directory: `./` (repo root). Build command: leave empty; Output Directory: `public` (also set in `vercel.json`).
-5. Click **Deploy**. Open the temporary `*.vercel.app` URL. You can play in Demo Mode immediately.
-6. Every commit to the connected GitHub branch automatically redeploys the front end.
+## Run a local preview
 
-**Don't upload only the `server/` directory to Vercel.** Vercel cannot host the game's continuously running WebSocket server as a normal serverless function.
-
-## Run the local playable demo
-
-You can serve the `public` folder with any static web server, for example:
+From the repository root:
 
 ```bash
 python -m http.server 8080 --directory public
 ```
 
-Then open `http://localhost:8080`. Alternatively use VS Code's Live Server. Opening `index.html` directly as a `file://` page is not supported because it uses browser ES modules.
+Open http://localhost:8080. The web interface runs using local NPCs when the backend WebSocket URL in `public/config.js` is empty. This is a local simulation inside the visitor's browser, not cross-user online multiplayer.
 
-## Run the real online server separately
+## Run the optional live multiplayer backend
 
-Requires Node.js 20+ on a service that accepts WebSocket connections and runs continuously.
+It requires Node.js 20+, a host with continuous WebSocket support, and internet access to install dependencies.
 
 ```bash
 cd server
@@ -69,50 +48,38 @@ npm install
 npm start
 ```
 
-The backend listens on `PORT` (default 3001) and reports `GET /health`. To try on one PC, change `public/config.js` to:
+Use an always-on Node hosting provider (Render, Railway, a VPS, etc.); Vercel's regular serverless functions cannot run this persistent WebSocket server. `GET /health` reports the room's real player count, bot count and spectator count separately.
+
+Update `public/config.js` with the working public WSS URL when your game server is online:
 
 ```js
-window.VINTAGE_CONFIG = { wsUrl: 'ws://localhost:3001' };
+window.VINTAGE_CONFIG = { wsUrl: 'wss://YOUR-GAME-SERVER-HOST' };
 ```
 
-For public Vercel hosting, deploy the `server/` directory to a supported Node.js hosting service (e.g. Railway, Render, VPS), with its own publicly reachable HTTPS/WSS host. Then edit `public/config.js`:
-
-```js
-window.VINTAGE_CONFIG = { wsUrl: 'wss://YOUR-ALWAYS-ON-GAME-SERVER' };
-```
-
-Commit `config.js`, wait for Vercel's redeploy, and test with two separate browser tabs. The WebSocket server hosts three independent logical rooms in one Node process: `ffa`, `dual` and `mega`.
-
-For a backend host that asks for a start command, choose `npm start`, root directory `server`, install command `npm install`, and use the host-provided `PORT` environment variable. It must support long-lived WebSockets (not Vercel Functions).
-
-## Add an official domain later
-
-No domain is required during development. After buying one, open **Vercel Project → Settings → Domains**, add the domain and follow the DNS instructions shown by Vercel. Configure the game server's subdomain (such as `ws.example.com`) on its separate host; update `public/config.js` to its real WSS URL. Never assume `wss://` works without HTTPS/TLS on the backend host.
+Do not assume a `*.vercel.app` frontend URL is a game-server WebSocket address. HTTPS Vercel pages require **WSS**, backed by a TLS-enabled game host.
 
 ## Controls
 
-| Action | Default |
-|---|---|
-| Move primary/selected cell | Mouse |
-| Split towards cursor | Space |
-| Eject mass | W |
-| Switch multi connection | Q |
-| Steer multi 2 while holding | Right mouse |
-| Chat | Enter |
-| Toggle All/Tag chat | C |
-| Settings | S |
-| Hide/show HUD | H |
-| Lobby | Escape |
-| Quick chat presets | Alt+1 ... Alt+5 |
+| Context | Mouse / key | Behavior |
+|---|---|---|
+| Any active game | Mouse movement | Move the controlled cell toward cursor |
+| Playing | Wheel scroll | Zoom in or out smoothly |
+| Playing | + / − / reset panel | Alternative camera zoom |
+| Playing | Space | Split |
+| Playing | W | Feed |
+| Playing | Tab | Switch multi connection |
+| Playing | Hold right-click | Steer second multi connection |
+| Free Spectate | Move mouse toward screen edges | Pan freely across the world |
+| Free Spectate | Hold left-click and drag | Precisely pan the camera |
+| Free Spectate | Wheel scroll | Zoom around the mouse pointer |
+| Free Spectate | EXIT SPECTATE | Return to lobby |
 
-Settings including key mappings persist in browser localStorage. Chat sent while in local Demo Mode is local-only; with the real server, All and Tag messages are delivered to eligible players within their mode.
+Camera zoom preferences and other settings are stored in this browser's localStorage. Login buttons and cosmetic skins are labeled Coming Soon; they are not real OAuth integrations yet.
 
 ## Tests
 
-Run from the repository root:
-
 ```bash
-node --test tests/server.test.cjs
+node --test tests/*.test.cjs
 ```
 
-Tests validate the three isolated rooms, initial masses, split direction/mass conservation, autosplit threshold and room-scoped Tag chat. The app has been checked for JS syntax and these unit tests, but production network load, browser compatibility and external hosting still require live acceptance tests.
+10 offline automated tests cover isolated rooms, mass, split direction, automatic split, tag chat filtering, NPC counts, Mega multibox setup and WebSocket spectator protocol handling (with a test double). Browser interaction tests also exercised the lobby, free-camera edge-panning, left-dragging, wheel zoom and playing zoom. Network integration with an externally hosted Node server was **not** tested in this environment because the `ws` dependency could not be fetched from npm here; deploy the backend separately before claiming real online multiplayer is verified.

@@ -1,14 +1,14 @@
 export const MODES = Object.freeze({
-  ffa: {title:'FREE FOR ALL',start:1000,color:'#73e5f1',botCount:13},
-  dual:{title:'DUAL',start:1000,color:'#ae95ff',botCount:11},
-  mega:{title:'MEGA',start:5000,color:'#ffd28a',botCount:12},
+  ffa: {title:'FREE FOR ALL',start:1000,color:'#73e5f1',botCount:10},
+  dual:{title:'DUAL',start:1000,color:'#ae95ff',botCount:10},
+  mega:{title:'MEGA',start:5000,color:'#ffd28a',botCount:10},
 });
 export const WORLD_SIZE=4800;
 export const AUTO_SPLIT_MASS=25500;
-export const MAX_CELLS=16;
+export const MAX_CELLS=64;
 export const DEFAULT_SETTINGS={
   showGrid:true,showMass:true,showNames:true,showLeaderboard:true,showMinimap:true,showChat:true,showSectors:false,
-  autoSplit:true,autoRespawn:false,mouseSensitivity:1,zoom:1,cameraSmoothing:0.10,
+  autoSplit:true,autoRespawn:false,mouseSensitivity:1,zoom:1,wheelZoom:true,wheelZoomSensitivity:1,cameraSmoothing:0.10,
   showFood:true,showViruses:true,showBorders:true,showHelp:true,cellOpacity:100,nickSize:1,massSize:1,
   bgColor:'#07131f',gridColor:'#244051',ownColor:'#70e0ff',secondColor:'#ff88b0',accentColor:'#70e0ff',
   borderWidth:5,foodSize:1,backgroundImage:false,backgroundUrl:'',
@@ -31,11 +31,14 @@ function newCell(x,y,mass,color){return {x,y,mass,color,vx:0,vy:0,mergeAt:0};}
 function player(id,name,tag,color,start,npc=false){const x=rand(700,WORLD_SIZE-700),y=rand(700,WORLD_SIZE-700);return {id,name,tag,color,npc,cells:[newCell(x,y,start,color)],target:{x,y},heading:rand(0,Math.PI*2),alive:true};}
 export class LocalArena{
   constructor(){this.mode='ffa';this.players=[];this.food=[];this.viruses=[];this.myIds=[];this.elapsed=0;this.chat=[];this._id=0;}
-  reset(mode,name,tag,multi=true,settings=DEFAULT_SETTINGS){this.mode=MODES[mode]?mode:'ffa';this.elapsed=0;this._id=0;this.chat=[];
+  reset(mode,name,tag,multi=true,settings=DEFAULT_SETTINGS,spectator=false){this.mode=MODES[mode]?mode:'ffa';this.elapsed=0;this._id=0;this.chat=[];
     const conf=MODES[this.mode];this.food=Array.from({length:260},foodPoint);this.viruses=Array.from({length:28},()=>({x:rand(100,WORLD_SIZE-100),y:rand(100,WORLD_SIZE-100)}));
-    this.players=[];const me=player('local-1',name||'Vintage Player',tag||'',settings.ownColor,conf.start);
-    me.cells[0].x=WORLD_SIZE/2;me.cells[0].y=WORLD_SIZE/2;me.target={x:me.cells[0].x,y:me.cells[0].y};this.players.push(me);this.myIds=[me.id];
-    if(multi&&this.mode!=='mega'){const second=player('local-2',name+' II',tag,settings.secondColor,conf.start);second.cells[0].x=me.cells[0].x+280;second.cells[0].y=me.cells[0].y+90;this.players.push(second);this.myIds.push(second.id);}
+    this.players=[];this.myIds=[];
+    if(!spectator){
+      const me=player('local-1',name||'Vintage Player',tag||'',settings.ownColor,conf.start);
+      me.cells[0].x=WORLD_SIZE/2;me.cells[0].y=WORLD_SIZE/2;me.target={x:me.cells[0].x,y:me.cells[0].y};this.players.push(me);this.myIds=[me.id];
+      if(multi){const second=player('local-2',name+' II',tag,settings.secondColor,conf.start);second.cells[0].x=me.cells[0].x+280;second.cells[0].y=me.cells[0].y+90;this.players.push(second);this.myIds.push(second.id);}
+    }
     for(let i=0;i<conf.botCount;i++)this.players.push(player('npc-'+i,DEFAULT_NAMES[i],['','VX','RX','NV'][i%4],['#e59fe7','#ffb482','#87f4cd','#9eb3fa'][i%4],rand(600,conf.start*1.8),true));
   }
   get snapshot(){return {type:'state',mode:this.mode,players:this.players.filter(p=>p.cells.length),food:this.food,viruses:this.viruses,worldSize:WORLD_SIZE};}
@@ -54,11 +57,12 @@ export class LocalArena{
         if(dangerous)p.heading=Math.atan2(lead.y-dangerous.cells[0].y,lead.x-dangerous.cells[0].x);
         p.target={x:clamp(lead.x+Math.cos(p.heading)*500,0,WORLD_SIZE),y:clamp(lead.y+Math.sin(p.heading)*500,0,WORLD_SIZE)};
       }
-      for(const c of p.cells){const dx=p.target.x-c.x,dy=p.target.y-c.y,dist=Math.hypot(dx,dy);const speed=clamp(400-Math.sqrt(c.mass)*2.2,80,355)*(p.npc?0.75:settings.mouseSensitivity);
+      for(const c of p.cells){const dx=p.target.x-c.x,dy=p.target.y-c.y,dist=Math.hypot(dx,dy);const speed=clamp(520/Math.pow(Math.max(c.mass,25),0.18),78,420)*(p.npc?0.74:settings.mouseSensitivity);
         if(dist>3){const movement=Math.min(dist,speed*dt);c.x+=dx/dist*movement;c.y+=dy/dist*movement;}
         c.x=clamp(c.x+c.vx*dt,10,WORLD_SIZE-10);c.y=clamp(c.y+c.vy*dt,10,WORLD_SIZE-10);c.vx*=Math.pow(.83,dt*30);c.vy*=Math.pow(.83,dt*30);
         if(c.mass>=AUTO_SPLIT_MASS&&settings.autoSplit&&p.cells.length<MAX_CELLS)this.split(p.id,settings);
       }
+      if(p.cells.length>1){for(let i=0;i<p.cells.length;i++)for(let j=i+1;j<p.cells.length;j++){const a=p.cells[i],b=p.cells[j];const dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy)||.001;const minGap=radius(a.mass)+radius(b.mass)+8;if(dist<minGap){const push=(minGap-dist)*.5;const ux=dx/dist,uy=dy/dist;a.x=clamp(a.x-ux*push,10,WORLD_SIZE-10);a.y=clamp(a.y-uy*push,10,WORLD_SIZE-10);b.x=clamp(b.x+ux*push,10,WORLD_SIZE-10);b.y=clamp(b.y+uy*push,10,WORLD_SIZE-10);}}}
       if(this.elapsed%6<dt){for(const c of p.cells){c.mass*=.9985;}}
       if(p.cells.length>1&&Math.random()<.05){for(let i=0;i<p.cells.length;i++)for(let j=i+1;j<p.cells.length;j++){const a=p.cells[i],b=p.cells[j];if(a&&b&&this.elapsed>a.mergeAt&&this.elapsed>b.mergeAt&&distance(a,b)<radius(a)*.55){a.mass+=b.mass;p.cells.splice(j,1);j--;}}}
     }
@@ -76,13 +80,13 @@ export class ArenaRenderer{
   constructor(canvas,minimap){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.radar=minimap;this.radarCtx=minimap.getContext('2d');this.cam={x:WORLD_SIZE/2,y:WORLD_SIZE/2};this.zoom=.75;this.background=null;this.backgroundUrl='';this.fps=60;this.lastFpsCheck=0;this.frames=0;this.last=performance.now();this.screenW=0;this.screenH=0;}
   resize(){const ratio=Math.min(devicePixelRatio||1,2),w=innerWidth,h=innerHeight;this.canvas.width=Math.round(w*ratio);this.canvas.height=Math.round(h*ratio);this.canvas.style.width=w+'px';this.canvas.style.height=h+'px';this.ctx.setTransform(ratio,0,0,ratio,0,0);this.screenW=w;this.screenH=h;}
   toWorld(x,y){return {x:this.cam.x+(x-this.screenW/2)/this.zoom,y:this.cam.y+(y-this.screenH/2)/this.zoom};}
-  draw(snapshot,selectedId,settings=DEFAULT_SETTINGS,playing=false,dt=1/60){if(!this.screenW||this.screenW!==innerWidth||this.screenH!==innerHeight)this.resize();const ctx=this.ctx,W=this.screenW,H=this.screenH;
+  draw(snapshot,selectedId,settings=DEFAULT_SETTINGS,playing=false,dt=1/60,freeCamera=false){if(!this.screenW||this.screenW!==innerWidth||this.screenH!==innerHeight)this.resize();const ctx=this.ctx,W=this.screenW,H=this.screenH;
     ctx.clearRect(0,0,W,H);ctx.fillStyle=settings.bgColor;ctx.fillRect(0,0,W,H);
     if(settings.backgroundImage&&settings.backgroundUrl){if(this.backgroundUrl!==settings.backgroundUrl){this.backgroundUrl=settings.backgroundUrl;this.background=new Image();this.background.src=settings.backgroundUrl;}if(this.background?.complete&&this.background.naturalWidth){ctx.globalAlpha=.22;ctx.drawImage(this.background,0,0,W,H);ctx.globalAlpha=1;}}
     const me=snapshot?.players?.find(p=>p.id===selectedId&&p.cells?.length),c=me?.cells||[];
-    if(me&&playing){const centroid={x:c.reduce((s,x)=>s+x.x,0)/c.length,y:c.reduce((s,x)=>s+x.y,0)/c.length};const ratio=clamp((settings.cameraSmoothing||.1)*dt*60,.01,1);this.cam.x+=(centroid.x-this.cam.x)*ratio;this.cam.y+=(centroid.y-this.cam.y)*ratio;}
+    if(me&&playing&&!freeCamera){const centroid={x:c.reduce((s,x)=>s+x.x,0)/c.length,y:c.reduce((s,x)=>s+x.y,0)/c.length};const ratio=clamp((settings.cameraSmoothing||.1)*dt*60,.01,1);this.cam.x+=(centroid.x-this.cam.x)*ratio;this.cam.y+=(centroid.y-this.cam.y)*ratio;}
     const mass=c.reduce((s,x)=>s+x.mass,0)||1000;
-    const targetZoom=(settings.zoom||1)*clamp(1.05-Math.log10(Math.max(100,mass))/12,.48,.78);
+    const targetZoom=freeCamera?clamp(settings.zoom||1,.25,3.5):(settings.zoom||1)*clamp(1.05-Math.log10(Math.max(100,mass))/12,.48,.78);
     this.zoom+= (targetZoom-this.zoom)*clamp(dt*5,0,1);
     ctx.save();ctx.translate(W/2,H/2);ctx.scale(this.zoom,this.zoom);ctx.translate(-this.cam.x,-this.cam.y);
     const left=this.cam.x-W/this.zoom/2,top=this.cam.y-H/this.zoom/2,right=this.cam.x+W/this.zoom/2,bottom=this.cam.y+H/this.zoom/2;
