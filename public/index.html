@@ -35,7 +35,6 @@
   </section>
 
   <div id="minimap" class="hud-panel minimap"><canvas id="minimap-canvas" width="150" height="150"></canvas><span>GRID MAP</span></div>
-  <div id="help-panel" class="help-panel"><b>SPACE</b> Split <b>W</b> Feed <b>TAB</b> Switch multi <b>RMB</b> Multi 2 <b>WHEEL</b> Zoom</div>
   <div id="toast-area" aria-live="polite"></div>
 
   <aside id="chat" class="hud-panel chatbox">
@@ -45,69 +44,46 @@
     <form id="chat-form"><input id="chat-input" autocomplete="off" maxlength="180" placeholder="Press Enter to chat..." aria-label="Chat message"><button type="submit" title="Send chat">➤</button></form>
   </aside>
 
-  <main id="lobby" class="lobby">
-    <div class="lobby-atmosphere" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-    <div class="lobby-wrap">
-      <div class="lobby-intro">
-        <div class="lobby-eyebrow"><span class="live-dot"></span> YOUR WORLD. YOUR LEGACY. <span class="lobby-eyebrow-line"></span> BUILD 0.6</div>
-        <h1 class="hero-logo">VINTAGE<span class="hero-dot">.</span></h1>
-        <p>Three game modes. One legendary experience.</p>
+  <main id="lobby" class="lobby vintage-stage" aria-label="Vintage home screen">
+    <div class="v-stage-light" aria-hidden="true"></div>
+    <div class="v-stage-noise" aria-hidden="true"></div>
+    <header class="v-stage-header">
+      <div class="v-stage-logo" aria-label="Vintage"><span class="v-logo-symbol">V</span><div><strong>VINTAGE</strong><small>BEYOND THE ORDINARY</small></div></div>
+      <nav class="v-stage-nav" aria-label="Main navigation">
+        <button type="button" class="v-stage-nav-link soon-btn" data-soon="Store is coming soon">STORE <span class="v-nav-soon">SOON</span></button>
+        <button type="button" class="v-stage-nav-link soon-btn" data-soon="Inventory is coming soon">COLLECTION</button>
+        <button type="button" class="v-stage-nav-link" id="lobby-settings-btn">SETTINGS</button>
+      </nav>
+      <div class="v-stage-account"><span class="v-guest-indicator"></span><span>GUEST ACCESS</span><button type="button" id="v-login-trigger" class="v-login-btn" aria-expanded="false" aria-controls="auth-menu">LOG IN <span>↗</span></button><div id="auth-menu" class="v-auth-menu hidden"><div>ACCOUNT CONNECTION <small>COMING SOON</small></div><button type="button" class="v-auth-option soon-btn" data-soon="Discord login is coming soon">Discord <span>SOON</span></button><button type="button" class="v-auth-option soon-btn" data-soon="Facebook login is coming soon">Facebook <span>SOON</span></button></div></div>
+    </header>
+    <div class="v-stage-center">
+      <div class="v-halo v-halo-one"></div>
+      <div class="v-halo v-halo-two"></div>
+      <div class="v-center-orb">
+        <div class="v-center-orb-hemisphere left"><div class="v-orb-mark">V</div></div>
+        <div class="v-center-orb-hemisphere right"><span class="v-orb-number">26</span></div>
+        <div class="v-orb-sheen"></div>
       </div>
-      <div class="lobby-grid">
-        <section class="menu-panel left-panel" aria-label="Profile and cosmetics">
-          <div class="panel-topline"><span class="panel-overline">01 / PROFILE</span><span class="panel-status">DEVELOPMENT</span></div>
-          <h2 class="panel-title">Make it yours<span>.</span></h2>
-          <p class="panel-description">Connect your account and build your identity.</p>
-          <div class="login-row">
-            <button type="button" class="login-btn discord soon-btn" data-soon="Discord login is coming soon"><span class="auth-icon">◈</span> Discord <small>SOON</small></button>
-            <button type="button" class="login-btn facebook soon-btn" data-soon="Facebook login is coming soon"><span class="auth-icon">f</span> Facebook <small>SOON</small></button>
-          </div>
-          <div class="panel-separator"></div>
-          <div class="panel-miniheading"><h3>CELL COLLECTION</h3><span>0 / 2</span></div>
-          <div class="skin-gallery">
-            <div class="skin-slot skin-red"><div class="skin-orb">V</div><span>SKIN 01</span><b>COMING SOON</b></div>
-            <div class="skin-slot skin-blue"><div class="skin-orb">V</div><span>SKIN 02</span><b>COMING SOON</b></div>
-          </div>
-          <p class="panel-footnote">Premium skins and profiles are under development.</p>
-        </section>
-
-        <section class="menu-panel center-panel" aria-label="Start a game">
-          <div class="panel-topline"><span class="panel-overline">02 / PLAY</span><span class="panel-status"><i></i> READY</span></div>
-          <h2 class="panel-title">Enter your world<span>.</span></h2>
-          <p class="panel-description">Pick a mode and take control.</p>
-          <div class="center-top swapped-inputs">
-            <label class="field-wrap name-field"><span>PLAYER NAME</span><input id="nickname" autocomplete="nickname" maxlength="18" placeholder="Enter name" value="Vintage Player" /></label>
-            <label class="field-wrap tag-field"><span>TAG</span><input id="team-tag" maxlength="8" placeholder="Tag" /></label>
-          </div>
-          <div class="select-caption">CHOOSE GAME MODE <span>3 AVAILABLE</span></div>
-          <div class="mode-picks big-modes" role="group" aria-label="Game mode">
-            <button class="mode-choice selected" data-mode="ffa" aria-pressed="true"><span class="mode-art"><i class="art-cell a"></i><i class="art-cell b"></i></span><strong>FFA</strong><small>Free For All</small><span class="mode-mass">1K MASS</span></button>
-            <button class="mode-choice" data-mode="dual" aria-pressed="false"><span class="mode-art dual-art"><i class="art-cell a"></i><i class="art-cell b"></i></span><strong>DUAL</strong><small>Multibox battle</small><span class="mode-mass">1K MASS</span></button>
-            <button class="mode-choice" data-mode="mega" aria-pressed="false"><span class="mode-art mega-art"><i class="art-cell a"></i><i class="art-cell b"></i></span><strong>MEGA</strong><small>Heavyweight</small><span class="mode-mass">5K MASS</span></button>
-          </div>
-          <div class="lobby-actions">
-            <button id="play-btn" class="main-btn play-blue"><span class="play-symbol">▶</span><span>PLAY NOW</span><span class="action-arrow">↗</span></button>
-            <button id="spectate-btn" class="main-btn play-yellow"><span>◉</span><span>FREE SPECTATE</span></button>
-          </div>
-          <button id="lobby-settings-btn" class="settings-lobby-btn"><span>⚙</span> SETTINGS &amp; CONTROLS <span>›</span></button>
-        </section>
-
-        <section class="menu-panel right-panel" aria-label="Game servers">
-          <div class="panel-topline"><span class="panel-overline">03 / SERVERS</span><span class="panel-status"><i></i> 3 MODES</span></div>
-          <h2 class="panel-title">Choose a server<span>.</span></h2>
-          <p class="panel-description">Isolated worlds, built for competition.</p>
-          <div class="region-tabs"><button class="region-tab active">EUROPE</button><button class="region-tab soon-btn" data-soon="North America is coming soon">NA · SOON</button><button class="region-tab soon-btn" data-soon="Asia is coming soon">ASIA · SOON</button></div>
-          <div class="server-table">
-            <div class="server-head-row"><span>GAME MODE</span><span>LOCAL AI</span></div>
-            <button class="server-row selected" data-mode="ffa" aria-pressed="true"><span><b class="server-led"></b><strong>Vintage FFA</strong><small>Free For All</small></span><em>10 BOTS</em></button>
-            <button class="server-row" data-mode="dual" aria-pressed="false"><span><b class="server-led"></b><strong>Vintage Dual</strong><small>Multibox mode</small></span><em>10 BOTS</em></button>
-            <button class="server-row" data-mode="mega" aria-pressed="false"><span><b class="server-led"></b><strong>Vintage Mega</strong><small>High-mass world</small></span><em>10 BOTS</em></button>
-          </div>
-          <div class="server-note"><span class="server-note-icon">i</span><p>Preview uses local bots. Live player counts will appear when the dedicated multiplayer server is connected.</p></div>
-        </section>
-      </div>
-      <div class="lobby-bottom"><span>VINTAGE / DEVELOPMENT PREVIEW</span><span>WHEEL TO ZOOM IN GAME · FREE MOUSE SPECTATE</span></div>
+      <button class="v-skin-control v-skin-left soon-btn" type="button" data-soon="Vintage skin 01 is coming soon">SKIN 01 <small>SOON</small></button>
+      <button class="v-skin-control v-skin-right soon-btn" type="button" data-soon="Vintage skin 02 is coming soon">SKIN 02 <small>SOON</small></button>
+      <div class="v-center-caption"><span>YOUR CELL. YOUR RULES.</span><strong>MAKE YOUR MARK</strong></div>
     </div>
+    <section class="v-launch-panel" aria-label="Start playing">
+      <div class="v-launch-top"><div><span class="v-launch-kicker">CURRENT WORLD <i></i> LOCAL PREVIEW</span><h1 id="lobby-mode-name">FREE FOR ALL</h1><small id="lobby-mode-mass">STARTS AT 1,000 MASS</small></div><button type="button" class="v-launch-settings" id="lobby-settings-secondary" aria-label="Open settings" title="Settings">⚙</button></div>
+      <div class="v-launch-fields"><label><span>PLAYER NAME</span><input id="nickname" autocomplete="nickname" maxlength="18" value="Vintage Player" placeholder="Nickname" /></label><label><span>TAG</span><input id="team-tag" maxlength="8" placeholder="Tag" /></label></div>
+      <div class="v-launch-actions"><button id="play-btn" class="v-play-button"><span>▶</span> PLAY NOW <span>↗</span></button><button id="spectate-btn" class="v-spectate-button">◉ SPECTATE</button></div>
+      <div class="v-launch-foot"><span><i></i> 10 LOCAL BOTS</span><span>MULTI ENABLED</span></div>
+    </section>
+    <section class="v-mode-panel" aria-label="Select game server">
+      <div class="v-mode-header"><div><small>CHOOSE YOUR WORLD</small><strong>THREE MODES. ONE VINTAGE.</strong></div><span class="v-server-pulse">● LOCAL</span></div>
+      <div class="v-mode-list" role="group" aria-label="Game modes">
+        <button type="button" class="mode-choice selected" data-mode="ffa" aria-pressed="true"><span class="v-mode-icon">◉</span><span class="v-mode-description"><strong>FFA</strong><small>FREE FOR ALL · 1K</small></span><span class="v-mode-indicator">↗</span></button>
+        <button type="button" class="mode-choice" data-mode="dual" aria-pressed="false"><span class="v-mode-icon">◉◉</span><span class="v-mode-description"><strong>DUAL</strong><small>DOUBLE CONTROL · 1K</small></span><span class="v-mode-indicator">↗</span></button>
+        <button type="button" class="mode-choice" data-mode="mega" aria-pressed="false"><span class="v-mode-icon">✦</span><span class="v-mode-description"><strong>MEGA</strong><small>HIGH MASS · 5K</small></span><span class="v-mode-indicator">↗</span></button>
+      </div>
+      <div class="v-mode-footer"><span>CONNECTED WORLD: <b>LOCAL DEMO</b></span><span>v1.0 • DEVELOPMENT</span></div>
+    </section>
+    <div class="v-stage-bottom-note"><span>VINTAGE ORIGINAL EXPERIENCE</span><span>FFA / DUAL / MEGA <b>•</b> INDEPENDENT WORLDS</span></div>
   </main>
 
   <div id="zoom-panel" class="zoom-panel hidden" aria-label="Camera zoom controls"><button id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-value">100%</span><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-reset" aria-label="Reset zoom" title="Reset zoom">⟲</button></div>

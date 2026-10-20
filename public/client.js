@@ -36,7 +36,7 @@ function applySettings(){
   $('leaderboard').classList.toggle('hidden', !settings.showLeaderboard || !hudVisible);
   $('minimap').classList.toggle('hidden', !settings.showMinimap || !hudVisible);
   $('chat').classList.toggle('hidden', !settings.showChat || !hudVisible);
-  $('help-panel').classList.toggle('hidden', !settings.showHelp || !hudVisible);
+  $('help-panel')?.classList.toggle('hidden', !settings.showHelp || !hudVisible);
 }
 function setLobbyState(isLobby){ document.body.classList.toggle('show-lobby', !!isLobby); document.body.classList.toggle('is-spectating', !isLobby&&spectating); }
 function setCameraControlsVisible(){
@@ -67,6 +67,9 @@ function updateMode(next){
   document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('selected', b.dataset.mode===mode));
   $('top-mode').textContent = mode.toUpperCase() + ' · EUROPE';
   $('mode-label').textContent = MODES[mode].title + ' MODE';
+  const label=$('lobby-mode-name'),mass=$('lobby-mode-mass');
+  if(label)label.textContent=MODES[mode].title;
+  if(mass)mass.textContent='STARTS AT '+MODES[mode].start.toLocaleString('en-US')+' MASS';
   if(!playing && !spectating) arena.reset(mode, nickname, tag, true, settings);
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
 }
@@ -303,14 +306,12 @@ const S = {
       {key:'showLeaderboard',label:'Leaderboard',type:'toggle'},
       {key:'showMinimap',label:'Minimap',type:'toggle'},
       {key:'showChat',label:'Chat box',type:'toggle'},
-      {key:'showHelp',label:'Hotkey helper',type:'toggle'},
       {key:'autoRespawn',label:'Automatic respawn after death',type:'toggle'},
     ]
   },
   theme:{
     HUD:[
       {key:'accentColor',label:'Accent color',type:'color'},
-      {key:'showHelp',label:'Show help bar',type:'toggle'},
     ],
     Cells:[
       {key:'ownColor',label:'Primary cell color',type:'color'},
@@ -502,6 +503,9 @@ $('back-to-lobby').onclick=enterLobby;
 $('menu-btn').onclick=enterLobby;
 $('settings-btn').onclick=showSettings;
 $('lobby-settings-btn').onclick=showSettings;
+$('lobby-settings-secondary').onclick=showSettings;
+$('v-login-trigger').onclick=()=>{const menu=$('auth-menu');const open=menu.classList.toggle('hidden')===false;$('v-login-trigger').setAttribute('aria-expanded',String(open));};
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.v-stage-account')){$('auth-menu')?.classList.add('hidden');$('v-login-trigger')?.setAttribute('aria-expanded','false');}});
 $('spectate-btn').onclick=beginSpectate;
 $('zoom-in').onclick=()=>adjustZoom(1.18);
 $('zoom-out').onclick=()=>adjustZoom(1/1.18);
