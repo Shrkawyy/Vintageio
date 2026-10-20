@@ -12,8 +12,14 @@ export const DEFAULT_SETTINGS={
   showFood:true,showViruses:true,showBorders:true,showHelp:true,cellOpacity:100,nickSize:1,massSize:1,
   bgColor:'#07131f',gridColor:'#244051',ownColor:'#70e0ff',secondColor:'#ff88b0',accentColor:'#70e0ff',
   borderWidth:5,foodSize:1,backgroundImage:false,backgroundUrl:'',
-  keySplit:'SPACE',keyFeed:'W',keySwitch:'Q',keyChat:'ENTER',keyMenu:'ESCAPE',keySettings:'S',keyChatToggle:'C',keyHUD:'H',
-  rightClickMove:true,chatCommands:['Need backup!','Need a teammate!','Push now!','Split into me!','Feed me!']
+  keySplit:'SPACE',keyDoubleSplit:'Q',keyTripleSplit:'NO KEY',keySplit16:'T',keySplit32:'NO KEY',keySplit64:'D',
+  keyFeed:'W',keyMacroFeed:'E',keySwitch:'TAB',keyStopMove:'NO KEY',keyChat:'ENTER',keyMenu:'ESCAPE',keySettings:'S',
+  keyChatToggle:'C',keyHUD:'H',keySaveReplay:'R',keySpectateMode:'X',keyToggleNames:'N',keyToggleMass:'M',
+  keyToggleSkin:'S',keyToggleChat:'NO KEY',keyToggleSectors:'B',keyCommand1:'1',keyCommand2:'2',keyCommand3:'3',
+  keyCommand4:'4',keyCommand5:'5',keyCommand6:'6',keyCommand7:'7',keyCommand8:'8',keyCommand9:'9',keyCommand10:'0',
+  keyZoom1:'ALT+1',keyZoom2:'ALT+2',keyZoom3:'ALT+3',keyZoom4:'ALT+4',keyZoom5:'ALT+5',
+  rightClickMove:true,
+  chatCommands:['Need backup!','Need a teammate!','Push now!','Split into me!','Feed me!','Hold position!','Defend me!','Go left!','Go right!','GG!']
 };
 export const DEFAULT_NAMES=['Nova','Orbit','Mercury','Sable','Helix','Cosmo','Vector','Astra','Vortex','Pulse','Quasar','Zenith','Echo','Drift','Neon'];
 export const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));

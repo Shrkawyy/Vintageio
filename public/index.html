@@ -4,15 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#081420" />
-  <meta name="description" content="Vintage Arena — FFA, Dual and Mega cell arena." />
-  <title>VINTAGE — Cell Arena</title>
+  <meta name="description" content="Vintage — FFA, Dual and Mega cell game." />
+  <title>VINTAGE</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <canvas id="arena" aria-label="Vintage cell arena"></canvas>
+  <canvas id="arena" aria-label="Vintage game field"></canvas>
   <div id="noise"></div>
+
   <header class="topbar">
-    <div class="brand" aria-label="Vintage Arena"><span class="brand-glyph">V</span><span>VINTAGE<small>ARENA</small></span></div>
+    <div class="brand" aria-label="Vintage"><span class="brand-glyph">V</span><span>VINTAGE<small>GAME</small></span></div>
     <div id="top-mode" class="mode-pill">FFA · EUROPE</div>
     <div class="top-actions">
       <span id="connection-status" class="connection-pill"><i></i> DEMO MODE</span>
@@ -21,54 +22,137 @@
     </div>
   </header>
 
-  <section id="leaderboard" class="hud-panel leader"><div class="hud-heading">LEADERBOARD <small id="player-count">12 PLAYERS</small></div><div id="board-entries"></div></section>
-  <section id="score-box" class="hud-panel status-card"><div class="status-label">YOUR TOTAL MASS</div><div class="score-line"><strong id="mass-label">1,000</strong><span id="cell-label">1 CELL</span></div><div class="mini-progress"><span id="mass-progress"></span></div><div class="status-details"><span id="mode-label">FFA ARENA</span><span id="fps-label">60 FPS</span></div></section>
-  <div id="minimap" class="hud-panel minimap"><canvas id="minimap-canvas" width="150" height="150"></canvas><span>ARENA RADAR</span></div>
-  <div id="help-panel" class="help-panel"><b>SPACE</b> Split <b>W</b> Feed <b>Q</b> Switch multi <b>RMB</b> Move multi 2 <b>ENTER</b> Chat</div>
+  <section id="leaderboard" class="hud-panel leader">
+    <div class="hud-heading">LEADERBOARD <small id="player-count">12 PLAYERS</small></div>
+    <div id="board-entries"></div>
+  </section>
+
+  <section id="score-box" class="hud-panel status-card">
+    <div class="status-label">YOUR TOTAL MASS</div>
+    <div class="score-line"><strong id="mass-label">1,000</strong><span id="cell-label">1 CELL</span></div>
+    <div class="mini-progress"><span id="mass-progress"></span></div>
+    <div class="status-details"><span id="mode-label">FFA MODE</span><span id="fps-label">60 FPS</span></div>
+  </section>
+
+  <div id="minimap" class="hud-panel minimap"><canvas id="minimap-canvas" width="150" height="150"></canvas><span>GRID MAP</span></div>
+  <div id="help-panel" class="help-panel"><b>SPACE</b> Split <b>W</b> Feed <b>TAB</b> Dual toggle <b>RMB</b> Move 2nd cell <b>ENTER</b> Chat</div>
   <div id="toast-area" aria-live="polite"></div>
 
   <aside id="chat" class="hud-panel chatbox">
-    <div class="chat-head"><b>ARENA CHAT</b><span id="chat-online">LOCAL</span></div>
+    <div class="chat-head"><b>VINTAGE CHAT</b><span id="chat-online">LOCAL</span></div>
     <div class="chat-tabs"><button class="chat-tab active" data-channel="all">ALL</button><button class="chat-tab" data-channel="tag">TAG</button><small id="chat-tag-label">NO TAG</small></div>
     <div id="chat-messages" class="chat-messages"></div>
     <form id="chat-form"><input id="chat-input" autocomplete="off" maxlength="180" placeholder="Press Enter to chat..." aria-label="Chat message"><button type="submit" title="Send chat">➤</button></form>
   </aside>
 
   <main id="lobby" class="lobby">
-    <div class="lobby-glow"></div>
-    <div class="lobby-content">
-      <div class="eyebrow"><span></span> BUILT FOR THE NEXT GENERATION</div>
-      <h1>OWN THE <em>ARENA.</em></h1>
-      <p class="intro">Three distinct worlds. One arena legend. Choose a mode, outgrow your opponents, and climb the leaderboard.</p>
-      <div class="modes" role="group" aria-label="Arena mode">
-        <button class="mode-card selected" data-mode="ffa"><span class="mode-index">01 / COMPETITIVE</span><span class="mode-icon icon-ffa">◉</span><strong>FREE FOR ALL</strong><span class="mode-description">Classic arena · Multi supported</span><span class="mode-bottom"><b>1,000 MASS</b><span>↗</span></span></button>
-        <button class="mode-card" data-mode="dual"><span class="mode-index">02 / TWO CELLS</span><span class="mode-icon icon-dual">◉◉</span><strong>DUAL</strong><span class="mode-description">Two-player multibox arena</span><span class="mode-bottom"><b>1,000 MASS</b><span>↗</span></span></button>
-        <button class="mode-card" data-mode="mega"><span class="mode-index">03 / HIGH MASS</span><span class="mode-icon icon-mega">✦</span><strong>MEGA</strong><span class="mode-description">Massive battles · Heavyweight</span><span class="mode-bottom"><b>5,000 MASS</b><span>↗</span></span></button>
-      </div>
-      <div class="join-card">
-        <div class="join-fields"><label>PLAYER NAME<input id="nickname" autocomplete="nickname" maxlength="18" placeholder="Enter nickname" value="Vintage Player"></label><label>TEAM TAG<input id="team-tag" maxlength="8" placeholder="Optional tag"></label></div>
-        <div class="join-actions"><label class="inline-toggle"><input id="multi-toggle" type="checkbox" checked><span class="toggle-track"></span> ENABLE MULTI <small>(FFA / Dual)</small></label><button id="play-btn" class="play-btn">ENTER ARENA <span>→</span></button></div>
-      </div>
-      <div class="lobby-foot"><span>● THREE ISOLATED ARENAS</span><span>AUTO SPLIT AT 25.5K</span><span>VINTAGE — DEVELOPMENT BUILD</span></div>
+    <div class="hero-logo">VINTAGE</div>
+    <div class="lobby-grid">
+      <section class="menu-panel left-panel">
+        <div class="mini-actions">
+          <button type="button" class="mini-btn soon-btn" data-soon="Replays is coming soon">Replays <small>Coming Soon</small></button>
+          <button type="button" class="mini-btn soon-btn blue" data-soon="Emojis is coming soon">Emojis <small>Coming Soon</small></button>
+          <button type="button" class="mini-btn soon-btn pink" data-soon="Hats is coming soon">Hats <small>Coming Soon</small></button>
+        </div>
+        <div class="skin-showcase">
+          <button type="button" class="arrow-btn soon-btn" data-soon="Skin browser is coming soon">‹</button>
+          <div class="skin-slot"><span>NO SKIN</span></div>
+          <div class="skin-slot"><span>NO SKIN</span></div>
+          <button type="button" class="arrow-btn soon-btn" data-soon="Skin browser is coming soon">›</button>
+        </div>
+        <div class="profile-card">
+          <div class="profile-avatar">V</div>
+          <div class="profile-meta">
+            <strong id="profile-name">Vintage Player</strong>
+            <span>Level 1</span>
+            <small>ID LOCAL</small>
+            <div class="coins-row"><span>🪙 0</span><button type="button" class="coin-plus soon-btn" data-soon="Store is coming soon">+</button></div>
+          </div>
+        </div>
+        <div class="xp-bar"><span></span></div>
+        <div class="profile-actions">
+          <button type="button" class="action-btn soon-btn" data-soon="Shop is coming soon">Shop</button>
+          <button type="button" class="action-btn soon-btn" data-soon="Free coins is coming soon">Free Coins</button>
+          <button type="button" class="action-btn soon-btn" data-soon="Names is coming soon">Names</button>
+          <button type="button" class="action-btn soon-btn" data-soon="Clans is coming soon">Clans</button>
+          <button type="button" class="action-btn" id="lobby-board-btn">Leaderboard</button>
+          <button type="button" class="action-btn logout-btn" id="logout-btn">Logout</button>
+        </div>
+      </section>
+
+      <section class="menu-panel center-panel">
+        <div class="center-top">
+          <input id="nickname" autocomplete="nickname" maxlength="18" placeholder="Player name" value="Vintage Player" />
+          <input id="team-tag" maxlength="8" placeholder="Tag" />
+        </div>
+
+        <div class="mode-picks" role="group" aria-label="Game mode">
+          <button class="mode-choice selected" data-mode="ffa">
+            <small>MODE</small><strong>Free For All</strong><span>1,000 Mass</span>
+          </button>
+          <button class="mode-choice" data-mode="dual">
+            <small>MODE</small><strong>Dual</strong><span>1,000 Mass</span>
+          </button>
+          <button class="mode-choice" data-mode="mega">
+            <small>MODE</small><strong>Mega</strong><span>5,000 Mass</span>
+          </button>
+        </div>
+
+        <div class="center-actions">
+          <label class="inline-toggle main-toggle"><input id="multi-toggle" type="checkbox" checked><span class="toggle-track"></span><span>ENABLE MULTI <small>(FFA / Dual)</small></span></label>
+          <div class="play-stack">
+            <button id="play-btn" class="main-btn play-blue">Play</button>
+            <button id="spectate-btn" class="main-btn play-yellow soon-btn" data-soon="Spectate will be available soon">Spectate</button>
+            <button id="lobby-settings-btn" class="main-btn play-red">Settings</button>
+          </div>
+        </div>
+
+        <div class="center-meta"><span>v1.0.0</span><span>Vintage Client</span><span>Development Build</span></div>
+      </section>
+
+      <section class="menu-panel right-panel">
+        <div class="server-header"><h3>Servers</h3></div>
+        <div class="region-tabs">
+          <button class="region-tab active">Europe</button>
+          <button class="region-tab soon-btn" data-soon="North America list is coming soon">North America</button>
+          <button class="region-tab soon-btn" data-soon="Asia list is coming soon">Asia</button>
+        </div>
+        <div class="server-table">
+          <div class="server-head-row"><span>Name</span><span>Players</span><span>Game mode</span></div>
+          <button class="server-row selected" data-mode="ffa"><span>Vintage FFA</span><span>42/200</span><span>Free For All</span></button>
+          <button class="server-row" data-mode="dual"><span>Vintage Dual</span><span>16/50</span><span>Dual</span></button>
+          <button class="server-row" data-mode="mega"><span>Vintage Mega</span><span>22/50</span><span>Mega</span></button>
+          <button class="server-row soon-btn" data-soon="Macro mode is coming soon"><span>Classic</span><span>Coming Soon</span><span>Extra Mode</span></button>
+          <button class="server-row soon-btn" data-soon="Instant merge is coming soon"><span>Future</span><span>Coming Soon</span><span>Instant Merge</span></button>
+          <button class="server-row soon-btn" data-soon="Self feed is coming soon"><span>Storm</span><span>Coming Soon</span><span>Self Feed</span></button>
+        </div>
+        <div class="social-row">
+          <button type="button" class="social-btn soon-btn discord" data-soon="Discord button is coming soon">D</button>
+          <button type="button" class="social-btn soon-btn facebook" data-soon="Facebook button is coming soon">f</button>
+          <button type="button" class="social-btn soon-btn xbtn" data-soon="X button is coming soon">X</button>
+          <button type="button" class="social-btn soon-btn youtube" data-soon="YouTube button is coming soon">▶</button>
+          <button type="button" class="social-btn soon-btn chat" data-soon="Community button is coming soon">💬</button>
+        </div>
+      </section>
     </div>
   </main>
 
-  <section id="gameover" class="gameover hidden"><div class="gameover-card"><small>THE ARENA NEVER SLEEPS</small><h2>YOU WERE EATEN</h2><p id="death-score"></p><button id="respawn-btn" class="play-btn">RESPAWN →</button><button id="back-to-lobby" class="link-button">BACK TO LOBBY</button></div></section>
+  <section id="gameover" class="gameover hidden"><div class="gameover-card"><small>THE MATCH NEVER SLEEPS</small><h2>YOU WERE EATEN</h2><p id="death-score"></p><button id="respawn-btn" class="main-btn play-blue">Respawn</button><button id="back-to-lobby" class="link-button">BACK TO LOBBY</button></div></section>
 
   <div id="settings-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Game settings">
     <div class="settings-shell">
       <div class="settings-header">
         <div class="settings-brand-wrap">
-          <div class="settings-brand" aria-label="Vintage Settings"><span class="settings-brand-glyph">V</span><span>VINTAGE<small>ARENA SETTINGS</small></span></div>
-          <div class="settings-title"><small>CUSTOMIZE YOUR GAME</small><h2>ARENA SETTINGS</h2></div>
+          <div class="settings-brand" aria-label="Vintage Settings"><span class="settings-brand-glyph">V</span><span>VINTAGE<small>SETTINGS</small></span></div>
         </div>
         <button id="close-settings" class="icon-btn settings-close" aria-label="Close settings">✕</button>
       </div>
-      <div id="settings-tabs" class="settings-tabs"><button data-tab="game" class="active">◈ &nbsp;GAME</button><button data-tab="theme">◉ &nbsp;THEME</button><button data-tab="controls">⌘ &nbsp;CONTROLS</button><button data-tab="import">⇅ &nbsp;IMPORT / EXPORT</button></div>
+      <div id="settings-tabs" class="settings-tabs"><button data-tab="game" class="active">🎮 Game</button><button data-tab="theme">🎨 Theme</button><button data-tab="controls">⌨ Controls</button><button data-tab="import">📄 Import/Export</button></div>
       <div class="settings-body"><nav id="settings-nav" class="settings-nav"></nav><div id="settings-content" class="settings-content"></div></div>
       <div class="settings-foot"><span>VINTAGE SETTINGS • SAVED LOCALLY</span><button id="settings-done">DONE ✓</button></div>
     </div>
   </div>
+
   <script src="/config.js"></script>
   <script type="module" src="/client.js"></script>
 </body>
