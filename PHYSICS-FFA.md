@@ -1,3 +1,22 @@
+# Vintage v0.9 — FFA speed calibration
+
+The new FFA movement constants are in `public/physics.js`:
+
+| Parameter | v0.8 | v0.9 |
+|---|---:|---:|
+| baseSpeed | 950 | 660 |
+| speedPower | 0.245 | 0.260 |
+| maxSpeed | 375 | 290 |
+| splitImpulse | 810 | 620 |
+| splitDrag | 2.75 | 3.20 |
+| steerDuringBoost | 0.42 | 0.32 |
+
+This was adjusted from Vintage's own gameplay capture showing overspeed, not from measured internal Senpa constants. These are a starting calibration, not exact duplication. Dual and Mega have their prior movement profile. After physics edits, run `node scripts/sync-physics.cjs` to regenerate authoritative server code.
+
+For Multi Tab respawning and continuous Macro Feed, see README.md. Any changes to `server/` must also be deployed to the persistent Node game server for live multiplayer.
+
+---
+
 # Vintage v0.8 — FFA Physics Reference
 
 Reference video: `Video Project 1 (1).mp4` supplied 2026-10-20, approximately 120.6 seconds at 1280×720 and 30 FPS.

@@ -17,7 +17,7 @@ let settings = (()=>{ try { return valueSafe(JSON.parse(localStorage.getItem(SET
 let mode='ffa', playing=false, spectating=false, spectateTargetId='', activeSlot=0, remote=null, hudVisible=true, chatChannel='all', isSettingsOpen=false, frameTime=performance.now();
 let nickname='Vintage Player', tag='';
 let showDeaths=false, remoteSnapshot=null;
-let pointer={x:innerWidth/2+100,y:innerHeight/2}, rightDown=false;
+let pointer={x:innerWidth/2+100,y:innerHeight/2}, rightDown=false, macroFeedHeld=false,nextMacroFeedAt=0;
 let pointerOverField=false, draggingCamera=false, dragPointer=null;
 let settingsTab='game', settingsPage='Render';
 
@@ -72,7 +72,7 @@ function updateMode(next){
 }
 
 function enterLobby(){
-  playing=false; spectating=false; spectateTargetId=''; remote?.disconnect(); remote=null; remoteSnapshot=null;
+  macroFeedHeld=false;playing=false; spectating=false; spectateTargetId=''; remote?.disconnect(); remote=null; remoteSnapshot=null;
   setLobbyState(true);
   $('lobby').classList.remove('hidden'); $('gameover').classList.add('hidden');
   $('top-mode').textContent = mode.toUpperCase() + ' · EUROPE';
@@ -87,7 +87,7 @@ function beginGame(){
   $('nickname').value = nickname; $('team-tag').value = tag;
   $('chat-tag-label').textContent = tag ? ('#'+tag.toUpperCase()) : 'NO TAG';
   updateProfileName();
-  activeSlot=0; remoteSnapshot=null; showDeaths=false; spectating=false; spectateTargetId=''; playing=true;
+  macroFeedHeld=false;activeSlot=0; remoteSnapshot=null; showDeaths=false; spectating=false; spectateTargetId=''; playing=true;
   setLobbyState(false);
   setCameraControlsVisible();
   $('lobby').classList.add('hidden'); $('gameover').classList.add('hidden'); clearChat();
@@ -125,6 +125,7 @@ class RemoteArena{
         if(slot===0) addChat('system','Connected to the '+MODES[mode].title+' room.','all');
       }
       if(payload.type==='state' && slot===0){ this.latest=payload; remoteSnapshot=payload; }
+      if(payload.type==='respawned' && slot===0) toast('Multi respawned at cursor');
       if(payload.type==='chat' && slot===0) addChat(payload.name,payload.text,payload.channel,payload.tag);
       if(payload.type==='error' && slot===0) toast(payload.message || 'Server error');
     });
@@ -140,6 +141,7 @@ class RemoteArena{
   sendChat(text,channel){ this.send(0,{type:'chat',channel,text}); }
   sendControl(slot,world){ this.send(slot,{type:'move',x:world.x,y:world.y}); }
   sendAction(slot,action){ this.send(slot,{type:action}); }
+  respawn(slot,position){this.send(slot,{type:'respawn',x:position.x,y:position.y});}
   disconnect(){ for(const s of this.sockets){ if(s && [0,1].includes(s.readyState)){ try{s.close(1000,'Switch game');}catch{} } } this.connected=false; this.sockets=[]; }
 }
 
@@ -189,7 +191,23 @@ function beginSpectate(){
   }
   setCameraControlsVisible();
 }
-function changeSlot(){ const max=remote?remote.myIds.length:arena.myIds.length; if(max<2){ toast('Multi already works automatically in all modes'); return; } activeSlot=(activeSlot+1)%max; toast('Controlling '+(activeSlot===0?'Connect 1':'Connect 2')); }
+function changeSlot(){
+  const ids=remote?.connected?remote.myIds:arena.myIds;
+  if(ids.length<2){toast('Waiting for Multi Connect 2');return;}
+  const next=(activeSlot+1)%ids.length;
+  const id=ids[next];
+  if(!id){toast('Waiting for Multi connection');return;}
+  const snap=remote?.connected?remoteSnapshot:arena.snapshot;
+  const target=snap?.players?.find(p=>p.id===id);
+  activeSlot=next;
+  if(!target?.cells?.length){
+    const world=renderer.toWorld(pointer.x,pointer.y);
+    const sx=clampClient(world.x,0,WORLD_SIZE),sy=clampClient(world.y,0,WORLD_SIZE);
+    if(remote?.connected){remote.respawn(next,{x:sx,y:sy});toast('Respawning Connect '+(next+1)+' at cursor');}
+    else {if(arena.respawn(id,sx,sy))toast('Connect '+(next+1)+' respawned at cursor');else toast('Waiting for respawn cooldown');}
+  }else toast('Controlling Connect '+(next+1));
+}
+
 function doAction(action){ if(!playing||spectating||isSettingsOpen) return; const id=activeId(); if(remote?.connected){ remote.sendAction(activeSlot,action); } else { if(action==='split') arena.split(id,settings); if(action==='feed') arena.feed(id); } }
 function repeatAction(action,count){ for(let i=0;i<count;i++) doAction(action); }
 function stopMovement(){
@@ -207,7 +225,7 @@ function stopMovement(){
 function setZoomLevel(level){ const values=[0.55,0.75,0.95,1.15,1.35]; settings.zoom = values[level-1] || 1; saveSettings(); setCameraControlsVisible(); toast('Zoom level '+level); }
 function toggleSetting(key,label){ settings[key]=!settings[key]; saveSettings(); if(label) toast(label+' '+(settings[key]?'enabled':'disabled')); }
 function triggerCommand(index){ const msg=settings.chatCommands[index]; if(msg) sendMessage(msg); }
-function gameover(){ showDeaths=true; playing=false; spectating=false; $('gameover').classList.remove('hidden'); $('death-score').textContent='Better luck next time. Return stronger.'; if(settings.autoRespawn) setTimeout(()=>{ if(showDeaths && !$('gameover').classList.contains('hidden')) beginGame(); },1800); }
+function gameover(){ macroFeedHeld=false;showDeaths=true; playing=false; spectating=false; $('gameover').classList.remove('hidden'); $('death-score').textContent='Better luck next time. Return stronger.'; if(settings.autoRespawn) setTimeout(()=>{ if(showDeaths && !$('gameover').classList.contains('hidden')) beginGame(); },1800); }
 function updateHUD(snapshot){
   const focusId=selectedId(snapshot);
   const me=snapshot?.players?.find(p=>p.id===focusId);
@@ -230,6 +248,9 @@ function updateHUD(snapshot){
 let controlAt=0, hudAt=0;
 function gameLoop(now){
   const dt=Math.min(.05,(now-frameTime)/1000||.016); frameTime=now;
+  if(playing && macroFeedHeld && !isSettingsOpen && now>=nextMacroFeedAt){
+    doAction('feed');nextMacroFeedAt=now+85;
+  }
   if((playing || spectating) && !isSettingsOpen){
     if(spectating && !draggingCamera && pointerOverField){
       const edge=(pos,size)=>{const n=(pos/size-.5)*2,dead=.23;return Math.sign(n)*Math.pow(Math.max(0,Math.abs(n)-dead)/(1-dead),1.55)};
@@ -248,7 +269,7 @@ function gameLoop(now){
   const snap = remote?.connected ? (remoteSnapshot || {players:[],food:[],viruses:[],worldSize:WORLD_SIZE}) : arena.snapshot;
   const focusId=selectedId(snap);
   renderer.draw(snap, focusId, settings, playing, dt, spectating);
-  if(now-hudAt>280){ hudAt=now; updateHUD(snap); if(playing && snap.players && snap.players.length && !(snap.players.find(p=>p.id===activeId())?.cells?.length)){ gameover(); } }
+  if(now-hudAt>280){ hudAt=now; updateHUD(snap); if(playing && snap.players?.length){const ids=remote?.connected?remote.myIds:arena.myIds;if(ids.length && ids.every(id=>id && !snap.players.find(p=>p.id===id)?.cells?.length)){gameover();}} }
   requestAnimationFrame(gameLoop);
 }
 
@@ -363,7 +384,7 @@ const S = {
   import:{'Import / Export':[]}
 };
 
-function showSettings(){ isSettingsOpen=true; $('settings-overlay').classList.remove('hidden'); renderSettings(); }
+function showSettings(){ macroFeedHeld=false;isSettingsOpen=true; $('settings-overlay').classList.remove('hidden'); renderSettings(); }
 function hideSettings(){ isSettingsOpen=false; $('settings-overlay').classList.add('hidden'); }
 
 function renderSettings(){
@@ -461,7 +482,7 @@ window.addEventListener('keydown',e=>{
   if(k===settings.keySplit32){ repeatAction('split',5); e.preventDefault(); return; }
   if(k===settings.keySplit64){ repeatAction('split',6); e.preventDefault(); return; }
   if(k===settings.keyFeed){ doAction('feed'); e.preventDefault(); return; }
-  if(k===settings.keyMacroFeed){ repeatAction('feed',4); e.preventDefault(); return; }
+  if(k===settings.keyMacroFeed){ if(!macroFeedHeld){macroFeedHeld=true;nextMacroFeedAt=0;}e.preventDefault();return; }
   if(k===settings.keyStopMove && settings.keyStopMove!=='NO KEY'){ stopMovement(); e.preventDefault(); return; }
   if(k===settings.keyToggleNames){ toggleSetting('showNames','Names'); e.preventDefault(); return; }
   if(k===settings.keyToggleMass){ toggleSetting('showMass','Mass labels'); e.preventDefault(); return; }
@@ -471,6 +492,7 @@ window.addEventListener('keydown',e=>{
   for(let i=1;i<=5;i++){ if(k===settings['keyZoom'+i]){ setZoomLevel(i); e.preventDefault(); return; } }
 });
 
+window.addEventListener('keyup',e=>{if(normalizeKey(e)===settings.keyMacroFeed)macroFeedHeld=false;});
 function updateChatTabs(){ document.querySelectorAll('.chat-tab').forEach(b=>b.classList.toggle('active', b.dataset.channel===chatChannel)); renderChat(); }
 
 $('chat-form').onsubmit=e=>{ e.preventDefault(); sendMessage($('chat-input').value); $('chat-input').value=''; $('chat-input').blur(); };
@@ -519,7 +541,7 @@ window.addEventListener('pointerup',e=>{
   if(e.button===2)rightDown=false;
   if(e.button===0){draggingCamera=false;dragPointer=null;document.body.classList.remove('dragging-camera');}
 });
-window.addEventListener('blur',()=>{rightDown=false;draggingCamera=false;dragPointer=null;document.body.classList.remove('dragging-camera');});
+window.addEventListener('blur',()=>{macroFeedHeld=false;rightDown=false;draggingCamera=false;dragPointer=null;document.body.classList.remove('dragging-camera');});
 window.addEventListener('resize',()=>renderer.resize());
 
 applySettings();

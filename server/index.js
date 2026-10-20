@@ -29,8 +29,16 @@ wss.on('connection',(ws)=>{let current=null,watching=null;
     if(!current)return;
     const {room,player}=current;
     if(msg.type==='move'){core.point(room,player,Number(msg.x),Number(msg.y));return;}
+    if(msg.type==='respawn'){
+      const x=Number(msg.x),y=Number(msg.y);
+      if(core.respawn(room,player,x,y))reply(ws,{type:'respawned',playerId:player.id});
+      return;
+    }
     if(msg.type==='split'){core.split(room,player);return;}
-    if(msg.type==='feed'){core.feed(room,player);return;}
+    if(msg.type==='feed'){
+      if(room.time-(player.lastFeedAt??-100)<.075)return;
+      player.lastFeedAt=room.time;core.feed(room,player);return;
+    }
     if(msg.type==='chat'){
       const now=Date.now();if(player.lastChat>now-350)return;
       player.lastChat=now;const text=core.cleanText(msg.text,180),channel=msg.channel==='tag'?'tag':'all';if(!text)return;

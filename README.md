@@ -1,4 +1,30 @@
-# VINTAGE v0.8 — FFA physics update for GitHub / Vercel
+# VINTAGE v0.9 — FFA movement, Multi Tab respawn, held Macro Feed
+
+This release fixes the gameplay problems shown in the user-supplied 41.6-second Vintage video (20 October 2026).
+
+## Fixed in v0.9
+
+- **FFA movement is slower:** `baseSpeed` is 660 (was 950), mass-speed power is 0.26 (was 0.245). **FFA split launch is reduced** from 810 to 620 and damps sooner. These are tuning estimates, **not identical to Senpa's proprietary physics**. The existing Dual/Mega movement profiles are preserved separately.
+- **Multi when consumed:** If your main cell consumes the second Multi connection, keep playing, move the cursor to the new location and press **Tab**. The next connection's dead cell respawns with the mode's initial mass (FFA/Dual: 1000, Mega: 5000) at your cursor's game-world position. Switching to a live cell still works normally. Each connection must already belong to your Multi setup; Tab does not spawn unlimited connections.
+- **Corrected Game Over detection:** Losing the currently active Multi cell does **not** end the session while another of your Multi cells is alive.
+- **Held Macro Feed:** Hold **E** to continuously eject mass at approximately 11–12 actions per second; release E to stop. **W** remains the regular single feed key. The game server rate-limits received feed actions to stop redundant bursts.
+- **Spawn safety:** A newly respawned cell gets 1.5 seconds of protection from being consumed and a 1.8-second per-connection respawn cooldown. This allows a Multi cell to appear at the cursor instead of instantly disappearing inside your main cell.
+- All rooms still have **10 bots** and **FFA, Dual and Mega** remain isolated.
+- Online Tab respawning requires deploying updated `server/` code to the separate persistent WebSocket host, **not just the Vercel frontend**.
+
+### If FFA still feels fast after updating
+
+In **Settings → Game → Camera**, check **Mouse movement speed**. An old saved sensitivity above 1.0 multiplies the movement speed. You can reset the defaults with **Settings → Import/Export → RESET DEFAULTS** if necessary. Compare under the same zoom level as the reference video.
+
+### Deployment and verification
+
+Update the files in your existing GitHub repository (no new repo) and let Vercel rebuild the `public/` frontend. The demo plays locally against NPCs until a working `wss://` URL is configured in `public/config.js` and the Node backend is deployed independently.
+
+All **27 automated tests pass** on Node, including the new respawn, protection and mass-conservation checks. An isolated Chromium UI interaction smoke test also passed: holding E for about one second reduced the active cell mass from 1,000 to 792, Tab switched to the other multi cell, and no JavaScript errors appeared. This does not verify external online server deployment; verify live respawning after updating the Node backend.
+
+---
+
+## Prior release: Vintage v0.8 — FFA physics update
 
 An independent cell game built from the Vintage project files and your reference screenshots. This is a complete **frontend + optional Node.js WebSocket backend** source package. Do not confuse the local preview with a publicly hosted multiplayer game.
 

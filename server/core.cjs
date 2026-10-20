@@ -20,6 +20,16 @@ function createRoom(mode){if(!MODES[mode])throw Error('Unknown mode');const room
 function newFood(){return{x:C.rand(30,WIDTH-30),y:C.rand(30,WIDTH-30),mass:C.rand(8,23),color:COLORS[Math.floor(Math.random()*COLORS.length)]};}
 function join(room,name,tag,slot=0){const p=makePlayer(room.mode,name,tag,false,slot);p.cells[0].x=C.rand(1600,3200);p.cells[0].y=C.rand(1600,3200);p.target={x:p.cells[0].x,y:p.cells[0].y};room.players.set(p.id,p);return p;}
 function point(room,p,x,y){if(Number.isFinite(x)&&Number.isFinite(y)){p.target.x=C.clamp(x,0,WIDTH);p.target.y=C.clamp(y,0,WIDTH);}}
+function respawn(room,p,x,y){
+  if(!p||p.npc||p.cells.length||room.time<(p.lastRespawnAt??-100)+1.8)return false;
+  const mass=MODES[room.mode].initialMass,r=C.radius(mass);
+  const px=C.clamp(Number.isFinite(x)?x:WIDTH/2,r,WIDTH-r);
+  const py=C.clamp(Number.isFinite(y)?y:WIDTH/2,r,WIDTH-r);
+  p.cells=[cell(px,py,mass,p.color)];p.target={x:px,y:py};
+  p.lastRespawnAt=room.time;p.spawnShieldUntil=room.time+1.5;
+  return true;
+}
+
 function split(room,p){return splitCells(p,room.time,WIDTH,MAX_CELLS,room.mode);}
 function feed(room,p){for(const c of p.cells){if(c.mass<100)continue;const dx=p.target.x-c.x,dy=p.target.y-c.y,len=Math.hypot(dx,dy)||1;c.mass-=22;room.food.push({x:C.clamp(c.x+dx/len*(C.radius(c.mass)+27),0,WIDTH),y:C.clamp(c.y+dy/len*(C.radius(c.mass)+27),0,WIDTH),mass:22,color:'#bdfdff',ejected:true,vx:dx/len*650,vy:dy/len*650});}}
 function step(room,dt=1/30){
@@ -41,7 +51,7 @@ function step(room,dt=1/30){
   stepViruses({viruses:room.viruses,food:room.food,players:[...room.players.values()],width:WIDTH,maxCells:MAX_CELLS,time:room.time,dt,spawnVirus:()=>makeVirus(C.rand(120,WIDTH-120),C.rand(120,WIDTH-120))});
   const all=[...room.players.values()];
   absorbFood(all,room.food,room.mode);
-  eatCells(all,room.mode);
+  eatCells(all,room.mode,room.time);
   for(const p of all)if(p.npc&&!p.cells.length){const spawned=makePlayer(room.mode,p.name,p.tag,true);p.cells=spawned.cells;p.heading=C.rand(0,Math.PI*2);p.target=spawned.target;}
   while(room.food.length<280)room.food.push(newFood());if(room.food.length>650)room.food.splice(0,room.food.length-650);
 }
@@ -49,4 +59,4 @@ function snapshot(room){return {type:'state',mode:room.mode,worldSize:WIDTH,play
 function cleanText(t,max=180){return String(t||'').replace(/[<>\u0000-\u001f\u007f]/g,'').trim().slice(0,max);}
 function cleanTag(t){return cleanText(t,8).toUpperCase();}
 function chatRecipients(room,p,channel){return [...room.players.values()].filter(x=>!x.npc&&(channel==='all'||(p.tag&&x.tag===p.tag)));}
-module.exports={MODES,WIDTH,MAX_CELLS,AUTO_SPLIT_MASS,createRoom,join,point,split,feed,step,snapshot,cleanText,cleanTag,chatRecipients};
+module.exports={MODES,WIDTH,MAX_CELLS,AUTO_SPLIT_MASS,createRoom,join,respawn,point,split,feed,step,snapshot,cleanText,cleanTag,chatRecipients};

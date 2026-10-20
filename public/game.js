@@ -51,6 +51,17 @@ export class LocalArena{
   }
   get snapshot(){return {type:'state',mode:this.mode,players:this.players.filter(p=>p.cells.length),food:this.food,viruses:this.viruses,worldSize:WORLD_SIZE};}
   getById(id){return this.players.find(p=>p.id===id);}
+  respawn(id,x,y){
+    if(!this.myIds.includes(id))return false;
+    const p=this.getById(id);
+    if(!p||p.cells.length||this.elapsed<(p.lastRespawnAt??-100)+1.8)return false;
+    const mass=MODES[this.mode].start,r=radius(mass);
+    const sx=clamp(Number.isFinite(x)?x:WORLD_SIZE/2,r,WORLD_SIZE-r);
+    const sy=clamp(Number.isFinite(y)?y:WORLD_SIZE/2,r,WORLD_SIZE-r);
+    p.cells=[newCell(sx,sy,mass,p.color)];p.target={x:sx,y:sy};
+    p.lastRespawnAt=this.elapsed;p.spawnShieldUntil=this.elapsed+1.5;
+    return true;
+  }
   setTarget(id,x,y){const p=this.getById(id);if(p&&Number.isFinite(x)&&Number.isFinite(y))p.target={x:clamp(x,0,WORLD_SIZE),y:clamp(y,0,WORLD_SIZE)};}
   split(id){return splitCells(this.getById(id),this.elapsed,WORLD_SIZE,MAX_CELLS,this.mode);}
   feed(id){const p=this.getById(id);if(!p)return;
@@ -78,7 +89,7 @@ export class LocalArena{
     stepViruses({viruses:this.viruses,food:this.food,players:this.players,width:WORLD_SIZE,maxCells:MAX_CELLS,time:this.elapsed,dt,
       spawnVirus:()=>makeVirus(rand(120,WORLD_SIZE-120),rand(120,WORLD_SIZE-120))});
     absorbFood(this.players,this.food,this.mode);
-    eatCells(this.players,this.mode);
+    eatCells(this.players,this.mode,this.elapsed);
     while(this.food.length<270)this.food.push(foodPoint());
     if(this.food.length>650)this.food.splice(0,this.food.length-650);
     for(const p of this.players)if(p.npc&&!p.cells.length){const replacement=player(p.id,p.name,p.tag,p.color,rand(550,MODES[this.mode].start*1.7),true);p.cells=replacement.cells;p.heading=rand(0,7);p.target=replacement.target;}
