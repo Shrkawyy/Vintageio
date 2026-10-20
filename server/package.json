@@ -1,0 +1,9 @@
+{
+  "name": "vintage-arena-backend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Node.js WebSocket game server for Vintage Arena",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node index.js", "test": "node --test ../tests/server.test.cjs" },
+  "dependencies": { "ws": "^8.18.0" }
+}

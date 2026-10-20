@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: three rooms are isolated and use correct initial mass
+ok 1 - three rooms are isolated and use correct initial mass
+  ---
+  duration_ms: 2.593733
+  type: 'test'
+  ...
+# Subtest: split follows cursor and retains mass
+ok 2 - split follows cursor and retains mass
+  ---
+  duration_ms: 0.856024
+  type: 'test'
+  ...
+# Subtest: automatic split begins at 25,500 mass and respects cell cap
+ok 3 - automatic split begins at 25,500 mass and respects cell cap
+  ---
+  duration_ms: 1.511887
+  type: 'test'
+  ...
+# Subtest: Tag chat recipients are private within a room
+ok 4 - Tag chat recipients are private within a room
+  ---
+  duration_ms: 1.114366
+  type: 'test'
+  ...
+# Subtest: sanitizer limits tags and chat data
+ok 5 - sanitizer limits tags and chat data
+  ---
+  duration_ms: 0.363269
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 61.306027
