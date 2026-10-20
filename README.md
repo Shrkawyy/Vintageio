@@ -1,8 +1,20 @@
-# VINTAGE v0.7 — GitHub / Vercel development build
+# VINTAGE v0.8 — FFA physics update for GitHub / Vercel
 
 An independent cell game built from the Vintage project files and your reference screenshots. This is a complete **frontend + optional Node.js WebSocket backend** source package. Do not confuse the local preview with a publicly hosted multiplayer game.
 
-## What's new in v0.7
+## What's new in v0.8
+
+**FFA physics update based on the user-supplied 2-minute FFA reference video.** This is an independent, testable approximation of the visible behavior, not a claim of perfect Senpa parity.
+
+- Reworked movement response and frame-rate-independent split boost: pieces now travel visibly before losing momentum.
+- Fixed the previous separation rule that made merge practically impossible. Fragments now merge consistently after a mass-adjusted cooldown.
+- Corrected cell-eating overlap checks to require a real collision and sufficient mass advantage.
+- The front-end and authoritative Node server use **one source of physics rules** (`public/physics.js`, synced to `server/physics.cjs` with `node scripts/sync-physics.cjs`).
+- The crystal-virus behavior from v0.7 stays enabled and tested; FFA, Dual and Mega keep their own mode rooms and 10 bots each.
+
+Read `PHYSICS-FFA.md` for tuning parameters and known differences from the reference.
+
+## Previously added in v0.7
 
 - Removed the large **FREE CAMERA** banner and its exit button. To leave Spectate, **right-click anywhere on the playfield**; no keyboard shortcut is needed.
 - Camera behavior tuned from the supplied Senpa reference video: use wheel zoom to move between extreme wide-world views (showing the world boundary) and close-ups. Pan with the mouse near screen edges or hold left-click and drag. Zoom anchors around your cursor.
@@ -22,7 +34,7 @@ The reference video shows the desired camera behavior, but these are independent
 
    ```bash
    git add .
-   git commit -m "Vintage v0.7 crystal virus gameplay and spectate camera"
+   git commit -m "Vintage v0.8 FFA physics and merge update"
    git push origin main
    ```
 
@@ -83,4 +95,4 @@ Camera zoom preferences and other settings are stored in this browser's localSto
 node --test tests/*.test.cjs
 ```
 
-Automated tests cover isolated rooms, mass, split direction, automatic split, tag chat filtering, NPC counts, Mega multibox setup and WebSocket spectator protocol handling (with a test double). Browser interaction tests also exercised the lobby, free-camera edge-panning, left-dragging, wheel zoom and playing zoom. Network integration with an externally hosted Node server was **not** tested in this environment because the `ws` dependency could not be fetched from npm here; deploy the backend separately before claiming real online multiplayer is verified.
+Automated tests cover isolated rooms, mass conservation, split direction, FPS-consistent launch motion, merging, eating, virus feeding/bursting, NPC counts, Mega multibox setup, and WebSocket spectator protocol handling (with a test double). **22 automated tests pass.** A full browser smoke-test was attempted but this sandbox blocks browser navigation to local test servers; browser interaction with v0.8 must still be verified after deploying it. Network integration with an externally hosted Node server was not tested in this environment; deploy the backend separately before claiming live multiplayer is verified.

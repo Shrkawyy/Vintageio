@@ -2,95 +2,143 @@ TAP version 13
 # Subtest: exactly 10 local bots in every mode
 ok 1 - exactly 10 local bots in every mode
   ---
-  duration_ms: 15.349732
+  duration_ms: 14.621768
   type: 'test'
   ...
 # Subtest: Mega multi creates two playable cells, both starting at 5K
 ok 2 - Mega multi creates two playable cells, both starting at 5K
   ---
-  duration_ms: 1.36127
+  duration_ms: 1.185018
   type: 'test'
   ...
 # Subtest: free local spectator has bots but no spectator player
 ok 3 - free local spectator has bots but no spectator player
   ---
-  duration_ms: 0.289037
+  duration_ms: 0.339753
+  type: 'test'
+  ...
+# Subtest: browser and server physics are generated from one source
+ok 4 - browser and server physics are generated from one source
+  ---
+  duration_ms: 1.214392
+  type: 'test'
+  ...
+# Subtest: FFA split keeps every gram and sends child towards pointer
+ok 5 - FFA split keeps every gram and sends child towards pointer
+  ---
+  duration_ms: 1.883571
+  type: 'test'
+  ...
+# Subtest: cells do not merge during cooldown but can really merge after cooldown
+ok 6 - cells do not merge during cooldown but can really merge after cooldown
+  ---
+  duration_ms: 4.178163
+  type: 'test'
+  ...
+# Subtest: split 16 / 32 / 64 respects cell cap and available mass
+ok 7 - split 16 / 32 / 64 respects cell cap and available mass
+  ---
+  duration_ms: 0.393854
+  type: 'test'
+  ...
+# Subtest: eating only works with mass advantage and sufficiently deep overlap
+ok 8 - eating only works with mass advantage and sufficiently deep overlap
+  ---
+  duration_ms: 0.355576
+  type: 'test'
+  ...
+# Subtest: FFA movement is approximately consistent at 30 FPS and 60 FPS
+ok 9 - FFA movement is approximately consistent at 30 FPS and 60 FPS
+  ---
+  duration_ms: 0.479743
+  type: 'test'
+  ...
+# Subtest: FFA game server still spawns 10 bots and maintains room isolation
+ok 10 - FFA game server still spawns 10 bots and maintains room isolation
+  ---
+  duration_ms: 3.764779
+  type: 'test'
+  ...
+# Subtest: split-launch travel stays close across 20, 30 and 60 FPS
+ok 11 - split-launch travel stays close across 20, 30 and 60 FPS
+  ---
+  duration_ms: 5.158291
   type: 'test'
   ...
 # Subtest: three rooms are isolated and use correct initial mass
-ok 4 - three rooms are isolated and use correct initial mass
+ok 12 - three rooms are isolated and use correct initial mass
   ---
-  duration_ms: 2.660306
+  duration_ms: 2.30009
   type: 'test'
   ...
 # Subtest: split follows cursor and retains mass
-ok 5 - split follows cursor and retains mass
+ok 13 - split follows cursor and retains mass
   ---
-  duration_ms: 0.905791
+  duration_ms: 0.641338
   type: 'test'
   ...
 # Subtest: automatic split begins at 25,500 mass and respects cell cap
-ok 6 - automatic split begins at 25,500 mass and respects cell cap
+ok 14 - automatic split begins at 25,500 mass and respects cell cap
   ---
-  duration_ms: 4.061918
+  duration_ms: 5.544474
   type: 'test'
   ...
 # Subtest: Tag chat recipients are private within a room
-ok 7 - Tag chat recipients are private within a room
+ok 15 - Tag chat recipients are private within a room
   ---
-  duration_ms: 1.676257
+  duration_ms: 1.057425
   type: 'test'
   ...
 # Subtest: sanitizer limits tags and chat data
-ok 8 - sanitizer limits tags and chat data
+ok 16 - sanitizer limits tags and chat data
   ---
-  duration_ms: 0.300645
+  duration_ms: 0.242917
   type: 'test'
   ...
 # Vintage game server listening on http://0.0.0.0:3327; modes: ffa, dual, mega
 # Vintage game server listening on http://0.0.0.0:3327; modes: ffa, dual, mega
 # Subtest: spectate uses an observer socket, without spawning an extra player
-ok 9 - spectate uses an observer socket, without spawning an extra player
+ok 17 - spectate uses an observer socket, without spawning an extra player
   ---
-  duration_ms: 11.294895
+  duration_ms: 5.841342
   type: 'test'
   ...
 # Subtest: joining after spectating removes observer and creates one player
-ok 10 - joining after spectating removes observer and creates one player
+ok 18 - joining after spectating removes observer and creates one player
   ---
-  duration_ms: 4.658751
+  duration_ms: 2.554894
   type: 'test'
   ...
 # Subtest: feeding a virus seven ejected pellets launches a new moving virus
-ok 11 - feeding a virus seven ejected pellets launches a new moving virus
+ok 19 - feeding a virus seven ejected pellets launches a new moving virus
   ---
-  duration_ms: 1.475213
+  duration_ms: 1.015892
   type: 'test'
   ...
 # Subtest: virus collision bursts a large player cell and conserves mass plus viral bonus
-ok 12 - virus collision bursts a large player cell and conserves mass plus viral bonus
+ok 20 - virus collision bursts a large player cell and conserves mass plus viral bonus
   ---
-  duration_ms: 0.557734
+  duration_ms: 0.439283
   type: 'test'
   ...
 # Subtest: small cells are not burst and virus count stays bounded
-ok 13 - small cells are not burst and virus count stays bounded
+ok 21 - small cells are not burst and virus count stays bounded
   ---
-  duration_ms: 0.338983
+  duration_ms: 0.265941
   type: 'test'
   ...
 # Subtest: game server rooms each start with 10 bots and independent virus arrays
-ok 14 - game server rooms each start with 10 bots and independent virus arrays
+ok 22 - game server rooms each start with 10 bots and independent virus arrays
   ---
-  duration_ms: 1.810296
+  duration_ms: 1.501556
   type: 'test'
   ...
-1..14
-# tests 14
+1..22
+# tests 22
 # suites 0
-# pass 14
+# pass 22
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 136.685784
+# duration_ms 114.363371
