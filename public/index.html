@@ -8,7 +8,7 @@
   <title>VINTAGE</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body>
+<body class="show-lobby">
   <canvas id="arena" aria-label="Vintage game field"></canvas>
   <div id="noise"></div>
 
@@ -46,47 +46,41 @@
   </aside>
 
   <main id="lobby" class="lobby">
+    <div class="lobby-fx fx-one"></div>
+    <div class="lobby-fx fx-two"></div>
+    <div class="lobby-fx fx-three"></div>
     <div class="hero-logo">VINTAGE</div>
+
     <div class="lobby-grid">
       <section class="menu-panel left-panel">
-        <div class="mini-actions">
-          <button type="button" class="mini-btn soon-btn" data-soon="Replays is coming soon">Replays <small>Coming Soon</small></button>
-          <button type="button" class="mini-btn soon-btn blue" data-soon="Emojis is coming soon">Emojis <small>Coming Soon</small></button>
-          <button type="button" class="mini-btn soon-btn pink" data-soon="Hats is coming soon">Hats <small>Coming Soon</small></button>
+        <div class="section-head">
+          <h3>LOGIN</h3>
+          <span>Account access</span>
         </div>
-        <div class="skin-showcase">
+        <div class="login-row">
+          <button type="button" class="login-btn discord soon-btn" data-soon="Discord login is coming soon">Discord Login</button>
+          <button type="button" class="login-btn facebook soon-btn" data-soon="Facebook login is coming soon">Facebook Login</button>
+        </div>
+
+        <div class="section-head skin-head">
+          <h3>SKINS</h3>
+          <span>Coming soon</span>
+        </div>
+        <div class="skin-showcase compact">
           <button type="button" class="arrow-btn soon-btn" data-soon="Skin browser is coming soon">‹</button>
-          <div class="skin-slot"><span>NO SKIN</span></div>
-          <div class="skin-slot"><span>NO SKIN</span></div>
+          <div class="skin-slot soon-slot"><span>NO SKIN</span><b>SOON</b></div>
+          <div class="skin-slot soon-slot"><span>NO SKIN</span><b>SOON</b></div>
           <button type="button" class="arrow-btn soon-btn" data-soon="Skin browser is coming soon">›</button>
-        </div>
-        <div class="profile-card">
-          <div class="profile-avatar">V</div>
-          <div class="profile-meta">
-            <strong id="profile-name">Vintage Player</strong>
-            <span>Level 1</span>
-            <small>ID LOCAL</small>
-            <div class="coins-row"><span>🪙 0</span><button type="button" class="coin-plus soon-btn" data-soon="Store is coming soon">+</button></div>
-          </div>
-        </div>
-        <div class="xp-bar"><span></span></div>
-        <div class="profile-actions">
-          <button type="button" class="action-btn soon-btn" data-soon="Shop is coming soon">Shop</button>
-          <button type="button" class="action-btn soon-btn" data-soon="Free coins is coming soon">Free Coins</button>
-          <button type="button" class="action-btn soon-btn" data-soon="Names is coming soon">Names</button>
-          <button type="button" class="action-btn soon-btn" data-soon="Clans is coming soon">Clans</button>
-          <button type="button" class="action-btn" id="lobby-board-btn">Leaderboard</button>
-          <button type="button" class="action-btn logout-btn" id="logout-btn">Logout</button>
         </div>
       </section>
 
       <section class="menu-panel center-panel">
-        <div class="center-top">
+        <div class="center-top swapped-inputs">
           <input id="nickname" autocomplete="nickname" maxlength="18" placeholder="Player name" value="Vintage Player" />
           <input id="team-tag" maxlength="8" placeholder="Tag" />
         </div>
 
-        <div class="mode-picks" role="group" aria-label="Game mode">
+        <div class="mode-picks big-modes" role="group" aria-label="Game mode">
           <button class="mode-choice selected" data-mode="ffa">
             <small>MODE</small><strong>Free For All</strong><span>1,000 Mass</span>
           </button>
@@ -98,9 +92,10 @@
           </button>
         </div>
 
-        <div class="center-actions">
-          <label class="inline-toggle main-toggle"><input id="multi-toggle" type="checkbox" checked><span class="toggle-track"></span><span>ENABLE MULTI <small>(FFA / Dual)</small></span></label>
-          <div class="play-stack">
+        <div class="auto-multi-note">MULTI IS ENABLED AUTOMATICALLY IN FFA / DUAL</div>
+
+        <div class="center-actions single-column">
+          <div class="play-stack large-stack">
             <button id="play-btn" class="main-btn play-blue">Play</button>
             <button id="spectate-btn" class="main-btn play-yellow soon-btn" data-soon="Spectate will be available soon">Spectate</button>
             <button id="lobby-settings-btn" class="main-btn play-red">Settings</button>
@@ -122,16 +117,9 @@
           <button class="server-row selected" data-mode="ffa"><span>Vintage FFA</span><span>42/200</span><span>Free For All</span></button>
           <button class="server-row" data-mode="dual"><span>Vintage Dual</span><span>16/50</span><span>Dual</span></button>
           <button class="server-row" data-mode="mega"><span>Vintage Mega</span><span>22/50</span><span>Mega</span></button>
-          <button class="server-row soon-btn" data-soon="Macro mode is coming soon"><span>Classic</span><span>Coming Soon</span><span>Extra Mode</span></button>
+          <button class="server-row soon-btn" data-soon="Classic mode is coming soon"><span>Classic</span><span>Coming Soon</span><span>Extra Mode</span></button>
           <button class="server-row soon-btn" data-soon="Instant merge is coming soon"><span>Future</span><span>Coming Soon</span><span>Instant Merge</span></button>
           <button class="server-row soon-btn" data-soon="Self feed is coming soon"><span>Storm</span><span>Coming Soon</span><span>Self Feed</span></button>
-        </div>
-        <div class="social-row">
-          <button type="button" class="social-btn soon-btn discord" data-soon="Discord button is coming soon">D</button>
-          <button type="button" class="social-btn soon-btn facebook" data-soon="Facebook button is coming soon">f</button>
-          <button type="button" class="social-btn soon-btn xbtn" data-soon="X button is coming soon">X</button>
-          <button type="button" class="social-btn soon-btn youtube" data-soon="YouTube button is coming soon">▶</button>
-          <button type="button" class="social-btn soon-btn chat" data-soon="Community button is coming soon">💬</button>
         </div>
       </section>
     </div>

@@ -37,6 +37,7 @@ function applySettings(){
   $('chat').classList.toggle('hidden', !settings.showChat || !hudVisible);
   $('help-panel').classList.toggle('hidden', !settings.showHelp || !hudVisible);
 }
+function setLobbyState(isLobby){ document.body.classList.toggle('show-lobby', !!isLobby); }
 function toast(msg){ const d=document.createElement('div'); d.className='toast'; d.textContent=msg; $('toast-area').appendChild(d); setTimeout(()=>d.remove(),3200); }
 
 function updateMode(next){
@@ -45,14 +46,12 @@ function updateMode(next){
   document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('selected', b.dataset.mode===mode));
   $('top-mode').textContent = mode.toUpperCase() + ' · EUROPE';
   $('mode-label').textContent = MODES[mode].title + ' MODE';
-  $('multi-toggle').disabled = mode === 'mega';
-  $('multi-toggle').closest('label').style.opacity = mode === 'mega' ? .55 : 1;
-  if(mode === 'mega') $('multi-toggle').checked = false;
-  if(!playing) arena.reset(mode, nickname, tag, mode !== 'mega' && $('multi-toggle').checked, settings);
+  if(!playing) arena.reset(mode, nickname, tag, mode !== 'mega', settings);
 }
 
 function enterLobby(){
   playing=false; remote?.disconnect(); remote=null; remoteSnapshot=null;
+  setLobbyState(true);
   $('lobby').classList.remove('hidden'); $('gameover').classList.add('hidden');
   $('top-mode').textContent = mode.toUpperCase() + ' · EUROPE';
   $('connection-status').innerHTML = '<i></i> DEMO MODE';
@@ -66,8 +65,9 @@ function beginGame(){
   $('chat-tag-label').textContent = tag ? ('#'+tag.toUpperCase()) : 'NO TAG';
   updateProfileName();
   activeSlot=0; remoteSnapshot=null; showDeaths=false; playing=true;
+  setLobbyState(false);
   $('lobby').classList.add('hidden'); $('gameover').classList.add('hidden'); clearChat();
-  const multi = $('multi-toggle').checked && mode !== 'mega';
+  const multi = mode !== 'mega';
   arena.reset(mode, nickname, tag, multi, settings);
   remote?.disconnect(); remote=null;
   const wsUrl = String(window.VINTAGE_CONFIG?.wsUrl || '').trim();
@@ -420,8 +420,6 @@ $('settings-btn').onclick=showSettings;
 $('lobby-settings-btn').onclick=showSettings;
 $('close-settings').onclick=hideSettings;
 $('settings-done').onclick=hideSettings;
-$('logout-btn').onclick=()=>toast('Logout is coming soon');
-$('lobby-board-btn').onclick=()=>{ hudVisible=true; settings.showLeaderboard=true; saveSettings(); toast('Leaderboard is enabled'); };
 $('settings-overlay').addEventListener('click',e=>{ if(e.target===$('settings-overlay')) hideSettings(); });
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ if(playing) enterLobby(); if(b.dataset.mode) updateMode(b.dataset.mode); });
 document.querySelectorAll('.chat-tab').forEach(b=>b.onclick=()=>{ chatChannel=b.dataset.channel; updateChatTabs(); });
@@ -429,7 +427,6 @@ document.querySelectorAll('#settings-tabs button').forEach(b=>b.onclick=()=>{ se
 document.querySelectorAll('.soon-btn').forEach(btn=>btn.addEventListener('click',e=>{ const msg=btn.dataset.soon; if(msg){ e.preventDefault(); toast(msg); } }));
 document.querySelectorAll('.region-tab').forEach(btn=>btn.addEventListener('click',()=>{ if(btn.classList.contains('soon-btn')) return; document.querySelectorAll('.region-tab').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); }));
 $('nickname').addEventListener('input', updateProfileName);
-$('multi-toggle').addEventListener('change',()=>{ if(!playing) arena.reset(mode,nickname,tag,$('multi-toggle').checked && mode!=='mega',settings); });
 window.addEventListener('pointermove',e=>{ pointer={x:e.clientX,y:e.clientY}; });
 $('arena').addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('contextmenu',e=>{ if(playing && settings.rightClickMove) e.preventDefault(); });
@@ -439,6 +436,7 @@ window.addEventListener('blur',()=>{ rightDown=false; });
 window.addEventListener('resize',()=>renderer.resize());
 
 applySettings();
+setLobbyState(true);
 updateProfileName();
 updateMode('ffa');
 requestAnimationFrame(gameLoop);
