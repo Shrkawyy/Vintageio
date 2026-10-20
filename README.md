@@ -1,17 +1,18 @@
-# VINTAGE v0.6 — GitHub / Vercel development build
+# VINTAGE v0.7 — GitHub / Vercel development build
 
 An independent cell game built from the Vintage project files and your reference screenshots. This is a complete **frontend + optional Node.js WebSocket backend** source package. Do not confuse the local preview with a publicly hosted multiplayer game.
 
-## What's new in v0.6
+## What's new in v0.7
 
-- Entirely refreshed custom burgundy/red Vintage lobby with responsive panels, animated rings, subtle light effects, streamlined login and skin placeholders, and larger FFA / Dual / Mega selections.
-- **Free Spectate** (mouse-only): choose **FREE SPECTATE** in the lobby; move the mouse toward a screen edge to roam; hold the left mouse button and drag to pan; roll the mouse wheel to zoom. Click **EXIT SPECTATE** to return to the lobby. No keyboard shortcuts are required.
-- **True observer-mode WebSocket protocol:** online spectators receive room snapshots and do not create game-player slots. The backend also cleans up spectators on disconnect and keeps their data scoped to the selected game room.
-- **Mouse wheel zoom during play** (and Spectate), plus visible + / − / reset controls. Zoom amount is adjustable in **Settings → Game → Camera** and saved locally.
-- 10 local AI opponents in **each** isolated mode; Mega supports two-player multibox connections; FFA and Dual retain the same automatic multibox behavior.
-- The existing hotkeys, split functions, settings, leaderboard, tag chat, skins/login **Coming Soon** placeholders, and room separation are preserved.
+- Removed the large **FREE CAMERA** banner and its exit button. To leave Spectate, **right-click anywhere on the playfield**; no keyboard shortcut is needed.
+- Camera behavior tuned from the supplied Senpa reference video: use wheel zoom to move between extreme wide-world views (showing the world boundary) and close-ups. Pan with the mouse near screen edges or hold left-click and drag. Zoom anchors around your cursor.
+- **Original Vintage neon-crystal viruses**, drawn directly on the HTML canvas. These have real game effects, both in the browser demo and in the optional dedicated Node.js server:
+  - Feed viruses by pressing W toward them (ejected mass travels and charges a virus).
+  - Every seven ejected pellets consumed launches another moving virus, up to a bounded total.
+  - Large player cells touching viruses burst into smaller moving pieces; mass is conserved plus virus mass; the consumed virus respawns elsewhere.
+- All three modes still contain **10 local bots** and support the existing multibox features.
 
-**Scope note:** gameplay physics remain an independently developed approximation, not an exact reverse-engineered implementation of Senpa. We can continue adjusting movement, split velocity, merging, collision and consumption based on reproducible examples. "Professional lobby" here means the new visual/UX treatment, not a claim of feature parity with an established live game.
+The reference video shows the desired camera behavior, but these are independently implemented rules and visuals, not proprietary Senpa internals or guaranteed exact parity with Senpa physics.
 
 ## Put this update on your existing GitHub + Vercel project
 
@@ -21,7 +22,7 @@ An independent cell game built from the Vintage project files and your reference
 
    ```bash
    git add .
-   git commit -m "Vintage v0.6 free spectate and mouse zoom"
+   git commit -m "Vintage v0.7 crystal virus gameplay and spectate camera"
    git push origin main
    ```
 
@@ -71,8 +72,8 @@ Do not assume a `*.vercel.app` frontend URL is a game-server WebSocket address. 
 | Playing | Hold right-click | Steer second multi connection |
 | Free Spectate | Move mouse toward screen edges | Pan freely across the world |
 | Free Spectate | Hold left-click and drag | Precisely pan the camera |
-| Free Spectate | Wheel scroll | Zoom around the mouse pointer |
-| Free Spectate | EXIT SPECTATE | Return to lobby |
+| Free Spectate | Wheel scroll | Zoom around the mouse pointer, including far wide-view |
+| Free Spectate | Right-click on playfield | Return to lobby |
 
 Camera zoom preferences and other settings are stored in this browser's localStorage. Login buttons and cosmetic skins are labeled Coming Soon; they are not real OAuth integrations yet.
 
@@ -82,4 +83,4 @@ Camera zoom preferences and other settings are stored in this browser's localSto
 node --test tests/*.test.cjs
 ```
 
-10 offline automated tests cover isolated rooms, mass, split direction, automatic split, tag chat filtering, NPC counts, Mega multibox setup and WebSocket spectator protocol handling (with a test double). Browser interaction tests also exercised the lobby, free-camera edge-panning, left-dragging, wheel zoom and playing zoom. Network integration with an externally hosted Node server was **not** tested in this environment because the `ws` dependency could not be fetched from npm here; deploy the backend separately before claiming real online multiplayer is verified.
+Automated tests cover isolated rooms, mass, split direction, automatic split, tag chat filtering, NPC counts, Mega multibox setup and WebSocket spectator protocol handling (with a test double). Browser interaction tests also exercised the lobby, free-camera edge-panning, left-dragging, wheel zoom and playing zoom. Network integration with an externally hosted Node server was **not** tested in this environment because the `ws` dependency could not be fetched from npm here; deploy the backend separately before claiming real online multiplayer is verified.

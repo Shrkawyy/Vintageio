@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 let game;
-async function getGame(){if(!game){const source=fs.readFileSync(path.join(__dirname,'../public/game.js'),'utf8');game=await import('data:text/javascript;charset=utf-8,'+encodeURIComponent(source));}return game;}
+async function getGame(){if(!game){const virusSource=fs.readFileSync(path.join(__dirname,'../public/virus-rules.js'),'utf8');const virusUrl='data:text/javascript;charset=utf-8,'+encodeURIComponent(virusSource);const source=fs.readFileSync(path.join(__dirname,'../public/game.js'),'utf8').replace("'./virus-rules.js'",JSON.stringify(virusUrl));game=await import('data:text/javascript;charset=utf-8,'+encodeURIComponent(source));}return game;}
 test('exactly 10 local bots in every mode',async()=>{
  const {LocalArena,MODES,DEFAULT_SETTINGS}=await getGame();
  for(const mode of Object.keys(MODES)){

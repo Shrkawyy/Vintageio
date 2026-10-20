@@ -2,49 +2,49 @@ TAP version 13
 # Subtest: exactly 10 local bots in every mode
 ok 1 - exactly 10 local bots in every mode
   ---
-  duration_ms: 9.899954
+  duration_ms: 15.349732
   type: 'test'
   ...
 # Subtest: Mega multi creates two playable cells, both starting at 5K
 ok 2 - Mega multi creates two playable cells, both starting at 5K
   ---
-  duration_ms: 2.148301
+  duration_ms: 1.36127
   type: 'test'
   ...
 # Subtest: free local spectator has bots but no spectator player
 ok 3 - free local spectator has bots but no spectator player
   ---
-  duration_ms: 0.2117
+  duration_ms: 0.289037
   type: 'test'
   ...
 # Subtest: three rooms are isolated and use correct initial mass
 ok 4 - three rooms are isolated and use correct initial mass
   ---
-  duration_ms: 3.089256
+  duration_ms: 2.660306
   type: 'test'
   ...
 # Subtest: split follows cursor and retains mass
 ok 5 - split follows cursor and retains mass
   ---
-  duration_ms: 0.868033
+  duration_ms: 0.905791
   type: 'test'
   ...
 # Subtest: automatic split begins at 25,500 mass and respects cell cap
 ok 6 - automatic split begins at 25,500 mass and respects cell cap
   ---
-  duration_ms: 1.992286
+  duration_ms: 4.061918
   type: 'test'
   ...
 # Subtest: Tag chat recipients are private within a room
 ok 7 - Tag chat recipients are private within a room
   ---
-  duration_ms: 1.068087
+  duration_ms: 1.676257
   type: 'test'
   ...
 # Subtest: sanitizer limits tags and chat data
 ok 8 - sanitizer limits tags and chat data
   ---
-  duration_ms: 0.349168
+  duration_ms: 0.300645
   type: 'test'
   ...
 # Vintage game server listening on http://0.0.0.0:3327; modes: ffa, dual, mega
@@ -52,21 +52,45 @@ ok 8 - sanitizer limits tags and chat data
 # Subtest: spectate uses an observer socket, without spawning an extra player
 ok 9 - spectate uses an observer socket, without spawning an extra player
   ---
-  duration_ms: 7.487092
+  duration_ms: 11.294895
   type: 'test'
   ...
 # Subtest: joining after spectating removes observer and creates one player
 ok 10 - joining after spectating removes observer and creates one player
   ---
-  duration_ms: 4.840295
+  duration_ms: 4.658751
   type: 'test'
   ...
-1..10
-# tests 10
+# Subtest: feeding a virus seven ejected pellets launches a new moving virus
+ok 11 - feeding a virus seven ejected pellets launches a new moving virus
+  ---
+  duration_ms: 1.475213
+  type: 'test'
+  ...
+# Subtest: virus collision bursts a large player cell and conserves mass plus viral bonus
+ok 12 - virus collision bursts a large player cell and conserves mass plus viral bonus
+  ---
+  duration_ms: 0.557734
+  type: 'test'
+  ...
+# Subtest: small cells are not burst and virus count stays bounded
+ok 13 - small cells are not burst and virus count stays bounded
+  ---
+  duration_ms: 0.338983
+  type: 'test'
+  ...
+# Subtest: game server rooms each start with 10 bots and independent virus arrays
+ok 14 - game server rooms each start with 10 bots and independent virus arrays
+  ---
+  duration_ms: 1.810296
+  type: 'test'
+  ...
+1..14
+# tests 14
 # suites 0
-# pass 10
+# pass 14
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 71.079476
+# duration_ms 136.685784

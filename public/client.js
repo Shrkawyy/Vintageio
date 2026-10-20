@@ -41,15 +41,14 @@ function applySettings(){
 function setLobbyState(isLobby){ document.body.classList.toggle('show-lobby', !!isLobby); document.body.classList.toggle('is-spectating', !isLobby&&spectating); }
 function setCameraControlsVisible(){
   const active=(playing||spectating) && !document.body.classList.contains('show-lobby');
-  $('zoom-panel').classList.toggle('hidden', !active);
-  $('spectate-hud').classList.toggle('hidden', !spectating);
+  $('zoom-panel').classList.toggle('hidden', !active || spectating);
   document.body.classList.toggle('is-spectating',spectating);
   $('zoom-value').textContent=Math.round(settings.zoom*100)+'%';
 }
 function adjustZoom(factor,x=innerWidth/2,y=innerHeight/2){
   if(!playing&&!spectating)return;
   const before=spectating?renderer.toWorld(x,y):null;
-  const next=clampClient(settings.zoom*factor, spectating?.3:.35, spectating?3.5:3.2);
+  const next=clampClient(settings.zoom*factor, spectating?.07:.25, spectating?5.5:4.2);
   settings.zoom=next;
   if(spectating){
     renderer.zoom=next;
@@ -180,7 +179,7 @@ function beginSpectate(){
   remote?.disconnect(); remote=null; remoteSnapshot=null;
   arena.reset(mode, 'Spectator', '', false, settings, true);
   renderer.cam={x:WORLD_SIZE/2,y:WORLD_SIZE/2};
-  renderer.zoom=clampClient(settings.zoom,.3,3.5);
+  renderer.zoom=clampClient(settings.zoom,.07,5.5);
   if(wsUrl && /^wss?:\/\//i.test(wsUrl)){
     remote=new RemoteArena(wsUrl,{mode,nickname:'Spectator',tag:'',multi:false,spectator:true});
     remote.connect(); $('connection-status').innerHTML='<i></i> CONNECTING'; $('chat-online').textContent='CONNECTING';
@@ -234,7 +233,7 @@ function gameLoop(now){
   if((playing || spectating) && !isSettingsOpen){
     if(spectating && !draggingCamera && pointerOverField){
       const edge=(pos,size)=>{const n=(pos/size-.5)*2,dead=.23;return Math.sign(n)*Math.pow(Math.max(0,Math.abs(n)-dead)/(1-dead),1.55)};
-      const speed=780*dt/Math.max(renderer.zoom,.35);
+      const speed=780*dt/Math.max(renderer.zoom,.09);
       renderer.cam.x=clampClient(renderer.cam.x+edge(pointer.x,innerWidth)*speed,0,WORLD_SIZE);
       renderer.cam.y=clampClient(renderer.cam.y+edge(pointer.y,innerHeight)*speed,0,WORLD_SIZE);
     }
@@ -482,7 +481,6 @@ $('menu-btn').onclick=enterLobby;
 $('settings-btn').onclick=showSettings;
 $('lobby-settings-btn').onclick=showSettings;
 $('spectate-btn').onclick=beginSpectate;
-$('spectate-exit').onclick=enterLobby;
 $('zoom-in').onclick=()=>adjustZoom(1.18);
 $('zoom-out').onclick=()=>adjustZoom(1/1.18);
 $('zoom-reset').onclick=()=>adjustZoom(1/Math.max(settings.zoom,.01));
@@ -498,20 +496,22 @@ $('nickname').addEventListener('input', updateProfileName);
 window.addEventListener('pointermove',e=>{
   pointer={x:e.clientX,y:e.clientY}; pointerOverField=e.target===$('arena');
   if(draggingCamera && spectating && dragPointer){
-    renderer.cam.x=clampClient(renderer.cam.x+(dragPointer.x-e.clientX)/Math.max(renderer.zoom,.2),0,WORLD_SIZE);
-    renderer.cam.y=clampClient(renderer.cam.y+(dragPointer.y-e.clientY)/Math.max(renderer.zoom,.2),0,WORLD_SIZE);
+    renderer.cam.x=clampClient(renderer.cam.x+(dragPointer.x-e.clientX)/Math.max(renderer.zoom,.07),0,WORLD_SIZE);
+    renderer.cam.y=clampClient(renderer.cam.y+(dragPointer.y-e.clientY)/Math.max(renderer.zoom,.07),0,WORLD_SIZE);
     dragPointer={x:e.clientX,y:e.clientY};
   }
 });
 window.addEventListener('wheel',e=>{
   if(!settings.wheelZoom || !(playing||spectating) || isSettingsOpen) return;
   e.preventDefault();
-  adjustZoom(Math.exp(-Math.sign(e.deltaY)*.14*(settings.wheelZoomSensitivity||1)),e.clientX,e.clientY);
+  const delta=(e.deltaMode===1?e.deltaY*16:e.deltaMode===2?e.deltaY*innerHeight:e.deltaY);
+  adjustZoom(Math.exp(-Math.max(-320,Math.min(320,delta))*.0023*(settings.wheelZoomSensitivity||1)),e.clientX,e.clientY);
 },{passive:false});
 $('arena').addEventListener('contextmenu',e=>e.preventDefault());
-window.addEventListener('contextmenu',e=>{ if(playing && settings.rightClickMove) e.preventDefault(); });
+window.addEventListener('contextmenu',e=>{ if(spectating || (playing && settings.rightClickMove)) e.preventDefault(); });
 window.addEventListener('pointerdown',e=>{
   if(e.target!==$('arena'))return;
+  if(spectating && e.button===2){ enterLobby(); e.preventDefault(); return; }
   if(spectating && e.button===0){draggingCamera=true;dragPointer={x:e.clientX,y:e.clientY};document.body.classList.add('dragging-camera');e.preventDefault();return;}
   if(playing && e.button===2 && settings.rightClickMove){rightDown=true;e.preventDefault();}
 });

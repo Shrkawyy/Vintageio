@@ -1,4 +1,5 @@
 'use strict';
+const {makeVirus,stepViruses}=require('./virus.cjs');
 /** Authoritative, in-memory arena simulation. Three completely isolated rooms. */
 const MODES={ffa:{name:'FREE FOR ALL',initialMass:1000,bots:10},dual:{name:'DUAL',initialMass:1000,bots:10},mega:{name:'MEGA',initialMass:5000,bots:10}};
 const WIDTH=4800,MAX_CELLS=64,AUTO_SPLIT_MASS=25500;
@@ -11,7 +12,7 @@ function cell(x,y,mass,color){return{x,y,mass,color,vx:0,vy:0,mergeAt:0};}
 function makePlayer(mode,name,tag,npc=false,slot=0){const config=MODES[mode];const color=npc?COLORS[Math.floor(C.rand(0,COLORS.length))]:(slot===0?'#70e0ff':'#ff88b0');const x=C.rand(300,WIDTH-300),y=C.rand(300,WIDTH-300);return{id:uid(),name,tag,npc,slot,color,target:{x,y},cells:[cell(x,y,config.initialMass,color)],heading:C.rand(0,Math.PI*2),lastChat:0};}
 function createRoom(mode){if(!MODES[mode])throw Error('Unknown mode');const room={mode,players:new Map(),food:[],viruses:[],time:0};
   for(let i=0;i<280;i++)room.food.push(newFood());
-  for(let i=0;i<28;i++)room.viruses.push({x:C.rand(50,WIDTH-50),y:C.rand(50,WIDTH-50)});
+  for(let i=0;i<28;i++)room.viruses.push(makeVirus(C.rand(120,WIDTH-120),C.rand(120,WIDTH-120)));
   for(let i=0;i<MODES[mode].bots;i++){const bot=makePlayer(mode,BOTS[i],'',true);bot.cells[0].mass=C.rand(600,MODES[mode].initialMass*1.7);room.players.set(bot.id,bot);}
   return room;
 }
@@ -23,7 +24,7 @@ function split(room,p){let free=MAX_CELLS-p.cells.length;if(!free)return;for(con
   const child=cell(C.clamp(c.x+dx/len*C.radius(nextMass)*1.1,0,WIDTH),C.clamp(c.y+dy/len*C.radius(nextMass)*1.1,0,WIDTH),nextMass,c.color);
   child.vx=dx/len*620;child.vy=dy/len*620;child.mergeAt=room.time+13;c.mergeAt=room.time+13;p.cells.push(child);free--;
 }}
-function feed(room,p){for(const c of p.cells){if(c.mass<100)continue;const dx=p.target.x-c.x,dy=p.target.y-c.y,len=Math.hypot(dx,dy)||1;c.mass-=22;room.food.push({x:C.clamp(c.x+dx/len*(C.radius(c.mass)+24),0,WIDTH),y:C.clamp(c.y+dy/len*(C.radius(c.mass)+24),0,WIDTH),mass:22,color:'#bdfdff'});}}
+function feed(room,p){for(const c of p.cells){if(c.mass<100)continue;const dx=p.target.x-c.x,dy=p.target.y-c.y,len=Math.hypot(dx,dy)||1;c.mass-=22;room.food.push({x:C.clamp(c.x+dx/len*(C.radius(c.mass)+27),0,WIDTH),y:C.clamp(c.y+dy/len*(C.radius(c.mass)+27),0,WIDTH),mass:22,color:'#bdfdff',ejected:true,vx:dx/len*650,vy:dy/len*650});}}
 function step(room,dt=1/30){dt=Math.min(.08,Math.max(0,dt));room.time+=dt;
   for(const p of room.players.values()){
     if(!p.cells.length)continue;
@@ -37,6 +38,7 @@ function step(room,dt=1/30){dt=Math.min(.08,Math.max(0,dt));room.time+=dt;
     if(p.cells.length>1)for(let i=0;i<p.cells.length;i++)for(let j=i+1;j<p.cells.length;j++){const a=p.cells[i],b=p.cells[j];if(room.time>a.mergeAt&&room.time>b.mergeAt&&Math.hypot(a.x-b.x,a.y-b.y)<C.radius(a)*.55){a.mass+=b.mass;p.cells.splice(j,1);j--;}}
     if(Math.random()<.004)for(const c of p.cells)c.mass*=.9985;
   }
+  stepViruses({viruses:room.viruses,food:room.food,players:[...room.players.values()],width:WIDTH,maxCells:MAX_CELLS,time:room.time,dt,spawnVirus:()=>makeVirus(C.rand(120,WIDTH-120),C.rand(120,WIDTH-120))});
   for(const p of room.players.values())for(const c of p.cells){const r=C.radius(c.mass);for(let k=room.food.length-1;k>=0;k--){const f=room.food[k];if(Math.abs(c.x-f.x)<r&&Math.abs(c.y-f.y)<r&&Math.hypot(c.x-f.x,c.y-f.y)<r){c.mass+=f.mass;room.food.splice(k,1);}}}
   const all=[...room.players.values()];for(const a of all)for(const b of all){if(a===b)continue;for(const ac of a.cells)for(let i=b.cells.length-1;i>=0;i--){const bc=b.cells[i];if(ac.mass>bc.mass*1.25&&Math.hypot(ac.x-bc.x,ac.y-bc.y)<C.radius(ac)-C.radius(bc)*.34){ac.mass+=bc.mass;b.cells.splice(i,1);}}}
   for(const p of all){if(p.npc&&!p.cells.length){const spawned=makePlayer(room.mode,p.name,p.tag,true);p.cells=spawned.cells;p.heading=C.rand(0,Math.PI*2);}}
