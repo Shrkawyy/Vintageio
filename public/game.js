@@ -1,20 +1,9 @@
 import {makeVirus, stepViruses, virusRadius} from './virus-rules.js';
 import {splitCells, moveCells, eatCells, absorbFood} from './physics.js';
 export const MODES = Object.freeze({
-  ffa: {title:'FREE FOR ALL',start:1000,color:'#73e5f1',botCount:10,physics:'ffa'},
-  dual:{title:'DUAL',start:1000,color:'#ae95ff',botCount:10,physics:'ffa'},
-  mega:{title:'MEGA',start:5000,color:'#ffd28a',botCount:10,physics:'other'},
-  aster_dual: {title:'ASTER DUAL',start:1000,color:'#73e5f1',botCount:10,physics:'aster'},
-  samba_dual: {title:'SAMBA DUAL',start:1000,color:'#ae95ff',botCount:10,physics:'samba'},
-  samba_mega: {title:'SAMBA MEGA',start:5000,color:'#ffd28a',botCount:10,physics:'samba',maxMass:100000},
-  aster_mega: {title:'ASTER MEGA',start:5000,color:'#ff88b0',botCount:10,physics:'aster',maxMass:22400},
-  arab_mega: {title:'ARAB.IO',start:5000,color:'#86f6cd',botCount:10,physics:'arab'},
-  venus_mega: {title:'VENUS / KOTA',start:5000,color:'#fa9dd7',botCount:10,physics:'gota'},
-  gota_mega: {title:'GOTA.IO',start:5000,color:'#7cc3ed',botCount:10,physics:'gota'},
-  samba_macro: {title:'SAMBA MACRO',start:1000,color:'#b595fc',botCount:10,physics:'samba'},
-  samba_ffa: {title:'SAMBA FFA',start:1000,color:'#ffb388',botCount:10,physics:'samba'},
-  agar_ffa: {title:'AGAR FFA',start:1000,color:'#70e0ff',botCount:10,physics:'agar'},
-  og_vanilla: {title:'OG VANILLA',start:1000,color:'#ffffff',botCount:10,physics:'agar'},
+  ffa: {title:'FREE FOR ALL',start:1000,color:'#73e5f1',botCount:10},
+  dual:{title:'DUAL',start:1000,color:'#ae95ff',botCount:10},
+  mega:{title:'MEGA',start:5000,color:'#ffd28a',botCount:10},
 });
 export const WORLD_SIZE=4800;
 export const AUTO_SPLIT_MASS=25500;
@@ -28,7 +17,7 @@ export const DEFAULT_SETTINGS={
   keySplit:'SPACE',keyDoubleSplit:'Q',keyTripleSplit:'NO KEY',keySplit16:'T',keySplit32:'NO KEY',keySplit64:'D',
   keyFeed:'W',keyMacroFeed:'E',keySwitch:'TAB',keyStopMove:'NO KEY',keyChat:'ENTER',keyMenu:'ESCAPE',keySettings:'S',
   keyChatToggle:'C',keyHUD:'H',keySaveReplay:'R',keySpectateMode:'X',keyToggleNames:'N',keyToggleMass:'M',
-  keyToggleSkin:'S',keyToggleChat:'NO KEY',keyToggleSectors:'B',keyCommand1:'1',keyCommand2:'2',keyCommand3:'3',
+  keyToggleSkin:'NO KEY',keyToggleChat:'NO KEY',keyToggleSectors:'B',keyCommand1:'1',keyCommand2:'2',keyCommand3:'3',
   keyCommand4:'4',keyCommand5:'5',keyCommand6:'6',keyCommand7:'7',keyCommand8:'8',keyCommand9:'9',keyCommand10:'0',
   keyZoom1:'ALT+1',keyZoom2:'ALT+2',keyZoom3:'ALT+3',keyZoom4:'ALT+4',keyZoom5:'ALT+5',
   rightClickMove:true,
@@ -74,16 +63,14 @@ export class LocalArena{
     return true;
   }
   setTarget(id,x,y){const p=this.getById(id);if(p&&Number.isFinite(x)&&Number.isFinite(y))p.target={x:clamp(x,0,WORLD_SIZE),y:clamp(y,0,WORLD_SIZE)};}
-  split(id){const conf=MODES[this.mode]; return splitCells(this.getById(id),this.elapsed,WORLD_SIZE,MAX_CELLS,conf.physics);}
+  split(id){return splitCells(this.getById(id),this.elapsed,WORLD_SIZE,MAX_CELLS,this.mode);}
   feed(id){const p=this.getById(id);if(!p)return;
-    for(const c of p.cells){if(c.mass<=105)continue;
+    for(const c of p.cells){if(c.mass<100)continue;
       const dx=p.target.x-c.x,dy=p.target.y-c.y,mag=Math.hypot(dx,dy)||1;
       c.mass-=22;this.food.push({x:clamp(c.x+dx/mag*(radius(c.mass)+27),0,WORLD_SIZE),y:clamp(c.y+dy/mag*(radius(c.mass)+27),0,WORLD_SIZE),mass:22,color:'#bdfdff',ejected:true,vx:dx/mag*650,vy:dy/mag*650});
     }
   }
   tick(dt,settings=DEFAULT_SETTINGS){
-    const conf=MODES[this.mode];
-    const maxMass=conf.maxMass||AUTO_SPLIT_MASS;
     dt=Math.min(.05,Math.max(0,dt));this.elapsed+=dt;
     for(const p of this.players){
       if(!p.cells.length)continue;
@@ -94,15 +81,15 @@ export class LocalArena{
         if(threat)p.heading=Math.atan2(lead.y-threat.cells[0].y,lead.x-threat.cells[0].x);
         p.target={x:clamp(lead.x+Math.cos(p.heading)*520,0,WORLD_SIZE),y:clamp(lead.y+Math.sin(p.heading)*520,0,WORLD_SIZE)};
       }
-      moveCells(p,dt,this.elapsed,WORLD_SIZE,conf.physics,p.npc?.73:settings.mouseSensitivity);
+      moveCells(p,dt,this.elapsed,WORLD_SIZE,this.mode,p.npc?.73:settings.mouseSensitivity);
       // Auto split is evaluated once per player per update, never inside an expanding cell loop.
-      if(settings.autoSplit&&p.cells.some(c=>c.mass>=maxMass)&&p.cells.length<MAX_CELLS)splitCells(p,this.elapsed,WORLD_SIZE,MAX_CELLS,conf.physics);
+      if(settings.autoSplit&&p.cells.some(c=>c.mass>=AUTO_SPLIT_MASS)&&p.cells.length<MAX_CELLS)splitCells(p,this.elapsed,WORLD_SIZE,MAX_CELLS,this.mode);
       if(this.elapsed%12<dt)for(const c of p.cells)c.mass*=.999;
     }
     stepViruses({viruses:this.viruses,food:this.food,players:this.players,width:WORLD_SIZE,maxCells:MAX_CELLS,time:this.elapsed,dt,
       spawnVirus:()=>makeVirus(rand(120,WORLD_SIZE-120),rand(120,WORLD_SIZE-120))});
-    absorbFood(this.players,this.food,conf.physics);
-    eatCells(this.players,conf.physics,this.elapsed);
+    absorbFood(this.players,this.food,this.mode);
+    eatCells(this.players,this.mode,this.elapsed);
     while(this.food.length<270)this.food.push(foodPoint());
     if(this.food.length>650)this.food.splice(0,this.food.length-650);
     for(const p of this.players)if(p.npc&&!p.cells.length){const replacement=player(p.id,p.name,p.tag,p.color,rand(550,MODES[this.mode].start*1.7),true);p.cells=replacement.cells;p.heading=rand(0,7);p.target=replacement.target;}

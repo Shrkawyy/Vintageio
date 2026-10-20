@@ -467,6 +467,7 @@ window.addEventListener('keydown',e=>{
   if(isSettingsOpen){ if(e.key==='Escape'){ hideSettings(); e.preventDefault(); } return; }
   const k=normalizeKey(e);
   if(document.activeElement === $('chat-input')){ if(k==='ESCAPE'){ document.activeElement.blur(); e.preventDefault(); } return; }
+  if(['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){ if(k==='ESCAPE') document.activeElement.blur(); return; }
   if(k===settings.keyMenu){ enterLobby(); e.preventDefault(); return; }
   if(k===settings.keySettings){ showSettings(); e.preventDefault(); return; }
   if((!playing && !spectating) || isEditing()) return;
