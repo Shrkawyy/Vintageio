@@ -1,0 +1,36 @@
+{
+  "_note": "Each server is an independent room. 'engineMode' selects the client mode UI (ffa|dual|mega); 'physics' selects a preset from public/physics.js. Preset values are Vintage's own tunable approximations, not measured copies of any other game.",
+  "categories": [
+    { "id": "ffa", "title": "FFA" },
+    { "id": "dual", "title": "Dual" },
+    { "id": "mega", "title": "Mega Split" },
+    { "id": "macro", "title": "Macro" },
+    { "id": "classic", "title": "Classic / OG" },
+    { "id": "competitive", "title": "Competitive – Bot Free" }
+  ],
+  "defaults": { "region": "EU", "maxPlayers": 50, "bots": 10, "initialMass": 1000, "feedInterval": 0.075, "maxCells": 64, "macro": false },
+  "servers": [
+    { "id": "senpa-ffa",       "name": "Senpa FFA",         "category": "ffa",     "engineMode": "ffa",  "physics": "senpa" },
+    { "id": "agar-ffa",        "name": "Agar FFA",          "category": "ffa",     "engineMode": "ffa",  "physics": "classic" },
+    { "id": "vintage-ffa",     "name": "Vintage FFA",       "category": "ffa",     "engineMode": "ffa",  "physics": "vintage_ffa" },
+
+    { "id": "senpa-dual",      "name": "Senpa Dual",        "category": "dual",    "engineMode": "dual", "physics": "senpa" },
+    { "id": "aster-domination","name": "Aster Domination",  "category": "dual",    "engineMode": "dual", "physics": "aster" },
+
+    { "id": "senpa-mega",      "name": "Senpa Mega Split",  "category": "mega",    "engineMode": "mega", "physics": "senpa_mega", "initialMass": 5000 },
+    { "id": "aster-mega",      "name": "Aster Mega Split",  "category": "mega",    "engineMode": "mega", "physics": "aster_mega", "initialMass": 5000 },
+    { "id": "arab-mega",       "name": "Arab-style Mega",   "category": "mega",    "engineMode": "mega", "physics": "arab",       "initialMass": 5000 },
+    { "id": "venus-kota-mega", "name": "Venus / Kota Mega", "category": "mega",    "engineMode": "mega", "physics": "arab",       "initialMass": 5000 },
+    { "id": "gota-mega",       "name": "Gota-style Mega",   "category": "mega",    "engineMode": "mega", "physics": "gota",       "initialMass": 5000 },
+
+    { "id": "senpa-beta2",     "name": "Senpa Beta 2",      "category": "macro",   "engineMode": "ffa",  "physics": "macro", "macro": true, "feedInterval": 0.03 },
+    { "id": "vintage-macro",   "name": "Vintage Macro Arena","category": "macro",  "engineMode": "ffa",  "physics": "macro", "macro": true, "feedInterval": 0.03 },
+
+    { "id": "og-vanilla",      "name": "OG Vanilla",        "category": "classic", "engineMode": "ffa",  "physics": "classic" },
+    { "id": "vintage-classic", "name": "Vintage Classic",   "category": "classic", "engineMode": "ffa",  "physics": "classic" },
+    { "id": "na-classic",      "name": "NA Classic",        "category": "classic", "engineMode": "ffa",  "physics": "classic", "region": "NA" },
+
+    { "id": "comp-ffa",        "name": "Competitive FFA",   "category": "competitive", "engineMode": "ffa",  "physics": "senpa",      "bots": 0, "competitive": true },
+    { "id": "comp-mega",       "name": "Competitive Mega",  "category": "competitive", "engineMode": "mega", "physics": "senpa_mega", "bots": 0, "competitive": true, "initialMass": 5000 }
+  ]
+}

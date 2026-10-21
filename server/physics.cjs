@@ -10,11 +10,27 @@ const FFA_PHYSICS = Object.freeze({
   minMergeTime: 8, maxMergeTime: 27, cellPush: .57, mergePull: 3.7,
   eatRatio: 1.25, eatOverlap: .39,
 });
-// All Vintage modes share mechanics; only starting mass and room population differ.
+// Physics presets. Every preset is an independent, tunable object. These are Vintage's OWN
+// starting values, NOT measurements of Senpa/Aster/Gota/Arab; they must be tuned by play-testing.
+const preset = overrides => Object.freeze({ ...FFA_PHYSICS, ...overrides });
+const PHYSICS_PRESETS = Object.freeze({
+  vintage_ffa: FFA_PHYSICS,
+  senpa: preset({}),
+  classic: preset({ speedPower: .24, splitImpulse: 700, minMergeTime: 15, maxMergeTime: 30, mergeBase: 12 }),
+  aster: preset({ baseSpeed: 700, splitImpulse: 700, minMergeTime: 6, maxMergeTime: 20 }),
+  senpa_mega: preset({ baseSpeed: 700, splitImpulse: 760, splitDrag: 3.6, minMergeTime: 4, maxMergeTime: 10, mergeBase: 3, cellPush: .45, mergePull: 5 }),
+  aster_mega: preset({ baseSpeed: 720, splitImpulse: 780, splitDrag: 3.6, minMergeTime: 3, maxMergeTime: 9, mergeBase: 3, cellPush: .45, mergePull: 5.5 }),
+  arab: preset({ baseSpeed: 700, splitImpulse: 740, splitDrag: 3.5, minMergeTime: 5, maxMergeTime: 12, mergeBase: 4, mergePull: 4.8 }),
+  gota: preset({ baseSpeed: 680, splitImpulse: 820, splitDrag: 3.4, minMergeTime: 5, maxMergeTime: 14, mergeBase: 4, mergePull: 4.5 }),
+  macro: preset({ baseSpeed: 760, splitImpulse: 700, minMergeTime: 5, maxMergeTime: 12, mergeBase: 4 }),
+});
+// Legacy mode ids still resolve, so existing rooms/tests keep working.
+const LEGACY_PRESET = Object.freeze({ ffa: 'vintage_ffa', dual: 'vintage_ffa', mega: 'senpa_mega' });
 const OTHER_PHYSICS = FFA_PHYSICS;
 const clamp = (v,min,max) => Math.min(max,Math.max(min,v));
 const cellRadius = mass => Math.max(13,Math.sqrt(Math.max(1,mass))*2.45);
-const physicsFor = mode => mode === 'ffa' ? FFA_PHYSICS : OTHER_PHYSICS;
+/** Accepts a preset object, a preset id, or a legacy mode id. Unknown ids fall back to vintage_ffa. */
+const physicsFor = key => (key && typeof key === 'object') ? key : (PHYSICS_PRESETS[key] || PHYSICS_PRESETS[LEGACY_PRESET[key]] || FFA_PHYSICS);
 
 function splitCells(player,time,width,maxCells,mode='ffa',minimumMass=null) {
   if (!player?.cells?.length) return 0;
@@ -166,4 +182,4 @@ function absorbFood(players,food,mode='ffa') {
   return gained;
 }
 
-module.exports={FFA_PHYSICS,OTHER_PHYSICS,clamp,cellRadius,physicsFor,splitCells,moveCells,mergeCells,eatCells,absorbFood};
+module.exports={FFA_PHYSICS,PHYSICS_PRESETS,OTHER_PHYSICS,clamp,cellRadius,physicsFor,splitCells,moveCells,mergeCells,eatCells,absorbFood};

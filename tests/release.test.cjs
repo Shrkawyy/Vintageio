@@ -2,8 +2,12 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const core=require('../server/core.cjs'),physics=require('../server/physics.cjs'),virus=require('../server/virus.cjs');
 const {createAuth}=require('../server/auth.cjs');
-test('all modes use the same movement and split rules',()=>{
- const positions=[];for(const mode of ['ffa','dual','mega']){const p={target:{x:4400,y:2400},cells:[{x:2400,y:2400,mass:2000}]};physics.splitCells(p,0,4800,64,mode);for(let i=1;i<=60;i++)physics.moveCells(p,1/60,i/60,4800,mode);positions.push(p.cells.map(c=>[c.x,c.y,c.mass]));}assert.deepEqual(positions[0],positions[1]);assert.deepEqual(positions[0],positions[2]);
+test('legacy ffa/dual share rules; mega and each preset are independent',()=>{
+  const run=key=>{const p={target:{x:4400,y:2400},cells:[{x:2400,y:2400,mass:2000}]};physics.splitCells(p,0,4800,64,key);for(let i=1;i<=60;i++)physics.moveCells(p,1/30,i/30,4800,key);return p.cells.map(c=>Math.round(c.x)).join(',');};
+  assert.equal(run('ffa'),run('dual'),'ffa and dual keep identical legacy physics');
+  assert.notEqual(run('mega'),run('ffa'),'mega must no longer reuse FFA physics');
+  for(const id of Object.keys(physics.PHYSICS_PRESETS))assert.ok(physics.physicsFor(id).baseSpeed>0,id);
+  assert.equal(physics.physicsFor('nonexistent'),physics.FFA_PHYSICS);
 });
 test('auto split splits only oversized cells',()=>{const r=core.createRoom('ffa'),p=core.join(r,'Test','');p.cells=[{x:2400,y:2400,mass:30000},{x:1000,y:1000,mass:200}];r.players=new Map([[p.id,p]]);r.food=[];r.viruses=[];core.step(r,.01);assert.equal(p.cells.length,3);assert.ok(p.cells.some(c=>c.mass===200));});
 test('one consumed virus schedules exactly one replacement; cap permits consumption',()=>{
