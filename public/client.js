@@ -1,5 +1,5 @@
 import {THEMES} from './themes.js';
-import {MODES, DEFAULT_SETTINGS, LocalArena, ArenaRenderer, AUTO_SPLIT_MASS, WORLD_SIZE} from './game.js';
+import {MODES, DEFAULT_SETTINGS, LocalArena, ArenaRenderer, AUTO_SPLIT_MASS, WORLD_SIZE, sectorAt, totalMass, getVisibleAllies} from './game.js';
 
 const $ = id => document.getElementById(id);
 const SETTINGS_KEY = 'vintage-settings-v2';
@@ -34,6 +34,45 @@ let nickname='Vintage Player', tag='';
 let region='EU', browseRegion='EU', serverId='eu-ffa', selectedServer=null, sessionServerId=null, sessionMode=null;
 const serverUrl=()=>String(selectedServer?.wsUrl || window.VINTAGE_CONFIG?.wsUrl || '').trim();
 let showDeaths=false, remoteSnapshot=null;
+const RESTART_INTERVAL=3*60*60*1000;
+let nextRestartAt=0, shownRestartWarnings=new Set(), restartNoticeUntil=0;
+const asTimer = ms => {
+  const n=Math.max(0,Math.ceil(ms/1000));
+  return [Math.floor(n/3600),Math.floor(n%3600/60),n%60].map(x=>String(x).padStart(2,'0')).join(':');
+};
+function displayServerNotice(message,ms=13000){
+  const node=$('server-announcement');node.textContent=message;node.classList.remove('hidden');
+  restartNoticeUntil=Date.now()+ms;
+  addChat('system',message,'all');
+}
+function setRestartClock(at){
+  nextRestartAt=Number.isFinite(Number(at)) ? Number(at) : 0;
+  shownRestartWarnings=new Set();
+}
+function updateRestartClock(now=Date.now()){
+  const label=$('restart-label'),count=$('restart-countdown');
+  if(!(playing||spectating)||!nextRestartAt){$('restart-status').classList.add('hidden');return;}
+  $('restart-status').classList.remove('hidden');
+  label.textContent=remote ? 'SERVER RESTART' : 'LOCAL DEMO RESET';
+  const remaining=nextRestartAt-now;
+  count.textContent=asTimer(remaining);
+  if(!remote){
+    for(const minute of [10,5]){
+      if(remaining<=minute*60000 && remaining>0 && !shownRestartWarnings.has(minute)){
+        shownRestartWarnings.add(minute);
+        displayServerNotice('Local demo world resets in '+minute+' minutes');
+      }
+    }
+    if(remaining<=0){
+      arena.reset(mode,nickname,tag,true,settings,spectating);
+      setRestartClock(now+RESTART_INTERVAL);
+      displayServerNotice('Local demo world reset • New 3-hour round started');
+    }
+  }
+  if(restartNoticeUntil && now>restartNoticeUntil){
+    restartNoticeUntil=0;$('server-announcement').classList.add('hidden');
+  }
+}
 let pointer={x:innerWidth/2+100,y:innerHeight/2}, rightDown=false, macroFeedHeld=false,nextMacroFeedAt=0;
 let pointerOverField=false, draggingCamera=false, dragPointer=null;
 let settingsTab='game', settingsPage='Render';
@@ -110,11 +149,12 @@ function enterLobby(){
 function leaveSession(){
   playing=false;spectating=false;showDeaths=false;
   const old=remote;remote=null;old?.disconnect();remoteSnapshot=null;
-  sessionServerId=null;sessionMode=null;
+  sessionServerId=null;sessionMode=null;setRestartClock(0);
 }
 
 function beginGame(){
-  if(playing && sessionMode===mode && sessionServerId===serverId){
+  if(playing && sessionMode===mode && sessionServerId===serverId &&
+     toName($('nickname').value)===nickname && toTag($('team-tag').value)===tag){
     setLobbyState(false);$('lobby').classList.add('hidden');$('gameover').classList.add('hidden');
     setCameraControlsVisible();return;
   }
@@ -123,6 +163,7 @@ function beginGame(){
   nickname = toName($('nickname').value); tag = toTag($('team-tag').value);
   $('nickname').value = nickname; $('team-tag').value = tag;
   $('chat-tag-label').textContent = tag ? ('#'+tag.toUpperCase()) : 'NO TAG';
+  if(!tag){chatChannel='all';updateChatTabs();}
   updateProfileName();
   macroFeedHeld=false;activeSlot=0; remoteSnapshot=null; showDeaths=false; spectating=false; spectateTargetId=''; playing=true;
   setLobbyState(false);
@@ -132,6 +173,7 @@ function beginGame(){
   arena.reset(mode, nickname, tag, multi, settings);
   remote?.disconnect(); remote=null;
   const wsUrl = serverUrl();
+  setRestartClock(wsUrl&&/^wss?:\/\//i.test(wsUrl)?0:Date.now()+RESTART_INTERVAL);
   if(wsUrl && /^wss?:\/\//i.test(wsUrl)){
     remote = new RemoteArena(wsUrl,{mode,nickname,tag,multi});
     remote.connect();
@@ -139,7 +181,7 @@ function beginGame(){
     $('chat-online').textContent = 'CONNECTING';
   }else{
     $('connection-status').innerHTML = '<i></i> DEMO MODE';
-    $('chat-online').textContent = 'LOCAL';
+    $('chat-online').textContent = 'LOCAL DEMO';
     addChat('system','You are playing against local AI. Configure /config.js for online multiplayer.','all');
   }
 }
@@ -167,13 +209,26 @@ class RemoteArena{
         if(slot===0){ addChat('system','Connected to the '+MODES[mode].title+' room.','all');this.probe(); }
       }
       if(payload.type==='state' && slot===0){ this.latest=payload; remoteSnapshot=payload; }
+      if(payload.type==='server_schedule' && slot===0) setRestartClock(payload.nextRestartAt);
+      if(payload.type==='server_notice' && slot===0) displayServerNotice(payload.message);
+      if(payload.type==='server_restarted' && slot===0){
+        this.restarting=true;
+        displayServerNotice('Server restarted • Reconnecting all players...');
+      }
       if(payload.type==='pong' && slot===0 && payload.nonce===this.pingId){this.latencyMs=Math.round(performance.now()-this.pingStarted);}
 
       if(payload.type==='respawned' && slot===0) toast('Multi respawned at cursor');
       if(payload.type==='chat' && slot===0) addChat(payload.name,payload.text,payload.channel,payload.tag);
       if(payload.type==='error' && slot===0) toast(payload.message || 'Server error');
     });
-    ws.addEventListener('close',()=>{
+    ws.addEventListener('close',event=>{
+      if(slot===0 && event.code===4001 && remote===this && (playing||spectating)){
+        this.connected=false;this.myIds=[];this.latest=null;remoteSnapshot=null;
+        clearInterval(this.pingTimer);this.pingTimer=null;
+        $('connection-status').innerHTML='<i></i> RECONNECTING';
+        setTimeout(()=>{if(remote===this && (playing||spectating)) this.connect();},1500);
+        return;
+      }
       if(slot===0 && (playing||spectating) && remote===this){
         this.connected=false;clearInterval(this.pingTimer);this.pingTimer=null;$('connection-status').innerHTML='<i></i> OFFLINE'; $('connection-status').classList.remove('online'); $('chat-online').textContent='OFFLINE';
         toast('Connection lost. Reconnect to start a new match.'); playing=false;spectating=false;enterLobby(); 
@@ -224,6 +279,7 @@ function beginSpectate(){
   spectating=true; playing=false; showDeaths=false; spectateTargetId=''; rightDown=false; draggingCamera=false;
   setLobbyState(false); $('lobby').classList.add('hidden'); $('gameover').classList.add('hidden');
   const wsUrl=serverUrl();
+  setRestartClock(wsUrl&&/^wss?:\/\//i.test(wsUrl)?0:Date.now()+RESTART_INTERVAL);
   remote?.disconnect(); remote=null; remoteSnapshot=null;
   arena.reset(mode, 'Spectator', '', false, settings, true);
   renderer.cam={x:WORLD_SIZE/2,y:WORLD_SIZE/2};
@@ -291,14 +347,22 @@ function updateHUD(snapshot){
   $('stat-mass').textContent=Math.floor(score).toLocaleString('en-US');
   $('stat-cells').textContent=String(ownCells);
   $('stat-online').textContent=remote?.connected?String(realOnline):'DEMO';
-  const rows=[...(snapshot?.players||[])].filter(p=>p.cells?.length).map(p=>({...p,total:p.cells.reduce((a,c)=>a+c.mass,0)})).sort((a,b)=>b.total-a.total).slice(0,8);
-  $('player-count').textContent=remote?.connected ? realOnline+' ONLINE' : 'LOCAL AI';
-  const container=$('board-entries'); container.replaceChildren();
+  const visible=getVisibleAllies(snapshot,focusId);
+  const teamTag=String(me?.tag||'').trim();
+  $('allies-heading').textContent=teamTag?'ALLIES · '+teamTag.toUpperCase():'SOLO PLAYERS';
+  $('player-count').textContent=visible.length+' VISIBLE';
+  $('map-sector').textContent=me?.cells?.length?sectorAt(me.cells[0].x,me.cells[0].y):'—';
+  $('map-team').textContent=teamTag?'#'+teamTag.toUpperCase():'NO TAG';
+  const rows=visible.map(p=>({...p,total:totalMass(p)})).sort((a,b)=>b.total-a.total).slice(0,8);
+  const container=$('board-entries');container.replaceChildren();
   for(let i=0;i<rows.length;i++){
-    const p=rows[i],line=document.createElement('div'); line.className='leader-entry'+(p.id===focusId?' is-me':'');
+    const p=rows[i],line=document.createElement('div');line.className='leader-entry'+(p.id===focusId?' is-me':'');
     const place=document.createElement('span'),n=document.createElement('b'),m=document.createElement('em');
-    place.textContent=String(i+1).padStart(2,'0'); n.textContent=p.name+(p.npc?' · AI':''); m.textContent=p.total>=1000?(p.total/1000).toFixed(1)+'k':Math.floor(p.total).toString();
-    line.append(place,n,m); container.appendChild(line);
+    place.textContent=String(i+1);n.textContent=p.name;
+    m.textContent=p.total>=1000?(p.total/1000).toFixed(1)+'k':Math.floor(p.total).toString();
+    const sector=document.createElement('small');sector.className='ally-sector';
+    sector.textContent=p.cells.length?sectorAt(p.cells[0].x,p.cells[0].y):'—';
+    line.append(place,m,sector,n);container.appendChild(line);
   }
 }
 
@@ -327,6 +391,7 @@ function gameLoop(now){
   const focusId=selectedId(snap);
   renderer.draw(snap, focusId, settings, playing, dt, spectating);
   if(now-hudAt>280){ hudAt=now; updateHUD(snap); if(playing && (!remote || remote.connected) && snap.players?.length){const ids=remote?.connected?remote.myIds:arena.myIds;if(ids.length && ids.every(id=>id && !snap.players.find(p=>p.id===id)?.cells?.length)){gameover();}} }
+  if(now-hudAt<20) updateRestartClock(Date.now());
   requestAnimationFrame(gameLoop);
 }
 
@@ -649,8 +714,16 @@ function setEmojiPicker(open){
   $('emoji-toggle').setAttribute('aria-expanded',String(open));
   $('chat').classList.toggle('chat-active',open||document.activeElement===$('chat-input'));
 }
-$('chat-input').addEventListener('focus',()=>{if(playing||spectating){setEmojiPicker(true);renderEmojis($('emoji-search').value);}});
-$('chat-input').addEventListener('blur',()=>{setTimeout(()=>{if(!$('chat').contains(document.activeElement))setEmojiPicker(false);},120);});
+$('chat-input').addEventListener('focus',()=>{$('chat').classList.add('chat-active');});
+$('chat-input').addEventListener('blur',()=>{setTimeout(()=>{if(!$('chat').contains(document.activeElement)){$('chat').classList.remove('chat-active');setEmojiPicker(false);}},120);});
+const QUICK_EMOJIS=['😀','😂','😍','😎','😭','🔥','❤️','👍','👑','🎮'];
+for(const emoji of QUICK_EMOJIS){
+  const b=document.createElement('button');b.type='button';b.className='quick-emoji';b.textContent=emoji;
+  b.title='Insert '+emoji;b.addEventListener('pointerdown',e=>e.preventDefault());
+  b.onclick=()=>{const input=$('chat-input'),start=input.selectionStart??input.value.length;
+    input.setRangeText(emoji,start,input.selectionEnd??start,'end');input.focus();};
+  $('emoji-quick').append(b);
+}
 $('emoji-search').oninput=()=>renderEmojis($('emoji-search').value);
 $('emoji-toggle').onclick=()=>{setEmojiPicker($('emoji-picker').classList.contains('hidden'));renderEmojis($('emoji-search').value);};
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('#chat'))setEmojiPicker(false);});

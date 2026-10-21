@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#10131b" />
   <meta name="description" content="Vintage — FFA, Dual and Mega cell game." />
   <title>VINTAGE.IO</title>
-  <link rel="stylesheet" href="/styles.css?v=12" />
+  <link rel="stylesheet" href="/styles.css?v=13" />
 </head>
 <body class="show-lobby">
   <canvas id="arena" aria-label="Vintage game field"></canvas>
@@ -23,7 +23,7 @@
   </header>
 
   <section id="leaderboard" class="hud-panel leader">
-    <div class="hud-heading">LEADERBOARD <small id="player-count">12 PLAYERS</small></div>
+    <div class="hud-heading"><span id="allies-heading">SOLO PLAYERS</span><small id="player-count">0 VISIBLE</small></div>
     <div id="board-entries"></div>
   </section>
 
@@ -43,7 +43,9 @@
     <div><small>ONLINE</small><strong id="stat-online">0</strong></div>
   </div>
 
-  <div id="minimap" class="hud-panel minimap"><canvas id="minimap-canvas" width="150" height="150"></canvas><span>GRID MAP</span></div>
+  <div id="minimap" class="hud-panel minimap"><div class="map-head"><strong>GRID MAP</strong><small id="map-sector">—</small></div><canvas id="minimap-canvas" width="240" height="240"></canvas><div class="map-foot"><span id="map-team">NO TAG</span><span>A1–E5 · LIVE</span></div></div>
+  <div id="restart-status" class="restart-clock hidden"><span id="restart-label">SERVER RESTART</span><strong id="restart-countdown">03:00:00</strong></div>
+  <div id="server-announcement" class="server-announcement hidden" role="status" aria-live="polite"></div>
   <div id="toast-area" aria-live="polite"></div>
 
   <aside id="chat" class="hud-panel chatbox">
@@ -54,6 +56,7 @@
       <div class="emoji-toolbar"><strong>EMOJIS</strong><input id="emoji-search" aria-label="Find emoji" placeholder="Search emoji..." autocomplete="off" /></div>
       <div id="emoji-grid" class="emoji-grid" role="group" aria-label="Emoji choices"></div>
     </div>
+    <div class="chat-emoji-toolbar"><span>EMOJIS</span><div id="emoji-quick" class="emoji-quick" aria-label="Quick chat emojis"></div><span class="emoji-hint">OPEN ALL ↓</span></div>
     <form id="chat-form"><button id="emoji-toggle" class="emoji-toggle" type="button" aria-label="Emoji picker" aria-expanded="false">☺</button><input id="chat-input" autocomplete="off" maxlength="180" placeholder="Enter message..." aria-label="Chat message"><button class="chat-send" type="submit" title="Send chat">➤</button></form>
   </aside>
 
@@ -107,6 +110,6 @@
 
   <div id="servers-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Select server"><section class="server-dialog"><header><div><small>FIND YOUR WORLD</small><h2>VINTAGE SERVERS</h2></div><button id="close-servers" class="icon-btn" aria-label="Close servers">✕</button></header><nav id="server-regions"><button data-region="EU" class="active">EU</button><button data-region="NA">NA</button><button data-region="ASIA">ASIA</button></nav><div id="server-list"></div><p class="hint">Changing servers starts a new match. Your current match keeps running while menus are open.</p></section></div>
   <script src="/config.js"></script>
-  <script type="module" src="/client.js?v=12"></script>
+  <script type="module" src="/client.js?v=13"></script>
 </body>
 </html>

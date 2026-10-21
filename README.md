@@ -1,3 +1,9 @@
+# Current release: Vintage.io v13
+
+Start with **UPDATE-v13-AR.md** for the latest grid map, team visibility, improved chat and scheduled world reset instructions. The v12/v11 notes below document prior versions.
+
+---
+
 # Current release: Vintage v11
 
 Read **START-HERE-AR.md** for the current changes, setup and limits. Earlier release notes below are historical.

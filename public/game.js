@@ -8,6 +8,22 @@ export const MODES = Object.freeze({
 export const WORLD_SIZE=4800;
 export const AUTO_SPLIT_MASS=25500;
 export const MAX_CELLS=64;
+/** Sector coordinates and tag visibility are shared by HUD and minimap. */
+export const sectorAt = (x,y,worldSize=WORLD_SIZE) => {
+  const c=n=>Math.max(0,Math.min(4,Math.floor(Number(n)/worldSize*5)));
+  return 'ABCDE'[c(x)]+String(c(y)+1);
+};
+export const totalMass = p => (p.cells||[]).reduce((sum,c)=>sum+Math.max(0,Number(c.mass)||0),0);
+export const markerRadius = (mass,isMe=false) => Math.min(17,Math.max(isMe?5:3,Math.sqrt(Math.max(0,Number(mass)||0))/12.2+(isMe?1.5:0)));
+export function getVisibleAllies(snapshot,selectedId){
+  const players=(snapshot?.players||[]).filter(p=>p.cells?.length);
+  const self=players.find(p=>p.id===selectedId);
+  // Spectators without a player see everybody; players see only their own tag group.
+  if(!self) return players;
+  const key=String(self.tag||'').trim().toUpperCase();
+  return players.filter(p=>String(p.tag||'').trim().toUpperCase()===key);
+}
+
 export const DEFAULT_SETTINGS={
   showGrid:true,showMass:true,showNames:true,showLeaderboard:true,showMinimap:true,showChat:true,showSectors:false,
   autoSplit:true,autoRespawn:false,mouseSensitivity:1,zoom:1,wheelZoom:true,wheelZoomSensitivity:1,cameraSmoothing:0.10,
@@ -109,14 +125,14 @@ export class LocalArena{
   }
 }
 export class ArenaRenderer{
-  constructor(canvas,minimap){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.radar=minimap;this.radarCtx=minimap.getContext('2d');this.cam={x:WORLD_SIZE/2,y:WORLD_SIZE/2};this.zoom=.75;this.background=null;this.backgroundUrl='';this.worldLogo=null;this.worldLogoUrl='';this.fps=60;this.lastFpsCheck=0;this.frames=0;this.last=performance.now();this.screenW=0;this.screenH=0;}
+  constructor(canvas,minimap){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.radar=minimap;this.radarCtx=minimap.getContext('2d');this.cam={x:WORLD_SIZE/2,y:WORLD_SIZE/2};this.zoom=.75;this.background=null;this.backgroundUrl='';this.worldTexture=null;this.worldTextureSource='';this.worldLogo=null;this.worldLogoUrl='';this.fps=60;this.lastFpsCheck=0;this.frames=0;this.last=performance.now();this.screenW=0;this.screenH=0;}
   resize(){const ratio=Math.min(devicePixelRatio||1,2),w=innerWidth,h=innerHeight;this.canvas.width=Math.round(w*ratio);this.canvas.height=Math.round(h*ratio);this.canvas.style.width=w+'px';this.canvas.style.height=h+'px';this.ctx.setTransform(ratio,0,0,ratio,0,0);this.screenW=w;this.screenH=h;}
   toWorld(x,y){return {x:this.cam.x+(x-this.screenW/2)/this.zoom,y:this.cam.y+(y-this.screenH/2)/this.zoom};}
   draw(snapshot,selectedId,settings=DEFAULT_SETTINGS,playing=false,dt=1/60,freeCamera=false){if(!this.screenW||this.screenW!==innerWidth||this.screenH!==innerHeight)this.resize();const ctx=this.ctx,W=this.screenW,H=this.screenH;
     ctx.clearRect(0,0,W,H);ctx.fillStyle=settings.bgColor;ctx.fillRect(0,0,W,H);
     const backgroundSource=settings.backgroundUrl || '/assets/vintage-background.png';
     if(settings.backgroundImage && this.backgroundUrl!==backgroundSource){
-      this.backgroundUrl=backgroundSource;this.background=new Image();this.background.decoding='async';this.background.src=backgroundSource;
+      this.backgroundUrl=backgroundSource;this.worldTexture=null;this.worldTextureSource='';this.background=new Image();this.background.decoding='async';this.background.src=backgroundSource;
     }
     const logoSource=settings.worldLogoUrl || '';
     if(this.worldLogoUrl!==logoSource){
@@ -134,18 +150,36 @@ export class ArenaRenderer{
     ctx.save();ctx.beginPath();ctx.rect(0,0,WORLD_SIZE,WORLD_SIZE);ctx.clip();
     if(settings.backgroundImage && this.background?.complete && this.background.naturalWidth){
       const img=this.background;
-      // Static map texture: always use contain (not stretch, scroll, tile or parallax).
-      // The same world coordinates are used on every frame: camera movement does not animate the background.
-      const scale=Math.min(WORLD_SIZE/img.naturalWidth,WORLD_SIZE/img.naturalHeight);
-      const bw=img.naturalWidth*scale,bh=img.naturalHeight*scale;
-      ctx.globalAlpha=settings.backgroundUrl?.84:.67;
-      ctx.drawImage(img,(WORLD_SIZE-bw)/2,(WORLD_SIZE-bh)/2,bw,bh);
+      // Fill the square edge to edge with a centered, non-distorted crop, then
+      // fit the entire artwork over it so that the Vintage lettering remains visible.
+      // Both layers are drawn at fixed WORLD positions, never attached to the camera.
+      const compose=(surface,g,size)=>{
+        const cover=Math.max(size/img.naturalWidth,size/img.naturalHeight);
+        const cw=img.naturalWidth*cover,ch=img.naturalHeight*cover;
+        g.globalAlpha=settings.backgroundUrl?.75:.55;
+        g.drawImage(img,(size-cw)/2,(size-ch)/2,cw,ch);
+        const contain=Math.min(size/img.naturalWidth,size/img.naturalHeight);
+        const bw=img.naturalWidth*contain,bh=img.naturalHeight*contain;
+        g.globalAlpha=settings.backgroundUrl?.88:.82;
+        g.drawImage(img,(size-bw)/2,(size-bh)/2,bw,bh);
+        g.globalAlpha=1;
+      };
+      // Cache the two static background layers once. Only one texture draw per frame,
+      // important for keeping gameplay smooth with large imported images.
+      if(typeof document!=='undefined' && document.createElement){
+        if(!this.worldTexture || this.worldTextureSource!==backgroundSource){
+          const texture=document.createElement('canvas');texture.width=1536;texture.height=1536;
+          const g=texture.getContext('2d');
+          if(g){compose(texture,g,texture.width);this.worldTexture=texture;this.worldTextureSource=backgroundSource;}
+        }
+        if(this.worldTexture)ctx.drawImage(this.worldTexture,0,0,WORLD_SIZE,WORLD_SIZE);
+      }else compose(null,ctx,WORLD_SIZE);
       ctx.globalAlpha=1;
     }
     if(this.worldLogo?.complete && this.worldLogo.naturalWidth){
-      const img=this.worldLogo,scale=Math.min(WORLD_SIZE*.43/img.naturalWidth,WORLD_SIZE*.27/img.naturalHeight);
+      const img=this.worldLogo,scale=Math.min(WORLD_SIZE*.83/img.naturalWidth,WORLD_SIZE*.34/img.naturalHeight);
       const lw=img.naturalWidth*scale,lh=img.naturalHeight*scale;
-      ctx.globalAlpha=.78;ctx.drawImage(img,(WORLD_SIZE-lw)/2,(WORLD_SIZE-lh)/2,lw,lh);ctx.globalAlpha=1;
+      ctx.globalAlpha=.87;ctx.drawImage(img,(WORLD_SIZE-lw)/2,(WORLD_SIZE-lh)/2,lw,lh);ctx.globalAlpha=1;
     }
     ctx.restore();
     if(settings.showGrid){ctx.save();ctx.beginPath();ctx.rect(0,0,WORLD_SIZE,WORLD_SIZE);ctx.clip();ctx.lineWidth=1/this.zoom;ctx.strokeStyle=settings.gridColor;ctx.globalAlpha=.65;ctx.beginPath();for(let x=Math.max(0,Math.floor(left/110)*110);x<Math.min(right,WORLD_SIZE);x+=110){ctx.moveTo(x,Math.max(0,top));ctx.lineTo(x,Math.min(WORLD_SIZE,bottom));}for(let y=Math.max(0,Math.floor(top/110)*110);y<Math.min(bottom,WORLD_SIZE);y+=110){ctx.moveTo(Math.max(0,left),y);ctx.lineTo(Math.min(WORLD_SIZE,right),y);}ctx.stroke();ctx.restore();}
@@ -212,8 +246,42 @@ export class ArenaRenderer{
     this.drawRadar(snapshot,selectedId,settings);
     this.frames++;if(performance.now()-this.lastFpsCheck>800){this.fps=Math.round(this.frames*1000/(performance.now()-this.lastFpsCheck||1000));this.frames=0;this.lastFpsCheck=performance.now();}
   }
-  drawRadar(snapshot,id,settings){const ctx=this.radarCtx;ctx.clearRect(0,0,150,150);if(!settings.showMinimap||!snapshot)return;ctx.fillStyle='#11273a';ctx.fillRect(0,0,150,150);
-    ctx.strokeStyle='#426278';ctx.strokeRect(3,3,144,144);ctx.strokeStyle='#264356';ctx.lineWidth=1;for(let k=1;k<5;k++){ctx.beginPath();ctx.moveTo(k*30,0);ctx.lineTo(k*30,150);ctx.moveTo(0,k*30);ctx.lineTo(150,k*30);ctx.stroke();}
-    for(const p of snapshot.players||[]){if(!p.cells?.length)continue;const c=p.cells[0];ctx.beginPath();ctx.arc(c.x/WORLD_SIZE*150,c.y/WORLD_SIZE*150,p.id===id?5:2.5,0,Math.PI*2);ctx.fillStyle=p.id===id?'#fff':'#7397b3';ctx.fill();}
-  }
-}
+  drawRadar(snapshot,id,settings){
+    const ctx=this.radarCtx, size=240, padding=10, inner=size-2*padding;
+    ctx.clearRect(0,0,size,size);
+    if(!settings.showMinimap||!snapshot)return;
+    ctx.fillStyle='rgba(6,15,25,0.95)';ctx.fillRect(0,0,size,size);
+    ctx.fillStyle='rgba(47,80,100,0.1)';ctx.fillRect(padding,padding,inner,inner);
+    ctx.strokeStyle='rgba(123,163,190,.55)';ctx.lineWidth=1;ctx.strokeRect(padding,padding,inner,inner);
+    ctx.strokeStyle='rgba(111,157,186,.21)';
+    for(let k=1;k<5;k++){
+      const a=padding+inner*k/5;
+      ctx.beginPath();ctx.moveTo(a,padding);ctx.lineTo(a,padding+inner);
+      ctx.moveTo(padding,a);ctx.lineTo(padding+inner,a);ctx.stroke();
+    }
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(135,163,187,.52)';ctx.font='600 12px Rajdhani, sans-serif';
+    for(let x=0;x<5;x++)for(let y=0;y<5;y++){
+      ctx.fillText('ABCDE'[x]+(y+1),padding+(x+.5)*inner/5,padding+(y+.5)*inner/5);
+    }
+    const visible=getVisibleAllies(snapshot,id);
+    const sorted=[...visible].sort((a,b)=>totalMass(b)-totalMass(a));
+    // Markers are scaled by mass. Never show names of players outside your tag group.
+    for(const p of sorted){
+      const total=totalMass(p),weight=Math.max(total,1);
+      const x=p.cells.reduce((s,c)=>s+c.x*c.mass,0)/weight;
+      const y=p.cells.reduce((s,c)=>s+c.y*c.mass,0)/weight;
+      const px=padding+Math.min(1,Math.max(0,x/WORLD_SIZE))*inner;
+      const py=padding+Math.min(1,Math.max(0,y/WORLD_SIZE))*inner;
+      const mine=p.id===id,r=markerRadius(total,mine);
+      ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);
+      ctx.fillStyle=mine?'#f8ffff':p.color||'#96bfd8';ctx.fill();
+      ctx.strokeStyle=mine?'#45d9ff':'rgba(255,255,255,.65)';ctx.lineWidth=mine?2.8:1;
+      ctx.stroke();
+      const label=String(p.name||'Player').slice(0,15);
+      // Label below each marker; all group members are represented by their real names.
+      const labelY=py+r+8;
+      ctx.font='700 11px Rajdhani, sans-serif';
+      ctx.lineWidth=2.6;ctx.strokeStyle='rgba(1,8,15,.9)';ctx.strokeText(label,px,labelY);
+      ctx.fillStyle=mine?'#fff':'#d8e9f3';ctx.fillText(label,px,labelY);
+    }
+  }}

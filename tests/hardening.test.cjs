@@ -14,7 +14,7 @@ function harness(env={}){
   const http={createServer(){return {listen(_p,_h,cb){cb();},close(fn){fn?.();}};}};
   const source=fs.readFileSync(path.join(__dirname,'../server/index.js'),'utf8');
   vm.runInNewContext(source,{
-    require(mod){if(mod==='ws')return {WebSocketServer:FakeWSS,WebSocket:{OPEN:1}};if(mod==='node:http')return http;if(mod==='./core.cjs')return core;if(mod==='./auth.cjs')return require('../server/auth.cjs');if(mod==='node:fs')return fs;if(mod==='node:path')return path;throw new Error(mod);},
+    require(mod){if(mod==='ws')return {WebSocketServer:FakeWSS,WebSocket:{OPEN:1}};if(mod==='node:http')return http;if(mod==='./core.cjs')return core;if(mod==='./restart.cjs')return require('../server/restart.cjs');if(mod==='./auth.cjs')return require('../server/auth.cjs');if(mod==='node:fs')return fs;if(mod==='node:path')return path;throw new Error(mod);},
     __dirname:path.resolve(__dirname,'../server'),
     process:{env:{PORT:'3328',...env},on(){}},setInterval(fn){intervals.push(fn);return intervals.length;},clearInterval(){},
     setTimeout(){return {unref(){}};},JSON,Date,URL,Number,String,console,Map,Set,Object,Buffer,

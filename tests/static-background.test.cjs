@@ -31,11 +31,15 @@ test('background and center logo are world-fixed and clipped to the square',asyn
     const s={...DEFAULT_SETTINGS,showGrid:false,showSectors:false,showBorders:false,worldLogoUrl:'https://example.com/brand.png'};
     r.draw(null,null,s,false);
     const initial=main.operations.filter(x=>x.method==='drawImage').map(x=>x.args.slice(1));
-    assert.equal(initial.length,2);
-    assert.equal(initial[0][0],0);
-    assert.equal(initial[0][1],800);
-    assert.equal(initial[0][2],WORLD_SIZE);
-    assert.equal(initial[0][3],3200);
+    assert.equal(initial.length,3);
+    assert.equal(initial[0][0],-1200); // cover crop, full square
+    assert.equal(initial[0][1],0);
+    assert.equal(initial[0][2],7200);
+    assert.equal(initial[0][3],WORLD_SIZE);
+    assert.equal(initial[1][0],0); // contain pass preserves full brand wordmark
+    assert.equal(initial[1][1],800);
+    assert.equal(initial[1][2],WORLD_SIZE);
+    assert.equal(initial[1][3],3200);
     assert.ok(main.operations.some(x=>x.method==='rect'&&x.args[0]===0&&x.args[2]===WORLD_SIZE));
     main.operations.length=0;
     r.cam.x=3900;r.cam.y=4100;

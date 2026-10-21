@@ -3,12 +3,14 @@
 const http=require('node:http');
 const {WebSocketServer,WebSocket}=require('ws');
 const core=require('./core.cjs');
+const {RestartCycle}=require('./restart.cjs');
 const auth=require('./auth.cjs').createAuth();
 const fs=require('node:fs'),pathModule=require('node:path');
 const publicRoot=pathModule.resolve(__dirname,'../public');
 const rooms=Object.fromEntries(Object.keys(core.MODES).map(m=>[m,core.createRoom(m)]));
 const host='0.0.0.0',port=Number(process.env.PORT||3001);
 const clients=new Map();
+const restartCycle=new RestartCycle();
 const spectators=Object.fromEntries(Object.keys(rooms).map(mode=>[mode,new Set()]));
 const server=http.createServer(async (req,res)=>{
   try{if(await auth(req,res))return;}catch{res.writeHead(500);res.end('Request failed');return;}
@@ -31,7 +33,7 @@ const wss=new WebSocketServer({server,maxPayload:4096,perMessageDeflate:false,ve
   return (ipCounts.get(clientIp(req))||0)<maxPerIp;
 }});
 function reply(ws,data){if(ws.readyState===WebSocket.OPEN){try{ws.send(JSON.stringify(data));}catch{}}}
-wss.on('connection',(ws,req)=>{const ip=clientIp(req);ipCounts.set(ip,(ipCounts.get(ip)||0)+1);let current=null,watching=null;
+wss.on('connection',(ws,req)=>{reply(ws,restartCycle.schedule());const ip=clientIp(req);ipCounts.set(ip,(ipCounts.get(ip)||0)+1);let current=null,watching=null;
   const detach=()=>{if(current){current.room.players.delete(current.player.id);clients.delete(current.player.id);current=null;}if(watching){spectators[watching.mode].delete(ws);watching=null;}};
   ws.on('message',data=>{let msg;try{msg=JSON.parse(data.toString());}catch{return;}if(!msg||typeof msg!=='object')return;
     if(msg.type==='spectate'){
@@ -71,7 +73,24 @@ wss.on('connection',(ws,req)=>{const ip=clientIp(req);ipCounts.set(ip,(ipCounts.
   ws.on('error',()=>{});
 });
 let last=Date.now();const tick=setInterval(()=>{const now=Date.now(),dt=Math.min(.1,(now-last)/1000);last=now;for(const room of Object.values(rooms))core.step(room,dt);},50);
+const restartWorker=setInterval(()=>{
+  for(const event of restartCycle.poll(Date.now())){
+    if(event.kind==='warning'){
+      for(const ws of wss.clients)reply(ws,{type:'server_notice',message:`Server will restart in ${event.minutes} minutes`,minutes:event.minutes});
+    }else if(event.kind==='restart'){
+      for(const ws of wss.clients){reply(ws,{type:'server_restarted',message:'Server restarted • Match reset'});}
+      for(const name of Object.keys(rooms)){
+        // Keep each room object so existing WebSocket handlers cannot act on a stale room reference.
+        const replacement=core.createRoom(name);
+        Object.assign(rooms[name],replacement);
+        spectators[name].clear();
+      }
+      clients.clear();
+      for(const ws of wss.clients){try{ws.close(4001,'Scheduled arena restart');}catch{}}
+    }
+  }
+},1000);
 const updates=setInterval(()=>{for(const room of Object.values(rooms)){const state=JSON.stringify(core.snapshot(room));for(const p of room.players.values()){if(p.npc)continue;const ws=clients.get(p.id);if(ws?.readyState===WebSocket.OPEN)try{ws.send(state);}catch{}}for(const ws of spectators[room.mode]){if(ws.readyState===WebSocket.OPEN)try{ws.send(state);}catch{}}}},50);
 server.listen(port,host,()=>console.log(`Vintage game server listening on http://${host}:${port}; modes: ${Object.keys(rooms).join(', ')}`));
-function shutDown(){clearInterval(tick);clearInterval(updates);wss.close();server.close(()=>process.exit(0));setTimeout(()=>process.exit(1),3000).unref();}
+function shutDown(){clearInterval(tick);clearInterval(updates);clearInterval(restartWorker);wss.close();server.close(()=>process.exit(0));setTimeout(()=>process.exit(1),3000).unref();}
 process.on('SIGTERM',shutDown);process.on('SIGINT',shutDown);

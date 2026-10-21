@@ -1,7 +1,7 @@
 {
   "name": "vintage-arena-backend",
   "private": true,
-  "version": "11.0.0",
+  "version": "13.0.0",
   "description": "Node.js WebSocket game server for Vintage Arena",
   "engines": {
     "node": ">=20"
