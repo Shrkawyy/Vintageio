@@ -514,7 +514,7 @@ $('zoom-reset').onclick=()=>adjustZoom(1/Math.max(settings.zoom,.01));
 $('close-settings').onclick=hideSettings;
 $('settings-done').onclick=hideSettings;
 $('settings-overlay').addEventListener('click',e=>{ if(e.target===$('settings-overlay')) hideSettings(); });
-document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ if(playing) enterLobby(); if(b.dataset.mode) updateMode(b.dataset.mode); });
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=(e)=>{ const btn=e.target.closest('[data-mode]'); if(!btn)return; if(playing) enterLobby(); if(btn.dataset.mode) updateMode(btn.dataset.mode); });
 document.querySelectorAll('.chat-tab').forEach(b=>b.onclick=()=>{ chatChannel=b.dataset.channel; updateChatTabs(); });
 document.querySelectorAll('#settings-tabs button').forEach(b=>b.onclick=()=>{ settingsTab=b.dataset.tab; settingsPage=Object.keys(S[settingsTab])[0]; renderSettings(); });
 document.querySelectorAll('.soon-btn').forEach(btn=>btn.addEventListener('click',e=>{ const msg=btn.dataset.soon; if(msg){ e.preventDefault(); toast(msg); } }));
