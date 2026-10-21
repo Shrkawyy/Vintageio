@@ -9,22 +9,19 @@ export const FFA_PHYSICS = Object.freeze({
   minMergeTime: 8, maxMergeTime: 27, cellPush: .57, mergePull: 3.7,
   eatRatio: 1.25, eatOverlap: .39,
 });
-export const OTHER_PHYSICS = Object.freeze({
-  ...FFA_PHYSICS, baseSpeed: 920, speedPower: .245, minSpeed: 61, maxSpeed: 375,
-  splitImpulse: 760, splitDrag: 3.1, steerDuringBoost: .42,
-  mergeBase: 9, mergeMassFactor: .024,
-});
+// All Vintage modes share mechanics; only starting mass and room population differ.
+export const OTHER_PHYSICS = FFA_PHYSICS;
 export const clamp = (v,min,max) => Math.min(max,Math.max(min,v));
 export const cellRadius = mass => Math.max(13,Math.sqrt(Math.max(1,mass))*2.45);
 export const physicsFor = mode => mode === 'ffa' ? FFA_PHYSICS : OTHER_PHYSICS;
 
-export function splitCells(player,time,width,maxCells,mode='ffa') {
+export function splitCells(player,time,width,maxCells,mode='ffa',minimumMass=null) {
   if (!player?.cells?.length) return 0;
   const rules=physicsFor(mode), original=[...player.cells];
   let free=maxCells-player.cells.length, spawned=0;
   for (const c of original) {
     if(free<=0) break;
-    if(c.mass < rules.minSplitMass) continue;
+    if(c.mass < (minimumMass??rules.minSplitMass)) continue;
     const dx=(player.target?.x??c.x)-c.x,dy=(player.target?.y??c.y)-c.y;
     const length=Math.hypot(dx,dy)||1;
     // If the pointer is directly over the cell, preserve the last target angle.
@@ -32,6 +29,7 @@ export function splitCells(player,time,width,maxCells,mode='ffa') {
     const uy=length===1 && dx===0 && dy===0 ? 0 : dy/length;
     const half=c.mass/2;
     c.mass=half;
+    c.collideAt=time+.15;
     const launch=rules.splitImpulse * Math.pow(1000/Math.max(100,half),rules.splitMassPower);
     const distance=cellRadius(half)*rules.splitGap;
     const duration=clamp(rules.mergeBase+Math.sqrt(half)*rules.mergeMassFactor,rules.minMergeTime,rules.maxMergeTime);
@@ -39,7 +37,7 @@ export function splitCells(player,time,width,maxCells,mode='ffa') {
     const spawnedCell={
       x:clamp(c.x+ux*distance,cellRadius(half),width-cellRadius(half)),
       y:clamp(c.y+uy*distance,cellRadius(half),width-cellRadius(half)),
-      mass:half,color:c.color,
+      mass:half,color:c.color,collideAt:time+.15,
       vx:ux*launch,vy:uy*launch,mergeAt:time+duration,
     };
     player.cells.push(spawnedCell);
@@ -80,13 +78,15 @@ export function moveCells(player,dt,time,width,mode='ffa',sensitivity=1) {
     const nx=dx/distance,ny=dy/distance;
     const mergeReady=time>=Math.max(a.mergeAt||0,b.mergeAt||0);
     if(!mergeReady){
+      if(time<Math.max(a.collideAt||0,b.collideAt||0))continue;
       const minDistance=(cellRadius(a.mass)+cellRadius(b.mass))*.93;
       if(distance<minDistance){
-        const push=(minDistance-distance)*rules.cellPush*.5;
-        a.x=clamp(a.x-nx*push,cellRadius(a.mass),width-cellRadius(a.mass));
-        a.y=clamp(a.y-ny*push,cellRadius(a.mass),width-cellRadius(a.mass));
-        b.x=clamp(b.x+nx*push,cellRadius(b.mass),width-cellRadius(b.mass));
-        b.y=clamp(b.y+ny*push,cellRadius(b.mass),width-cellRadius(b.mass));
+        const push=(minDistance-distance)*(1-Math.pow(1-rules.cellPush,dt*30));
+        const pushA=push*b.mass/(a.mass+b.mass),pushB=push*a.mass/(a.mass+b.mass);
+        a.x=clamp(a.x-nx*pushA,cellRadius(a.mass),width-cellRadius(a.mass));
+        a.y=clamp(a.y-ny*pushA,cellRadius(a.mass),width-cellRadius(a.mass));
+        b.x=clamp(b.x+nx*pushB,cellRadius(b.mass),width-cellRadius(b.mass));
+        b.y=clamp(b.y+ny*pushB,cellRadius(b.mass),width-cellRadius(b.mass));
       }
     }else {
       const reach=(cellRadius(a.mass)+cellRadius(b.mass))*1.18;

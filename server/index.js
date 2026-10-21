@@ -3,13 +3,23 @@
 const http=require('node:http');
 const {WebSocketServer,WebSocket}=require('ws');
 const core=require('./core.cjs');
+const auth=require('./auth.cjs').createAuth();
+const fs=require('node:fs'),pathModule=require('node:path');
+const publicRoot=pathModule.resolve(__dirname,'../public');
 const rooms=Object.fromEntries(Object.keys(core.MODES).map(m=>[m,core.createRoom(m)]));
 const host='0.0.0.0',port=Number(process.env.PORT||3001);
 const clients=new Map();
 const spectators=Object.fromEntries(Object.keys(rooms).map(mode=>[mode,new Set()]));
-const server=http.createServer((req,res)=>{const path=new URL(req.url||'/',`http://${req.headers.host||'localhost'}`).pathname;
+const server=http.createServer(async (req,res)=>{
+  try{if(await auth(req,res))return;}catch{res.writeHead(500);res.end('Request failed');return;}
+  const path=new URL(req.url||'/',`http://${req.headers.host||'localhost'}`).pathname;
   if(path==='/health'){res.writeHead(200,{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'});res.end(JSON.stringify({status:'ok',rooms:Object.fromEntries(Object.entries(rooms).map(([key,room])=>[key,{players:[...room.players.values()].filter(p=>!p.npc).length,bots:core.MODES[key].bots,spectators:spectators[key].size}]))}));return;}
-  res.writeHead(200,{'Content-Type':'text/plain'});res.end('Vintage game WebSocket server. Health: /health\n');
+  const file=pathModule.resolve(publicRoot,'.'+(path==='/'?'/index.html':path));
+  if(!file.startsWith(publicRoot+pathModule.sep)){res.writeHead(403);res.end();return;}
+  const ext=pathModule.extname(file),types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml'};
+  if(!types[ext]||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end('Not found');return;}
+  res.writeHead(200,{'Content-Type':types[ext],'X-Content-Type-Options':'nosniff'});fs.createReadStream(file).pipe(res);
+
 });
 const allowedOrigins=String(process.env.ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean);
 const maxPerIp=Number(process.env.MAX_CONN_PER_IP||8),trustProxy=process.env.TRUST_PROXY==='1';
@@ -29,6 +39,7 @@ wss.on('connection',(ws,req)=>{const ip=clientIp(req);ipCounts.set(ip,(ipCounts.
       detach();watching=rooms[msg.mode];spectators[msg.mode].add(ws);reply(ws,{type:'spectator_welcome',mode:msg.mode});reply(ws,core.snapshot(watching));return;
     }
     if(msg.type==='join'){
+      if(current && current.room.mode===msg.mode){reply(ws,{type:'welcome',mode:msg.mode,playerId:current.player.id});return;}
       detach();
       if(!Object.hasOwn(rooms,msg.mode)){reply(ws,{type:'error',message:'Unknown game mode'});return;}
       const room=rooms[msg.mode];const tag=core.cleanTag(msg.tag),name=core.cleanText(msg.name,18)||'Vintage Player';const player=core.join(room,name,tag,0);
@@ -59,7 +70,7 @@ wss.on('connection',(ws,req)=>{const ip=clientIp(req);ipCounts.set(ip,(ipCounts.
   ws.on('error',()=>{});
 });
 let last=Date.now();const tick=setInterval(()=>{const now=Date.now(),dt=Math.min(.1,(now-last)/1000);last=now;for(const room of Object.values(rooms))core.step(room,dt);},50);
-const updates=setInterval(()=>{for(const room of Object.values(rooms)){const state=JSON.stringify(core.snapshot(room));for(const p of room.players.values()){if(p.npc)continue;const ws=clients.get(p.id);if(ws?.readyState===WebSocket.OPEN)try{ws.send(state);}catch{}}for(const ws of spectators[room.mode]){if(ws.readyState===WebSocket.OPEN)try{ws.send(state);}catch{}}}},100);
+const updates=setInterval(()=>{for(const room of Object.values(rooms)){const state=JSON.stringify(core.snapshot(room));for(const p of room.players.values()){if(p.npc)continue;const ws=clients.get(p.id);if(ws?.readyState===WebSocket.OPEN)try{ws.send(state);}catch{}}for(const ws of spectators[room.mode]){if(ws.readyState===WebSocket.OPEN)try{ws.send(state);}catch{}}}},50);
 server.listen(port,host,()=>console.log(`Vintage game server listening on http://${host}:${port}; modes: ${Object.keys(rooms).join(', ')}`));
 function shutDown(){clearInterval(tick);clearInterval(updates);wss.close();server.close(()=>process.exit(0));setTimeout(()=>process.exit(1),3000).unref();}
 process.on('SIGTERM',shutDown);process.on('SIGINT',shutDown);

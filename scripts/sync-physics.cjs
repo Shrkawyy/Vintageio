@@ -6,3 +6,7 @@ const names=[...source.matchAll(/^export\s+(?:const|function)\s+(\w+)/gm)].map(m
 const body=source.replace(/^export\s+/gm,'');
 fs.writeFileSync(path.join(root,'server/physics.cjs'),"'use strict';\n"+body+'\nmodule.exports={'+names.join(',')+'};\n');
 console.log('Synchronized physics:',names.join(', '));
+
+const virusSource=fs.readFileSync(path.join(root,'public/virus-rules.js'),'utf8');
+const virusNames=[...virusSource.matchAll(/^export\s+(?:const|function)\s+(\w+)/gm)].map(m=>m[1]);
+fs.writeFileSync(path.join(root,'server/virus.cjs'),"'use strict';\n"+virusSource.replace(/^export\s+/gm,'')+'\nmodule.exports={'+virusNames.join(',')+'};\n');

@@ -1,3 +1,7 @@
+# Current release: Vintage v11
+
+Read **START-HERE-AR.md** for the current changes, setup and limits. Earlier release notes below are historical.
+
 # VINTAGE v10.1 — see RELEASE-v10.1.md (bug fixes + server hardening)
 
 The sections below describe earlier releases (v0.7 – v10) and remain accurate unless RELEASE-v10.1.md says otherwise.

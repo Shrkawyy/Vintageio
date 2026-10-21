@@ -1,3 +1,4 @@
+import {THEMES} from './themes.js';
 import {MODES, DEFAULT_SETTINGS, LocalArena, ArenaRenderer, AUTO_SPLIT_MASS, WORLD_SIZE} from './game.js';
 
 const $ = id => document.getElementById(id);
@@ -16,6 +17,8 @@ const valueSafe = (saved={}) => {
 let settings = (()=>{ try { return valueSafe(JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null')); } catch { return cloneDefaults(); }})();
 let mode='ffa', playing=false, spectating=false, spectateTargetId='', activeSlot=0, remote=null, hudVisible=true, chatChannel='all', isSettingsOpen=false, frameTime=performance.now();
 let nickname='Vintage Player', tag='';
+let region='EU', browseRegion='EU', serverId='eu-ffa', selectedServer=null, sessionServerId=null, sessionMode=null;
+const serverUrl=()=>String(selectedServer?.wsUrl || window.VINTAGE_CONFIG?.wsUrl || '').trim();
 let showDeaths=false, remoteSnapshot=null;
 let pointer={x:innerWidth/2+100,y:innerHeight/2}, rightDown=false, macroFeedHeld=false,nextMacroFeedAt=0;
 let pointerOverField=false, draggingCamera=false, dragPointer=null;
@@ -33,6 +36,11 @@ function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(
 function updateProfileName(){ const name = toName($('nickname')?.value || nickname); const node = $('profile-name'); if(node) node.textContent = name; }
 function applySettings(){
   document.documentElement.style.setProperty('--accent', settings.accentColor);
+  const theme=THEMES[settings.themePreset] || THEMES.vintage;
+  document.body.dataset.theme=settings.themePreset;
+  document.documentElement.style.setProperty('--theme-panel',theme.panel);
+  document.documentElement.style.setProperty('--theme-radius',theme.radius);
+  document.body.classList.toggle('vintage-background-enabled',settings.backgroundImage);
   $('leaderboard').classList.toggle('hidden', !settings.showLeaderboard || !hudVisible);
   $('minimap').classList.toggle('hidden', !settings.showMinimap || !hudVisible);
   $('chat').classList.toggle('hidden', !settings.showChat || !hudVisible);
@@ -65,7 +73,7 @@ function updateMode(next){
   if(!MODES[next]) return;
   mode = next;
   document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('selected', b.dataset.mode===mode));
-  $('top-mode').textContent = mode.toUpperCase() + ' · EUROPE';
+  $('top-mode').textContent = mode.toUpperCase() + ' · '+region;
   $('mode-label').textContent = MODES[mode].title + ' MODE';
   const label=$('lobby-mode-name'),mass=$('lobby-mode-mass');
   if(label)label.textContent=MODES[mode].title;
@@ -75,17 +83,24 @@ function updateMode(next){
 }
 
 function enterLobby(){
-  macroFeedHeld=false;playing=false; spectating=false; spectateTargetId=''; remote?.disconnect(); remote=null; remoteSnapshot=null;
-  setLobbyState(true);
-  $('lobby').classList.remove('hidden'); $('gameover').classList.add('hidden');
-  $('top-mode').textContent = mode.toUpperCase() + ' · EUROPE';
-  $('connection-status').innerHTML = '<i></i> DEMO MODE';
-  $('connection-status').classList.remove('online');
-  $('chat-online').textContent = 'LOCAL';
+  macroFeedHeld=false;rightDown=false;pointerOverField=false;
+  setLobbyState(true);$('lobby').classList.remove('hidden');$('gameover').classList.add('hidden');
+  $('play-btn').innerHTML=playing ? '<span>▶</span> RESUME MATCH <span>↗</span>' : '<span>▶</span> PLAY NOW <span>↗</span>';
   setCameraControlsVisible();
+}
+function leaveSession(){
+  playing=false;spectating=false;showDeaths=false;
+  const old=remote;remote=null;old?.disconnect();remoteSnapshot=null;
+  sessionServerId=null;sessionMode=null;
 }
 
 function beginGame(){
+  if(playing && sessionMode===mode && sessionServerId===serverId){
+    setLobbyState(false);$('lobby').classList.add('hidden');$('gameover').classList.add('hidden');
+    setCameraControlsVisible();return;
+  }
+  leaveSession();sessionMode=mode;sessionServerId=serverId;
+
   nickname = toName($('nickname').value); tag = toTag($('team-tag').value);
   $('nickname').value = nickname; $('team-tag').value = tag;
   $('chat-tag-label').textContent = tag ? ('#'+tag.toUpperCase()) : 'NO TAG';
@@ -97,7 +112,7 @@ function beginGame(){
   const multi = true;
   arena.reset(mode, nickname, tag, multi, settings);
   remote?.disconnect(); remote=null;
-  const wsUrl = String(window.VINTAGE_CONFIG?.wsUrl || '').trim();
+  const wsUrl = serverUrl();
   if(wsUrl && /^wss?:\/\//i.test(wsUrl)){
     remote = new RemoteArena(wsUrl,{mode,nickname,tag,multi});
     remote.connect();
@@ -135,7 +150,7 @@ class RemoteArena{
     ws.addEventListener('close',()=>{
       if(slot===0 && (playing||spectating) && remote===this){
         this.connected=false; $('connection-status').innerHTML='<i></i> OFFLINE'; $('connection-status').classList.remove('online'); $('chat-online').textContent='OFFLINE';
-        toast('Connection lost — switched to local preview'); remote?.disconnect(); remote=null; remoteSnapshot=null; arena.reset(mode,nickname,tag,this.opts.multi,settings,this.opts.spectator); 
+        toast('Connection lost. Reconnect to start a new match.'); playing=false;spectating=false;enterLobby(); 
       }
     });
     ws.addEventListener('error',()=>{ if(slot===0) toast('WebSocket connection failed'); });
@@ -178,9 +193,10 @@ function sendMessage(text){
 function activeId(){ return remote ? (remote.myIds[Math.min(activeSlot,remote.myIds.length-1)]||remote.myIds[0]) : (arena.myIds[Math.min(activeSlot,arena.myIds.length-1)]||arena.myIds[0]); }
 function selectedId(snapshot){ return spectating ? null : activeId(); }
 function beginSpectate(){
+  leaveSession();
   spectating=true; playing=false; showDeaths=false; spectateTargetId=''; rightDown=false; draggingCamera=false;
   setLobbyState(false); $('lobby').classList.add('hidden'); $('gameover').classList.add('hidden');
-  const wsUrl=String(window.VINTAGE_CONFIG?.wsUrl || '').trim();
+  const wsUrl=serverUrl();
   remote?.disconnect(); remote=null; remoteSnapshot=null;
   arena.reset(mode, 'Spectator', '', false, settings, true);
   renderer.cam={x:WORLD_SIZE/2,y:WORLD_SIZE/2};
@@ -211,7 +227,7 @@ function changeSlot(){
   }else toast('Controlling Connect '+(next+1));
 }
 
-function doAction(action){ if(!playing||spectating||isSettingsOpen) return; const id=activeId(); if(remote?.connected){ remote.sendAction(activeSlot,action); } else { if(action==='split') arena.split(id,settings); if(action==='feed') arena.feed(id); } }
+function doAction(action){ if(!playing||spectating||isSettingsOpen||document.body.classList.contains('show-lobby')) return; const id=activeId(); if(remote?.connected){ remote.sendAction(activeSlot,action); } else { if(action==='split') arena.split(id,settings); if(action==='feed') arena.feed(id); } }
 function repeatAction(action,count){ for(let i=0;i<count;i++) doAction(action); }
 function stopMovement(){
   if(remote?.connected){
@@ -254,25 +270,25 @@ function gameLoop(now){
   if(playing && macroFeedHeld && !isSettingsOpen && now>=nextMacroFeedAt){
     doAction('feed');nextMacroFeedAt=now+85;
   }
-  if((playing || spectating) && !isSettingsOpen){
+  if((playing || spectating) && !isSettingsOpen && !document.body.classList.contains('show-lobby')){
     if(spectating && !draggingCamera && pointerOverField){
       const edge=(pos,size)=>{const n=(pos/size-.5)*2,dead=.23;return Math.sign(n)*Math.pow(Math.max(0,Math.abs(n)-dead)/(1-dead),1.55)};
       const speed=780*dt/Math.max(renderer.zoom,.09);
       renderer.cam.x=clampClient(renderer.cam.x+edge(pointer.x,innerWidth)*speed,0,WORLD_SIZE);
       renderer.cam.y=clampClient(renderer.cam.y+edge(pointer.y,innerHeight)*speed,0,WORLD_SIZE);
     }
-    const world=renderer.toWorld(pointer.x,pointer.y);
+    const world=renderer.toWorld(renderer.screenW/2+(pointer.x-renderer.screenW/2)*settings.mouseSensitivity,renderer.screenH/2+(pointer.y-renderer.screenH/2)*settings.mouseSensitivity);
     const slot=(rightDown && settings.rightClickMove && (remote?.myIds.length || arena.myIds.length)>1)?1:activeSlot;
     if(playing){
       if(remote?.connected){ if(now-controlAt>60){ remote.sendControl(slot,world); controlAt=now; } }
       else { const id=arena.myIds[slot] || activeId(); arena.setTarget(id,world.x,world.y); }
     }
-    if(!remote?.connected) arena.tick(dt,settings);
-  }else if(!showDeaths){ arena.tick(dt*.45,settings); }
-  const snap = remote?.connected ? (remoteSnapshot || {players:[],food:[],viruses:[],worldSize:WORLD_SIZE}) : arena.snapshot;
+    }
+  if(!remote && !showDeaths) arena.tick((playing||spectating)?dt:dt*.45,settings);
+  const snap = remote ? (remoteSnapshot || {players:[],food:[],viruses:[],worldSize:WORLD_SIZE}) : arena.snapshot;
   const focusId=selectedId(snap);
   renderer.draw(snap, focusId, settings, playing, dt, spectating);
-  if(now-hudAt>280){ hudAt=now; updateHUD(snap); if(playing && snap.players?.length){const ids=remote?.connected?remote.myIds:arena.myIds;if(ids.length && ids.every(id=>id && !snap.players.find(p=>p.id===id)?.cells?.length)){gameover();}} }
+  if(now-hudAt>280){ hudAt=now; updateHUD(snap); if(playing && (!remote || remote.connected) && snap.players?.length){const ids=remote?.connected?remote.myIds:arena.myIds;if(ids.length && ids.every(id=>id && !snap.players.find(p=>p.id===id)?.cells?.length)){gameover();}} }
   requestAnimationFrame(gameLoop);
 }
 
@@ -287,7 +303,7 @@ const S = {
     Cells:[
       {key:'showNames',label:'Player names',type:'toggle'},
       {key:'showMass',label:'Cell mass values',type:'toggle'},
-      {key:'autoSplit',label:'Auto split at 25,500 mass',type:'toggle'},
+
       {key:'cellOpacity',label:'Cell opacity',type:'range',min:30,max:100,step:5},
     ],
     Elements:[
@@ -300,7 +316,7 @@ const S = {
       {key:'wheelZoom',label:'Mouse wheel zoom',type:'toggle'},
       {key:'wheelZoomSensitivity',label:'Wheel zoom sensitivity',type:'range',min:.4,max:2,step:.1},
       {key:'cameraSmoothing',label:'Camera smoothing',type:'range',min:.02,max:.6,step:.02},
-      {key:'mouseSensitivity',label:'Mouse movement speed',type:'range',min:.5,max:1.8,step:.1},
+      {key:'mouseSensitivity',label:'Cursor sensitivity',type:'range',min:.5,max:1.8,step:.1},
     ],
     Helpers:[
       {key:'showLeaderboard',label:'Leaderboard',type:'toggle'},
@@ -310,6 +326,7 @@ const S = {
     ]
   },
   theme:{
+    'Theme presets':[],
     HUD:[
       {key:'accentColor',label:'Accent color',type:'color'},
     ],
@@ -327,7 +344,7 @@ const S = {
     Background:[
       {key:'bgColor',label:'Background color',type:'color'},
       {key:'backgroundImage',label:'Use background image',type:'toggle'},
-      {key:'backgroundUrl',label:'Background image URL',type:'url'},
+      {key:'backgroundUrl',label:'External background URL (blank = Vintage)',type:'url'},
     ]
   },
   controls:{
@@ -397,9 +414,25 @@ function renderSettings(){
   }
   const area = $('settings-content'); area.replaceChildren();
   if(settingsTab === 'import'){ renderImport(area); return; }
+  const heading=document.createElement('h3');heading.className='settings-section-title';heading.textContent=settingsPage.toUpperCase();area.append(heading);
+  if(settingsTab==='theme' && settingsPage==='Theme presets'){renderThemePresets(area);return;}
   for(const item of S[settingsTab][settingsPage]) renderSettingRow(area,item);
 }
 
+function renderThemePresets(area){
+  const grid=document.createElement('div');grid.className='theme-grid';
+  for(const [id,t] of Object.entries(THEMES)){
+    const card=document.createElement('button');card.className='theme-card'+(settings.themePreset===id?' selected':'');
+    card.style.setProperty('--swatch',t.accentColor);card.style.setProperty('--card-bg',t.panel);
+    const title=document.createElement('strong');title.textContent=t.label;
+    const desc=document.createElement('span');desc.textContent=t.description;
+    const preview=document.createElement('div');preview.className='theme-preview';preview.innerHTML='<i></i><i></i><i></i>';
+    card.append(preview,title,desc);card.onclick=()=>{
+      for(const key of ['accentColor','bgColor','gridColor','ownColor','secondColor']) settings[key]=t[key];
+      settings.themePreset=id;saveSettings();renderSettings();
+    };grid.append(card);
+  }area.append(grid);
+}
 function renderSettingRow(area,item){
   const row=document.createElement('div'); row.className='setting-row';
   const lab=document.createElement('div'); lab.className='setting-label'; lab.textContent=item.label;
@@ -468,9 +501,9 @@ window.addEventListener('keydown',e=>{
   const k=normalizeKey(e);
   if(document.activeElement === $('chat-input')){ if(k==='ESCAPE'){ document.activeElement.blur(); e.preventDefault(); } return; }
   if(['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){ if(k==='ESCAPE') document.activeElement.blur(); return; }
-  if(k===settings.keyMenu){ enterLobby(); e.preventDefault(); return; }
+  if(k===settings.keyMenu){ if(document.body.classList.contains('show-lobby') && playing) beginGame(); else enterLobby(); e.preventDefault(); return; }
   if(k===settings.keySettings){ showSettings(); e.preventDefault(); return; }
-  if((!playing && !spectating) || isEditing()) return;
+  if((!playing && !spectating) || isEditing() || document.body.classList.contains('show-lobby')) return;
   if(k===settings.keyChat){ $('chat-input').focus(); e.preventDefault(); return; }
   if(k===settings.keyChatToggle){ chatChannel = chatChannel==='all' ? 'tag' : 'all'; updateChatTabs(); e.preventDefault(); return; }
   if(k===settings.keyHUD){ hudVisible=!hudVisible; applySettings(); e.preventDefault(); return; }
@@ -552,6 +585,52 @@ window.addEventListener('resize',()=>renderer.resize());
 applySettings();
 setLobbyState(true);
 updateProfileName();
+selectedServer=window.VINTAGE_CONFIG?.regions?.EU?.[0]||null;
 updateMode('ffa');
+updateServerLabel();
 setCameraControlsVisible();
 requestAnimationFrame(gameLoop);
+
+function updateServerLabel(){
+  $('server-picker-btn').querySelector('span').textContent=region+' · '+mode.toUpperCase()+' ▾';
+  $('world-status').textContent='CURRENT WORLD · '+(serverUrl()?region+' ONLINE':'LOCAL DEMO');
+}
+function renderServers(){
+  document.querySelectorAll('[data-region]').forEach(b=>b.classList.toggle('active',b.dataset.region===browseRegion));
+  const list=$('server-list');list.replaceChildren();
+  const entries=browseRegion==='ASIA'?[]:(window.VINTAGE_CONFIG?.regions?.[browseRegion]||[]);
+  if(!entries.length){const empty=document.createElement('p');empty.className='server-empty';empty.textContent='No servers available in '+browseRegion+'.';list.append(empty);return;}
+  for(const entry of entries){
+    if(!MODES[entry.mode])continue;
+    const b=document.createElement('button');b.className='server-entry'+(entry.id===serverId?' selected':'');
+    const name=document.createElement('strong');name.textContent=entry.name;
+    const detail=document.createElement('span');detail.textContent=MODES[entry.mode].start.toLocaleString()+' MASS · '+((entry.wsUrl||window.VINTAGE_CONFIG?.wsUrl)?'ONLINE ENDPOINT':'LOCAL DEMO');
+    b.append(name,detail);b.onclick=()=>{
+      if(serverId!==entry.id){if(playing&&!confirm('Switch server and leave your current match?'))return;leaveSession();}
+      region=browseRegion;selectedServer=entry;serverId=entry.id;updateMode(entry.mode);updateServerLabel();enterLobby();$('servers-overlay').classList.add('hidden');
+    };list.append(b);
+  }
+}
+$('server-picker-btn').onclick=()=>{renderServers();$('servers-overlay').classList.remove('hidden');};
+$('close-servers').onclick=()=>$('servers-overlay').classList.add('hidden');
+$('servers-overlay').onclick=e=>{if(e.target===$('servers-overlay'))$('servers-overlay').classList.add('hidden');};
+document.querySelectorAll('[data-region]').forEach(b=>b.onclick=()=>{browseRegion=b.dataset.region;renderServers();});
+const authBase=String(window.VINTAGE_CONFIG?.authBaseUrl||'').replace(/\/$/,'');
+async function refreshAccount(){
+  try{const r=await fetch(authBase+'/auth/me',{credentials:'include'});if(!r.ok)return;const data=await r.json();
+    $('account-name').textContent=data.user?.name||'GUEST ACCESS';$('logout-btn').classList.toggle('hidden',!data.user);
+    if(data.user){$('nickname').value=toName(data.user.name);updateProfileName();}
+  }catch{}
+}
+let authPopup=null;
+document.querySelectorAll('[data-provider]').forEach(b=>b.onclick=async()=>{
+  const provider=b.dataset.provider;
+  authPopup=window.open('about:blank','vintage-login','width=520,height=720');
+  try{const r=await fetch(authBase+'/auth/providers',{credentials:'include'});if(!r.ok)throw Error('Account server is not configured.');
+    const providers=await r.json();if(!providers[provider])throw Error(provider+' login needs application credentials on the server.');
+    if(!authPopup)throw Error('Allow popups to sign in.');authPopup.location=authBase+'/auth/'+provider;
+  }catch(e){authPopup?.close();$('auth-status').textContent=e.message;}
+});
+window.addEventListener('message',e=>{if(e.origin!==new URL(authBase||location.origin).origin || e.source!==authPopup || e.data?.type!=='vintage-auth')return;refreshAccount();authPopup?.close();});
+$('logout-btn').onclick=async()=>{await fetch(authBase+'/auth/logout',{method:'POST',credentials:'include'});refreshAccount();};
+refreshAccount();

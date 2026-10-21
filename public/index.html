@@ -13,7 +13,7 @@
   <div id="noise"></div>
 
   <header class="topbar">
-    <div class="brand" aria-label="Vintage"><span class="brand-glyph">V</span><span>VINTAGE.IO<small>EST. 2026</small></span></div>
+    <div class="brand" aria-label="Vintage"><img class="vintage-logo" src="/assets/vintage-logo.png" alt="VINTAGE"></div>
     <div id="top-mode" class="mode-pill">FFA · EUROPE</div>
     <div class="top-actions">
       <span id="connection-status" class="connection-pill"><i></i> DEMO MODE</span>
@@ -48,11 +48,11 @@
     <div class="v-stage-light" aria-hidden="true"></div>
     <div class="v-stage-noise" aria-hidden="true"></div>
     <header class="v-stage-header">
-      <div class="v-stage-logo" aria-label="Vintage"><span class="v-logo-symbol">V</span><div><strong>VINTAGE.IO</strong><small>BEYOND THE ORDINARY</small></div></div>
+      <div class="v-stage-logo"><img class="vintage-logo" src="/assets/vintage-logo.png" alt="VINTAGE"></div>
       <nav class="v-stage-nav" aria-label="Main navigation">
         <button type="button" class="v-stage-nav-link" id="lobby-settings-btn">SETTINGS</button>
       </nav>
-      <div class="v-stage-account"><span class="v-guest-indicator"></span><span>GUEST ACCESS</span><button type="button" id="v-login-trigger" class="v-login-btn" aria-expanded="false" aria-controls="auth-menu">LOG IN <span>↗</span></button><div id="auth-menu" class="v-auth-menu hidden"><div>ACCOUNT CONNECTION <small>COMING SOON</small></div><button type="button" class="v-auth-option soon-btn" data-soon="Discord login is coming soon">Discord <span>SOON</span></button><button type="button" class="v-auth-option soon-btn" data-soon="Facebook login is coming soon">Facebook <span>SOON</span></button></div></div>
+      <div class="v-stage-account"><span class="v-guest-indicator"></span><span id="account-name">GUEST ACCESS</span><button type="button" id="v-login-trigger" class="v-login-btn" aria-expanded="false" aria-controls="auth-menu">LOG IN <span>↗</span></button><div id="auth-menu" class="v-auth-menu hidden"><div>ACCOUNT CONNECTION</div><button class="v-auth-option" data-provider="discord">Discord <span>CONNECT ↗</span></button><button class="v-auth-option" data-provider="facebook">Facebook <span>CONNECT ↗</span></button><button id="logout-btn" class="v-auth-option hidden">Log out</button><small id="auth-status" role="status"></small></div></div>
     </header>
     <div class="v-stage-center">
       <div class="v-halo v-halo-one"></div>
@@ -67,19 +67,10 @@
       <div class="v-center-caption"><span>YOUR CELL. YOUR RULES.</span><strong>MAKE YOUR MARK</strong></div>
     </div>
     <section class="v-launch-panel" aria-label="Start playing">
-      <div class="v-launch-top"><div><span class="v-launch-kicker">CURRENT WORLD <i></i> LOCAL PREVIEW</span><h1 id="lobby-mode-name">FREE FOR ALL</h1><small id="lobby-mode-mass">STARTS AT 1,000 MASS</small></div><button type="button" class="v-launch-settings" id="lobby-settings-secondary" aria-label="Open settings" title="Settings">⚙</button></div>
-      <div class="v-launch-fields"><label><span>PLAYER NAME</span><input id="nickname" autocomplete="nickname" maxlength="18" value="Vintage Player" placeholder="Nickname" /></label><label><span>TAG</span><input id="team-tag" maxlength="8" placeholder="Tag" /></label></div>
+      <div class="v-launch-top"><div><span class="v-launch-kicker" id="world-status">CURRENT WORLD · LOCAL DEMO</span><h1 id="lobby-mode-name">FREE FOR ALL</h1><small id="lobby-mode-mass">STARTS AT 1,000 MASS</small></div><button type="button" class="v-launch-settings" id="lobby-settings-secondary" aria-label="Open settings" title="Settings">⚙</button></div>
+      <button id="server-picker-btn" class="server-picker-btn">SELECT SERVER <span>EU · FFA ▾</span></button><div class="v-launch-fields"><label><span>PLAYER NAME</span><input id="nickname" autocomplete="nickname" maxlength="18" value="Vintage Player" placeholder="Nickname" /></label><label><span>TAG</span><input id="team-tag" maxlength="8" placeholder="Tag" /></label></div>
       <div class="v-launch-actions"><button id="play-btn" class="v-play-button"><span>▶</span> PLAY NOW <span>↗</span></button><button id="spectate-btn" class="v-spectate-button">◉ SPECTATE</button></div>
-      <div class="v-launch-foot"><span><i></i> 10 LOCAL BOTS</span><span>MULTI ENABLED</span></div>
-    </section>
-    <section class="v-mode-panel" aria-label="Select game server">
-      <div class="v-mode-header"><div><small>CHOOSE YOUR WORLD</small><strong>THREE MODES. ONE VINTAGE.</strong></div><span class="v-server-pulse">● LOCAL</span></div>
-      <div class="v-mode-list" role="group" aria-label="Game modes">
-        <button type="button" class="mode-choice selected" data-mode="ffa" aria-pressed="true"><span class="v-mode-icon">◉</span><span class="v-mode-description"><strong>FFA</strong><small>FREE FOR ALL · 1K</small></span><span class="v-mode-indicator">↗</span></button>
-        <button type="button" class="mode-choice" data-mode="dual" aria-pressed="false"><span class="v-mode-icon">◉◉</span><span class="v-mode-description"><strong>DUAL</strong><small>DOUBLE CONTROL · 1K</small></span><span class="v-mode-indicator">↗</span></button>
-        <button type="button" class="mode-choice" data-mode="mega" aria-pressed="false"><span class="v-mode-icon">✦</span><span class="v-mode-description"><strong>MEGA</strong><small>HIGH MASS · 5K</small></span><span class="v-mode-indicator">↗</span></button>
-      </div>
-      <div class="v-mode-footer"><span>CONNECTED WORLD: <b>LOCAL DEMO</b></span><span>v10.1 • DEVELOPMENT</span></div>
+      <div class="v-launch-foot"><span id="world-detail">10 AI PLAYERS</span><span>MULTI ENABLED</span></div>
     </section>
     <div class="v-stage-bottom-note"><span>VINTAGE.IO ORIGINAL EXPERIENCE</span><span>FFA / DUAL / MEGA <b>•</b> INDEPENDENT WORLDS</span></div>
   </main>
@@ -91,16 +82,17 @@
     <div class="settings-shell">
       <div class="settings-header">
         <div class="settings-brand-wrap">
-          <div class="settings-brand" aria-label="Vintage Settings"><span class="settings-brand-glyph">V</span><span>VINTAGE.IO<small>SETTINGS</small></span></div>
+          <div class="settings-brand"><img class="vintage-logo" src="/assets/vintage-logo.png" alt="VINTAGE"><small>SETTINGS</small></div>
         </div>
         <button id="close-settings" class="icon-btn settings-close" aria-label="Close settings">✕</button>
       </div>
-      <div id="settings-tabs" class="settings-tabs"><button data-tab="game" class="active">🎮 Game</button><button data-tab="theme">🎨 Theme</button><button data-tab="controls">⌨ Controls</button><button data-tab="import">📄 Import/Export</button></div>
+      <div id="settings-tabs" class="settings-tabs"><button data-tab="game" class="active">Game</button><button data-tab="theme">Theme</button><button data-tab="controls">Controls</button><button data-tab="import">Import/Export</button></div>
       <div class="settings-body"><nav id="settings-nav" class="settings-nav"></nav><div id="settings-content" class="settings-content"></div></div>
       <div class="settings-foot"><span>VINTAGE.IO SETTINGS • SAVED LOCALLY</span><button id="settings-done">DONE ✓</button></div>
     </div>
   </div>
 
+  <div id="servers-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Select server"><section class="server-dialog"><header><div><small>FIND YOUR WORLD</small><h2>VINTAGE SERVERS</h2></div><button id="close-servers" class="icon-btn" aria-label="Close servers">✕</button></header><nav id="server-regions"><button data-region="EU" class="active">EU</button><button data-region="NA">NA</button><button data-region="ASIA">ASIA</button></nav><div id="server-list"></div><p class="hint">Changing servers starts a new match. Your current match keeps running while menus are open.</p></section></div>
   <script src="/config.js"></script>
   <script type="module" src="/client.js"></script>
 </body>

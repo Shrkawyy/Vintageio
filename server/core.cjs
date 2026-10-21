@@ -47,14 +47,14 @@ function step(room,dt=1/30){
       p.target={x:C.clamp(lead.x+Math.cos(p.heading)*520,0,WIDTH),y:C.clamp(lead.y+Math.sin(p.heading)*520,0,WIDTH)};
     }
     moveCells(p,dt,room.time,WIDTH,room.mode,p.npc?.73:1);
-    if(p.cells.some(c=>c.mass>=AUTO_SPLIT_MASS)&&p.cells.length<MAX_CELLS)splitCells(p,room.time,WIDTH,MAX_CELLS,room.mode);
+    if(p.cells.some(c=>c.mass>=AUTO_SPLIT_MASS)&&p.cells.length<MAX_CELLS)splitCells(p,room.time,WIDTH,MAX_CELLS,room.mode,AUTO_SPLIT_MASS);
     if(room.time%12<dt)for(const c of p.cells)c.mass*=.999;
   }
   // Check pending virus respawns
   for (let i = room.virusRespawns.length - 1; i >= 0; i--) {
     const resp = room.virusRespawns[i];
     if (room.time >= resp.time) {
-      for (let k = 0; k < resp.count; k++) {
+      for (let k = 0; k < resp.count && room.viruses.length < 32; k++) {
         room.viruses.push(makeVirus(C.rand(120, WIDTH - 120), C.rand(120, WIDTH - 120)));
       }
       room.virusRespawns.splice(i, 1);

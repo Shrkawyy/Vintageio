@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS={
   autoSplit:true,autoRespawn:false,mouseSensitivity:1,zoom:1,wheelZoom:true,wheelZoomSensitivity:1,cameraSmoothing:0.10,
   showFood:true,showViruses:true,showBorders:true,showHelp:true,cellOpacity:100,nickSize:1,massSize:1,
   bgColor:'#07131f',gridColor:'#244051',ownColor:'#70e0ff',secondColor:'#ff88b0',accentColor:'#70e0ff',
-  borderWidth:5,foodSize:1,backgroundImage:false,backgroundUrl:'',
+  borderWidth:5,foodSize:1,backgroundImage:true,backgroundUrl:'',themePreset:'vintage',
   keySplit:'SPACE',keyDoubleSplit:'Q',keyTripleSplit:'NO KEY',keySplit16:'T',keySplit32:'NO KEY',keySplit64:'D',
   keyFeed:'W',keyMacroFeed:'E',keySwitch:'TAB',keyStopMove:'NO KEY',keyChat:'ENTER',keyMenu:'ESCAPE',keySettings:'S',
   keyChatToggle:'C',keyHUD:'H',keySaveReplay:'R',keySpectateMode:'X',keyToggleNames:'N',keyToggleMass:'M',
@@ -82,16 +82,16 @@ export class LocalArena{
         if(threat)p.heading=Math.atan2(lead.y-threat.cells[0].y,lead.x-threat.cells[0].x);
         p.target={x:clamp(lead.x+Math.cos(p.heading)*520,0,WORLD_SIZE),y:clamp(lead.y+Math.sin(p.heading)*520,0,WORLD_SIZE)};
       }
-      moveCells(p,dt,this.elapsed,WORLD_SIZE,this.mode,p.npc?.73:settings.mouseSensitivity);
+      moveCells(p,dt,this.elapsed,WORLD_SIZE,this.mode,p.npc?.73:1);
       // Auto split is evaluated once per player per update, never inside an expanding cell loop.
-      if(settings.autoSplit&&p.cells.some(c=>c.mass>=AUTO_SPLIT_MASS)&&p.cells.length<MAX_CELLS)splitCells(p,this.elapsed,WORLD_SIZE,MAX_CELLS,this.mode);
+      if(p.cells.some(c=>c.mass>=AUTO_SPLIT_MASS)&&p.cells.length<MAX_CELLS)splitCells(p,this.elapsed,WORLD_SIZE,MAX_CELLS,this.mode,AUTO_SPLIT_MASS);
       if(this.elapsed%12<dt)for(const c of p.cells)c.mass*=.999;
     }
     // Check pending virus respawns
     for (let i = this.virusRespawns.length - 1; i >= 0; i--) {
       const resp = this.virusRespawns[i];
       if (this.elapsed >= resp.time) {
-        for (let k = 0; k < resp.count; k++) {
+        for (let k = 0; k < resp.count && this.viruses.length < 32; k++) {
           this.viruses.push(makeVirus(rand(120, WORLD_SIZE - 120), rand(120, WORLD_SIZE - 120)));
         }
         this.virusRespawns.splice(i, 1);
@@ -113,7 +113,8 @@ export class ArenaRenderer{
   toWorld(x,y){return {x:this.cam.x+(x-this.screenW/2)/this.zoom,y:this.cam.y+(y-this.screenH/2)/this.zoom};}
   draw(snapshot,selectedId,settings=DEFAULT_SETTINGS,playing=false,dt=1/60,freeCamera=false){if(!this.screenW||this.screenW!==innerWidth||this.screenH!==innerHeight)this.resize();const ctx=this.ctx,W=this.screenW,H=this.screenH;
     ctx.clearRect(0,0,W,H);ctx.fillStyle=settings.bgColor;ctx.fillRect(0,0,W,H);
-    if(settings.backgroundImage&&settings.backgroundUrl){if(this.backgroundUrl!==settings.backgroundUrl){this.backgroundUrl=settings.backgroundUrl;this.background=new Image();this.background.src=settings.backgroundUrl;}if(this.background?.complete&&this.background.naturalWidth){ctx.globalAlpha=.22;ctx.drawImage(this.background,0,0,W,H);ctx.globalAlpha=1;}}
+    const backgroundSource=settings.backgroundUrl || "/assets/vintage-background.png";
+    if(settings.backgroundImage){if(this.backgroundUrl!==backgroundSource){this.backgroundUrl=backgroundSource;this.background=new Image();this.background.src=backgroundSource;}if(this.background?.complete&&this.background.naturalWidth){ctx.globalAlpha=.38;ctx.drawImage(this.background,0,0,W,H);ctx.globalAlpha=1;}}
     const me=snapshot?.players?.find(p=>p.id===selectedId&&p.cells?.length),c=me?.cells||[];
     if(me&&playing&&!freeCamera){const centroid={x:c.reduce((s,x)=>s+x.x,0)/c.length,y:c.reduce((s,x)=>s+x.y,0)/c.length};const ratio=clamp((settings.cameraSmoothing||.1)*dt*60,.01,1);this.cam.x+=(centroid.x-this.cam.x)*ratio;this.cam.y+=(centroid.y-this.cam.y)*ratio;}
     const mass=c.reduce((s,x)=>s+x.mass,0)||1000;
@@ -145,14 +146,6 @@ export class ArenaRenderer{
 
         ctx.beginPath();ctx.arc(0,0,outer*.75,0,Math.PI*2);
         ctx.lineWidth=2/Math.max(this.zoom,.08);ctx.strokeStyle='#ff88b0';ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
-
-        ctx.beginPath();ctx.arc(0,0,outer*.28,0,Math.PI*2);
-        const coreGrad=ctx.createRadialGradient(0,0,0,0,0,outer*.28);
-        coreGrad.addColorStop(0,'#ffffff');
-        coreGrad.addColorStop(0.5,'#f065b5');
-        coreGrad.addColorStop(1,'#801e36');
-        ctx.fillStyle=coreGrad;ctx.fill();
-        ctx.lineWidth=2/Math.max(this.zoom,.08);ctx.strokeStyle='#ff94d4';ctx.stroke();
 
         if(v.feedCount){
           ctx.beginPath();ctx.arc(0,0,outer*1.2,-Math.PI/2,-Math.PI/2+Math.PI*2*(v.feedCount/7));

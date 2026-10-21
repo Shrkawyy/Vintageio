@@ -1,3 +1,4 @@
+'use strict';
 /** Vintage crystal-virus rules. Shared by the offline client and authoritative server. */
 const VIRUS_BASE_MASS = 100;
 const VIRUS_FEEDS_TO_SHOOT = 7;
@@ -12,9 +13,12 @@ const distance = (x1,y1,x2,y2) => Math.hypot(x2-x1,y2-y1);
 
 /** Consumes ejected food, launches fed viruses, and bursts sufficiently large player cells. */
 function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVirus, addRespawn}) {
+  const virusDrag=-30*Math.log(.90),pelletDrag=-30*Math.log(.91);
+  const virusTravel=(1-Math.exp(-virusDrag*dt))/virusDrag;
+  const pelletTravel=(1-Math.exp(-pelletDrag*dt))/pelletDrag;
   for (const virus of viruses) {
-    virus.x=clamp(virus.x+(virus.vx||0)*dt,virusRadius(virus),width-virusRadius(virus));
-    virus.y=clamp(virus.y+(virus.vy||0)*dt,virusRadius(virus),width-virusRadius(virus));
+    virus.x=clamp(virus.x+(virus.vx||0)*virusTravel,virusRadius(virus),width-virusRadius(virus));
+    virus.y=clamp(virus.y+(virus.vy||0)*virusTravel,virusRadius(virus),width-virusRadius(virus));
     const damp=Math.pow(.90, dt*30);
     virus.vx=(virus.vx||0)*damp;
     virus.vy=(virus.vy||0)*damp;
@@ -24,8 +28,8 @@ function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVi
   for (let i=food.length-1;i>=0;i--) {
     const pellet=food[i];
     if (!pellet.ejected) continue;
-    pellet.x=clamp(pellet.x+(pellet.vx||0)*dt,0,width);
-    pellet.y=clamp(pellet.y+(pellet.vy||0)*dt,0,width);
+    pellet.x=clamp(pellet.x+(pellet.vx||0)*pelletTravel,0,width);
+    pellet.y=clamp(pellet.y+(pellet.vy||0)*pelletTravel,0,width);
     pellet.vx=(pellet.vx||0)*Math.pow(.91,dt*30);
     pellet.vy=(pellet.vy||0)*Math.pow(.91,dt*30);
     for (const virus of [...viruses]) {
@@ -65,10 +69,10 @@ function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVi
       for (const cell of [...p.cells]) {
         const r=Math.max(13,Math.sqrt(Math.max(1,cell.mass))*2.45);
         if (distance(cell.x,cell.y,virus.x,virus.y)>r+virusRadius(virus)*.3) continue;
-        if (cell.mass<600 || p.cells.length>=maxCells) continue;
+        if (cell.mass<600) continue;
         const free=maxCells-p.cells.length;
         const copies=Math.min(free,Math.max(5,Math.min(15,Math.floor(cell.mass/180)))) ;
-        if (!copies) continue;
+        // At the fragment cap a virus is consumed without adding cells.
         const newCount=copies+1, total=cell.mass+VIRUS_BASE_MASS;
         const massEach=total/newCount;
         cell.mass=massEach;
@@ -84,8 +88,9 @@ function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVi
           });
         }
         viruses.splice(vi,1);
+        // Replace one consumed virus, subject to the world cap.
         if (addRespawn) {
-          addRespawn(time + 120, 8);
+          addRespawn(time + 20, 1);
         } else if (spawnVirus) {
           viruses.push(spawnVirus());
         }
@@ -97,4 +102,4 @@ function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVi
   }
 }
 
-module.exports = {VIRUS_BASE_MASS, VIRUS_FEEDS_TO_SHOOT, VIRUS_MIN_COUNT, VIRUS_MAX_COUNT, virusRadius, makeVirus, stepViruses};
+module.exports={VIRUS_BASE_MASS,VIRUS_FEEDS_TO_SHOOT,VIRUS_MIN_COUNT,VIRUS_MAX_COUNT,virusRadius,makeVirus,stepViruses};
