@@ -1,3 +1,9 @@
+# VINTAGE v10.1 — see RELEASE-v10.1.md (bug fixes + server hardening)
+
+The sections below describe earlier releases (v0.7 – v10) and remain accurate unless RELEASE-v10.1.md says otherwise.
+
+---
+
 # VINTAGE v0.9 — FFA movement, Multi Tab respawn, held Macro Feed
 
 This release fixes the gameplay problems shown in the user-supplied 41.6-second Vintage video (20 October 2026).

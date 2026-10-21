@@ -11,9 +11,17 @@ const server=http.createServer((req,res)=>{const path=new URL(req.url||'/',`http
   if(path==='/health'){res.writeHead(200,{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'});res.end(JSON.stringify({status:'ok',rooms:Object.fromEntries(Object.entries(rooms).map(([key,room])=>[key,{players:[...room.players.values()].filter(p=>!p.npc).length,bots:core.MODES[key].bots,spectators:spectators[key].size}]))}));return;}
   res.writeHead(200,{'Content-Type':'text/plain'});res.end('Vintage game WebSocket server. Health: /health\n');
 });
-const wss=new WebSocketServer({server,maxPayload:4096,perMessageDeflate:false});
+const allowedOrigins=String(process.env.ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean);
+const maxPerIp=Number(process.env.MAX_CONN_PER_IP||8),trustProxy=process.env.TRUST_PROXY==='1';
+const ipCounts=new Map();
+const clientIp=req=>trustProxy&&req?.headers?.['x-forwarded-for']?String(req.headers['x-forwarded-for']).split(',')[0].trim():(req?.socket?.remoteAddress||'unknown');
+/** ALLOWED_ORIGINS (comma list) restricts which websites may connect; MAX_CONN_PER_IP caps sockets per address. */
+const wss=new WebSocketServer({server,maxPayload:4096,perMessageDeflate:false,verifyClient:({origin,req})=>{
+  if(allowedOrigins.length&&!allowedOrigins.includes(origin))return false;
+  return (ipCounts.get(clientIp(req))||0)<maxPerIp;
+}});
 function reply(ws,data){if(ws.readyState===WebSocket.OPEN){try{ws.send(JSON.stringify(data));}catch{}}}
-wss.on('connection',(ws)=>{let current=null,watching=null;
+wss.on('connection',(ws,req)=>{const ip=clientIp(req);ipCounts.set(ip,(ipCounts.get(ip)||0)+1);let current=null,watching=null;
   const detach=()=>{if(current){current.room.players.delete(current.player.id);clients.delete(current.player.id);current=null;}if(watching){spectators[watching.mode].delete(ws);watching=null;}};
   ws.on('message',data=>{let msg;try{msg=JSON.parse(data.toString());}catch{return;}if(!msg||typeof msg!=='object')return;
     if(msg.type==='spectate'){
@@ -34,7 +42,7 @@ wss.on('connection',(ws)=>{let current=null,watching=null;
       if(core.respawn(room,player,x,y))reply(ws,{type:'respawned',playerId:player.id});
       return;
     }
-    if(msg.type==='split'){core.split(room,player);return;}
+    if(msg.type==='split'){core.trySplit(room,player);return;}
     if(msg.type==='feed'){
       if(room.time-(player.lastFeedAt??-100)<.075)return;
       player.lastFeedAt=room.time;core.feed(room,player);return;
@@ -47,7 +55,7 @@ wss.on('connection',(ws)=>{let current=null,watching=null;
       for(const target of core.chatRecipients(room,player,channel))reply(clients.get(target.id),packet);return;
     }
   });
-  ws.on('close',detach);
+  ws.on('close',()=>{detach();const n=(ipCounts.get(ip)||1)-1;if(n>0)ipCounts.set(ip,n);else ipCounts.delete(ip);});
   ws.on('error',()=>{});
 });
 let last=Date.now();const tick=setInterval(()=>{const now=Date.now(),dt=Math.min(.1,(now-last)/1000);last=now;for(const room of Object.values(rooms))core.step(room,dt);},50);
