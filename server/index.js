@@ -45,6 +45,7 @@ wss.on('connection',(ws,req)=>{const ip=clientIp(req);ipCounts.set(ip,(ipCounts.
       const room=rooms[msg.mode];const tag=core.cleanTag(msg.tag),name=core.cleanText(msg.name,18)||'Vintage Player';const player=core.join(room,name,tag,0);
       current={room,player};clients.set(player.id,ws);reply(ws,{type:'welcome',mode:msg.mode,playerId:player.id,initialMass:core.MODES[msg.mode].initialMass,autoSplitMass:core.AUTO_SPLIT_MASS});return;
     }
+    if(msg.type==='ping'){reply(ws,{type:'pong',nonce:msg.nonce});return;}
     if(!current)return;
     const {room,player}=current;
     if(msg.type==='move'){core.point(room,player,Number(msg.x),Number(msg.y));return;}

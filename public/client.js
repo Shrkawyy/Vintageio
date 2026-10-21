@@ -3,12 +3,26 @@ import {MODES, DEFAULT_SETTINGS, LocalArena, ArenaRenderer, AUTO_SPLIT_MASS, WOR
 
 const $ = id => document.getElementById(id);
 const SETTINGS_KEY = 'vintage-settings-v2';
+const HEX = /^#[0-9a-fA-F]{6}$/;
+function cleanHex(value,fallback){return HEX.test(String(value))?String(value):fallback;}
+function cleanAssetUrl(value){
+  const candidate=String(value||'').trim().slice(0,1200);
+  if(!candidate)return '';
+  try{const url=new URL(candidate,location.origin);return ['https:','http:'].includes(url.protocol)?url.href:'';}catch{return '';}
+}
+
 const cloneDefaults = () => ({...DEFAULT_SETTINGS, chatCommands:[...DEFAULT_SETTINGS.chatCommands]});
 const valueSafe = (saved={}) => {
   const next = cloneDefaults();
   for (const [key, val] of Object.entries(saved || {})) {
     if (!(key in next)) continue;
     if (Array.isArray(next[key]) && Array.isArray(val)) next[key] = [...val].slice(0, 10);
+    else if(key==='customTheme' && val && typeof val==='object' && !Array.isArray(val)){
+      const colors={};
+      for(const prop of ['accentColor','panelColor','textColor','bgColor','gridColor','ownColor','secondColor','foodColor','virusColor'])
+        colors[prop]=cleanHex(val[prop],next[prop]);
+      next.customTheme={name:String(val.name||'My theme').slice(0,32),...colors,backgroundUrl:cleanAssetUrl(val.backgroundUrl),worldLogoUrl:cleanAssetUrl(val.worldLogoUrl)};
+    }
     else if (typeof val === typeof next[key]) next[key] = val;
   }
   return next;
@@ -35,10 +49,15 @@ const toTag = s => String(s||'').trim().slice(0,8).replace(/[<>\u0000-\u001f]/g,
 function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }catch{} applySettings(); }
 function updateProfileName(){ const name = toName($('nickname')?.value || nickname); const node = $('profile-name'); if(node) node.textContent = name; }
 function applySettings(){
-  document.documentElement.style.setProperty('--accent', settings.accentColor);
+  document.documentElement.style.setProperty('--accent', cleanHex(settings.accentColor,'#a9dcff'));
   const theme=THEMES[settings.themePreset] || THEMES.vintage;
-  document.body.dataset.theme=settings.themePreset;
-  document.documentElement.style.setProperty('--theme-panel',theme.panel);
+  const custom=settings.themePreset==='custom' && settings.customTheme;
+  document.body.dataset.theme=custom?'custom':(THEMES[settings.themePreset]?settings.themePreset:'vintage');
+  document.documentElement.style.setProperty('--theme-panel',cleanHex(custom?.panelColor||settings.panelColor||theme.panel,theme.panel));
+  document.documentElement.style.setProperty('--text',cleanHex(custom?.textColor||settings.textColor,'#f5f9ff'));
+  document.documentElement.style.setProperty('--hud-border',cleanHex(settings.gridColor,'#27323e'));
+  document.documentElement.style.setProperty('--pink',cleanHex(settings.secondColor,'#f065b5'));
+  document.documentElement.style.setProperty('--accent2',cleanHex(settings.secondColor,'#bd93ff'));
   document.documentElement.style.setProperty('--theme-radius',theme.radius);
   document.body.classList.toggle('vintage-background-enabled',settings.backgroundImage);
   $('leaderboard').classList.toggle('hidden', !settings.showLeaderboard || !hudVisible);
@@ -126,8 +145,13 @@ function beginGame(){
 }
 
 class RemoteArena{
-  constructor(url,opts){ this.url=url; this.opts=opts; this.sockets=[]; this.myIds=[]; this.latest=null; this.connected=false; }
-  connect(){ const total=this.opts.spectator?1:(this.opts.multi?2:1); for(let n=0;n<total;n++) this.open(n); }
+  constructor(url,opts){ this.url=url; this.opts=opts; this.sockets=[]; this.myIds=[]; this.latest=null; this.connected=false;
+    this.latencyMs=null;this.lastPingAt=0;this.pingStarted=0;this.pingId=0;this.pingTimer=null; }
+  connect(){ const total=this.opts.spectator?1:(this.opts.multi?2:1); for(let n=0;n<total;n++) this.open(n);
+    this.pingTimer=setInterval(()=>this.probe(),2500); }
+  probe(){const ws=this.sockets[0];if(ws?.readyState!==WebSocket.OPEN)return;
+    const nonce=++this.pingId;this.pingStarted=performance.now();this.lastPingAt=Date.now();
+    this.send(0,{type:'ping',nonce});}
   open(slot){
     let ws; try{ ws=new WebSocket(this.url); }catch{ toast('Invalid WebSocket server URL'); return; }
     this.sockets[slot]=ws;
@@ -140,16 +164,18 @@ class RemoteArena{
       if(payload.type==='welcome'){
         this.myIds[slot]=payload.playerId; this.connected=true;
         $('connection-status').innerHTML='<i></i> ONLINE'; $('connection-status').classList.add('online'); $('chat-online').textContent='LIVE';
-        if(slot===0) addChat('system','Connected to the '+MODES[mode].title+' room.','all');
+        if(slot===0){ addChat('system','Connected to the '+MODES[mode].title+' room.','all');this.probe(); }
       }
       if(payload.type==='state' && slot===0){ this.latest=payload; remoteSnapshot=payload; }
+      if(payload.type==='pong' && slot===0 && payload.nonce===this.pingId){this.latencyMs=Math.round(performance.now()-this.pingStarted);}
+
       if(payload.type==='respawned' && slot===0) toast('Multi respawned at cursor');
       if(payload.type==='chat' && slot===0) addChat(payload.name,payload.text,payload.channel,payload.tag);
       if(payload.type==='error' && slot===0) toast(payload.message || 'Server error');
     });
     ws.addEventListener('close',()=>{
       if(slot===0 && (playing||spectating) && remote===this){
-        this.connected=false; $('connection-status').innerHTML='<i></i> OFFLINE'; $('connection-status').classList.remove('online'); $('chat-online').textContent='OFFLINE';
+        this.connected=false;clearInterval(this.pingTimer);this.pingTimer=null;$('connection-status').innerHTML='<i></i> OFFLINE'; $('connection-status').classList.remove('online'); $('chat-online').textContent='OFFLINE';
         toast('Connection lost. Reconnect to start a new match.'); playing=false;spectating=false;enterLobby(); 
       }
     });
@@ -160,10 +186,10 @@ class RemoteArena{
   sendControl(slot,world){ this.send(slot,{type:'move',x:world.x,y:world.y}); }
   sendAction(slot,action){ this.send(slot,{type:action}); }
   respawn(slot,position){this.send(slot,{type:'respawn',x:position.x,y:position.y});}
-  disconnect(){ for(const s of this.sockets){ if(s && [0,1].includes(s.readyState)){ try{s.close(1000,'Switch game');}catch{} } } this.connected=false; this.sockets=[]; }
+  disconnect(){ clearInterval(this.pingTimer);this.pingTimer=null; for(const s of this.sockets){ if(s && [0,1].includes(s.readyState)){ try{s.close(1000,'Switch game');}catch{} } } this.connected=false; this.sockets=[]; }
 }
 
-function clearChat(){ $('chat-messages').replaceChildren(); }
+function clearChat(){ chatHistory.length=0;$('chat-messages').replaceChildren(); }
 const chatHistory=[];
 function addChat(name,message,channel='all',messageTag=''){
   const row={name:String(name).slice(0,25), text:String(message).slice(0,180), channel, tag:messageTag||''};
@@ -187,7 +213,8 @@ function renderChat(){
 function sendMessage(text){
   text=String(text).trim().slice(0,180); if(!text) return;
   if(chatChannel==='tag' && !tag){ toast('Enter a team tag to use Tag chat'); return; }
-  if(remote?.connected) remote.sendChat(text,chatChannel); else addChat(nickname,text,chatChannel,tag);
+  if(remote){if(remote.connected)remote.sendChat(text,chatChannel);else toast('Chat unavailable until connected');}
+  else addChat(nickname,text,chatChannel,tag);
 }
 
 function activeId(){ return remote ? (remote.myIds[Math.min(activeSlot,remote.myIds.length-1)]||remote.myIds[0]) : (arena.myIds[Math.min(activeSlot,arena.myIds.length-1)]||arena.myIds[0]); }
@@ -253,13 +280,24 @@ function updateHUD(snapshot){
   $('cell-label').textContent=(me?.cells?.length||0)+' CELL'+((me?.cells?.length||0)===1?'':'S');
   $('mass-progress').style.width=Math.min(100,score/AUTO_SPLIT_MASS*100)+'%';
   $('fps-label').textContent=renderer.fps+' FPS';
+  const ownIds=remote?.connected?remote.myIds:arena.myIds;
+  const ownPlayers=(snapshot?.players||[]).filter(p=>ownIds.includes(p.id));
+  const ownMass=ownPlayers.reduce((sum,p)=>sum+(p.cells||[]).reduce((n,c)=>n+c.mass,0),0);
+  const ownCells=ownPlayers.reduce((n,p)=>n+(p.cells?.length||0),0);
+  const realOnline=remote?.connected?(snapshot?.players||[]).filter(p=>!p.npc).length:0;
+  $('stat-fps').textContent=String(renderer.fps);
+  $('stat-ping').textContent=remote?.connected ? (remote.latencyMs!==null && Date.now()-remote.lastPingAt<10000 ? remote.latencyMs+' ms':'—') : (remote?'OFFLINE':'LOCAL');
+  $('stat-score').textContent=Math.floor(ownMass).toLocaleString('en-US');
+  $('stat-mass').textContent=Math.floor(score).toLocaleString('en-US');
+  $('stat-cells').textContent=String(ownCells);
+  $('stat-online').textContent=remote?.connected?String(realOnline):'DEMO';
   const rows=[...(snapshot?.players||[])].filter(p=>p.cells?.length).map(p=>({...p,total:p.cells.reduce((a,c)=>a+c.mass,0)})).sort((a,b)=>b.total-a.total).slice(0,8);
-  $('player-count').textContent=(snapshot?.players?.filter(p=>p.cells?.length)?.length||0)+' PLAYERS';
+  $('player-count').textContent=remote?.connected ? realOnline+' ONLINE' : 'LOCAL AI';
   const container=$('board-entries'); container.replaceChildren();
   for(let i=0;i<rows.length;i++){
     const p=rows[i],line=document.createElement('div'); line.className='leader-entry'+(p.id===focusId?' is-me':'');
     const place=document.createElement('span'),n=document.createElement('b'),m=document.createElement('em');
-    place.textContent=String(i+1).padStart(2,'0'); n.textContent=p.name; m.textContent=p.total>=1000?(p.total/1000).toFixed(1)+'k':Math.floor(p.total).toString();
+    place.textContent=String(i+1).padStart(2,'0'); n.textContent=p.name+(p.npc?' · AI':''); m.textContent=p.total>=1000?(p.total/1000).toFixed(1)+'k':Math.floor(p.total).toString();
     line.append(place,n,m); container.appendChild(line);
   }
 }
@@ -327,8 +365,13 @@ const S = {
   },
   theme:{
     'Theme presets':[],
+    'PUT UR THEME':[],
     HUD:[
       {key:'accentColor',label:'Accent color',type:'color'},
+      {key:'panelColor',label:'HUD / panel color',type:'color'},
+      {key:'textColor',label:'Text color',type:'color'},
+      {key:'foodColor',label:'Food color',type:'color'},
+      {key:'virusColor',label:'Virus color',type:'color'},
     ],
     Cells:[
       {key:'ownColor',label:'Primary cell color',type:'color'},
@@ -344,7 +387,8 @@ const S = {
     Background:[
       {key:'bgColor',label:'Background color',type:'color'},
       {key:'backgroundImage',label:'Use background image',type:'toggle'},
-      {key:'backgroundUrl',label:'External background URL (blank = Vintage)',type:'url'},
+      {key:'backgroundUrl',label:'Static background URL (inside server square)',type:'url'},
+      {key:'worldLogoUrl',label:'Center logo URL (fit inside square)',type:'url'},
     ]
   },
   controls:{
@@ -416,6 +460,7 @@ function renderSettings(){
   if(settingsTab === 'import'){ renderImport(area); return; }
   const heading=document.createElement('h3');heading.className='settings-section-title';heading.textContent=settingsPage.toUpperCase();area.append(heading);
   if(settingsTab==='theme' && settingsPage==='Theme presets'){renderThemePresets(area);return;}
+  if(settingsTab==='theme' && settingsPage==='PUT UR THEME'){renderCustomTheme(area);return;}
   for(const item of S[settingsTab][settingsPage]) renderSettingRow(area,item);
 }
 
@@ -429,9 +474,55 @@ function renderThemePresets(area){
     const preview=document.createElement('div');preview.className='theme-preview';preview.innerHTML='<i></i><i></i><i></i>';
     card.append(preview,title,desc);card.onclick=()=>{
       for(const key of ['accentColor','bgColor','gridColor','ownColor','secondColor']) settings[key]=t[key];
-      settings.themePreset=id;saveSettings();renderSettings();
+      settings.themePreset=id;settings.panelColor=t.panel;settings.textColor='#f5f9ff';saveSettings();renderSettings();
     };grid.append(card);
-  }area.append(grid);
+  }
+  const custom=document.createElement('button');custom.type='button';custom.className='theme-card custom-theme-card';
+  const customTitle=document.createElement('strong');customTitle.textContent='PUT UR THEME';
+  const customDesc=document.createElement('span');customDesc.textContent='Create your own theme • Choose all colors, a background and a center logo • Save locally';
+  const customPreview=document.createElement('div');customPreview.className='theme-preview';customPreview.innerHTML='<i></i><i></i><i></i>';
+  custom.append(customPreview,customTitle,customDesc);custom.onclick=()=>{settingsPage='PUT UR THEME';renderSettings();};grid.append(custom);
+  area.append(grid);
+}
+function renderCustomTheme(area){
+  const base=settings.customTheme||{};
+  const defaults={name:'My Vintage Theme',accentColor:settings.accentColor,panelColor:settings.panelColor,textColor:settings.textColor,
+    bgColor:settings.bgColor,gridColor:settings.gridColor,ownColor:settings.ownColor,secondColor:settings.secondColor,
+    foodColor:settings.foodColor,virusColor:settings.virusColor,backgroundUrl:settings.backgroundUrl,worldLogoUrl:settings.worldLogoUrl};
+  const draft={...defaults,...base};
+  const intro=document.createElement('p');intro.className='theme-intro';intro.textContent='Customize your entire game. Your theme is saved on this browser only and can be exported from Import / Export.';
+  area.append(intro);
+  function makeInput(title,key,type){
+    const wrap=document.createElement('label');wrap.className='theme-field';
+    const text=document.createElement('span');text.textContent=title;
+    const inp=document.createElement('input');inp.type=type;inp.value=draft[key]|| (type==='color'?'#ffffff':'');
+    if(type==='text')inp.maxLength=32;
+    if(type==='url'){inp.placeholder='https://example.com/image.png';inp.maxLength=1200;}
+    inp.addEventListener('input',()=>{draft[key]=inp.value;});
+    wrap.append(text,inp);return wrap;
+  }
+  const title=document.createElement('div');title.className='theme-name-field';title.append(makeInput('YOUR THEME NAME','name','text'));area.append(title);
+  const controls=document.createElement('div');controls.className='custom-colors';
+  const fields=[['Accent','accentColor'],['Panel / HUD','panelColor'],['Text','textColor'],['Field background','bgColor'],
+    ['Grid','gridColor'],['Primary cell','ownColor'],['Secondary cell','secondColor'],['Food','foodColor'],['Virus','virusColor']];
+  for(const [name,key] of fields)controls.append(makeInput(name,key,'color'));
+  area.append(controls);
+  const assets=document.createElement('div');assets.className='theme-assets';assets.append(makeInput('BACKGROUND URL (fixed inside server square)','backgroundUrl','url'),makeInput('CENTER LOGO URL','worldLogoUrl','url'));area.append(assets);
+  const actions=document.createElement('div');actions.className='custom-theme-actions';
+  const save=document.createElement('button');save.type='button';save.className='settings-action blue';save.textContent='SAVE & APPLY THEME';
+  save.onclick=()=>{
+    const preset={name:String(draft.name||'My Vintage Theme').trim().slice(0,32)||'My Vintage Theme',backgroundUrl:cleanAssetUrl(draft.backgroundUrl),worldLogoUrl:cleanAssetUrl(draft.worldLogoUrl)};
+    for(const [,key] of fields)preset[key]=cleanHex(draft[key],defaults[key]);
+    if(draft.backgroundUrl&&!preset.backgroundUrl||draft.worldLogoUrl&&!preset.worldLogoUrl){toast('Use a valid http(s) image URL');return;}
+    settings.customTheme=preset;settings.themePreset='custom';
+    for(const [,key] of fields)settings[key]=preset[key];
+    settings.backgroundUrl=preset.backgroundUrl;settings.worldLogoUrl=preset.worldLogoUrl;
+    settings.backgroundImage=true;saveSettings();toast('Theme saved: '+preset.name);renderSettings();
+  };
+  actions.append(save);
+  const reset=document.createElement('button');reset.type='button';reset.className='settings-action';reset.textContent='BACK TO PRESETS';
+  reset.onclick=()=>{settingsPage='Theme presets';renderSettings();};actions.append(reset);area.append(actions);
+  if(settings.themePreset==='custom' && settings.customTheme){const current=document.createElement('p');current.className='hint';current.textContent='ACTIVE: '+settings.customTheme.name;area.append(current);}
 }
 function renderSettingRow(area,item){
   const row=document.createElement('div'); row.className='setting-row';
@@ -452,7 +543,7 @@ function renderSettingRow(area,item){
   } else if(item.type==='color'){
     const field=document.createElement('input'); field.type='color'; field.value=settings[item.key]; field.oninput=()=>{ settings[item.key]=field.value; saveSettings(); }; box.append(field);
   } else if(item.type==='url'){
-    const field=document.createElement('input'); field.type='url'; field.value=settings[item.key]; field.placeholder='https://...'; field.onchange=()=>{ settings[item.key]=field.value.trim(); saveSettings(); }; box.append(field);
+    const field=document.createElement('input'); field.type='url'; field.value=settings[item.key]; field.placeholder='https://...'; field.onchange=()=>{ const val=cleanAssetUrl(field.value);if(field.value.trim()&&!val){toast('Use an http(s) image link');field.value=settings[item.key];return;}settings[item.key]=val;saveSettings(); }; box.append(field);
   } else if(item.type==='key'){
     const field=document.createElement('input'); field.type='text'; field.className='keybind'; field.readOnly=true; field.value=settings[item.key]; field.title='Click, then press a key';
     field.onfocus=()=>{ field.value='PRESS KEY...'; };
@@ -530,7 +621,41 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('keyup',e=>{if(normalizeKey(e)===settings.keyMacroFeed)macroFeedHeld=false;});
 function updateChatTabs(){ document.querySelectorAll('.chat-tab').forEach(b=>b.classList.toggle('active', b.dataset.channel===chatChannel)); renderChat(); }
 
-$('chat-form').onsubmit=e=>{ e.preventDefault(); sendMessage($('chat-input').value); $('chat-input').value=''; $('chat-input').blur(); };
+const EMOJI_CATALOG=[
+  ['😀','grin'],['😃','smile'],['😄','happy'],['😁','grin'],['😆','laugh'],['😂','laugh'],['🤣','rofl'],['😊','blush'],['🙂','smile'],['😉','wink'],
+  ['😍','love'],['🥰','love'],['😘','kiss'],['😎','cool'],['🤩','star'],['🥳','party'],['😏','smirk'],['😋','yum'],['😝','tongue'],['🤔','thinking'],
+  ['😐','neutral'],['🙄','eyes'],['😴','sleep'],['😭','cry'],['😢','sad'],['😡','angry'],['😱','shock'],['😨','fear'],['😤','angry'],['🤯','mind'],
+  ['😇','angel'],['😈','devil'],['👻','ghost'],['💀','skull'],['👽','alien'],['🤖','robot'],['💩','poop'],['❤️','heart'],['🧡','heart'],['💛','heart'],
+  ['💚','heart'],['💙','heart'],['💜','heart'],['🖤','heart'],['💔','broken'],['💯','100'],['🔥','fire'],['✨','sparkles'],['⭐','star'],['🌟','star'],
+  ['🎉','party'],['🎮','game'],['🏆','trophy'],['👑','crown'],['⚔️','sword'],['🛡️','shield'],['🎯','target'],['💎','diamond'],['🚀','rocket'],['⚡','lightning'],
+  ['👍','thumb'],['👎','thumb'],['👏','clap'],['🙌','hands'],['💪','strong'],['🙏','pray'],['🤝','handshake'],['👌','ok'],['✌️','peace'],['👀','eyes'],
+  ['🐉','dragon'],['🐱','cat'],['🐶','dog'],['🐼','panda'],['🍕','pizza'],['🍔','burger'],['☕','coffee'],['🎵','music'],['🌈','rainbow'],['☀️','sun']
+];
+function renderEmojis(query=''){
+  const list=$('emoji-grid');list.replaceChildren();
+  const search=query.toLowerCase().trim();
+  for(const [emoji,key] of EMOJI_CATALOG){if(search && !key.includes(search)&&!emoji.includes(search))continue;
+    const b=document.createElement('button');b.type='button';b.className='emoji-option';b.textContent=emoji;b.title=key;
+    b.addEventListener('pointerdown',e=>e.preventDefault());
+    b.addEventListener('click',()=>{
+      const input=$('chat-input'),start=input.selectionStart??input.value.length,end=input.selectionEnd??start;
+      input.setRangeText(emoji,start,end,'end');input.focus();
+    });list.append(b);
+  }
+  if(!list.children.length){const none=document.createElement('span');none.className='emoji-empty';none.textContent='No emojis found';list.append(none);}
+}
+function setEmojiPicker(open){
+  $('emoji-picker').classList.toggle('hidden',!open);
+  $('emoji-toggle').setAttribute('aria-expanded',String(open));
+  $('chat').classList.toggle('chat-active',open||document.activeElement===$('chat-input'));
+}
+$('chat-input').addEventListener('focus',()=>{if(playing||spectating){setEmojiPicker(true);renderEmojis($('emoji-search').value);}});
+$('chat-input').addEventListener('blur',()=>{setTimeout(()=>{if(!$('chat').contains(document.activeElement))setEmojiPicker(false);},120);});
+$('emoji-search').oninput=()=>renderEmojis($('emoji-search').value);
+$('emoji-toggle').onclick=()=>{setEmojiPicker($('emoji-picker').classList.contains('hidden'));renderEmojis($('emoji-search').value);};
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('#chat'))setEmojiPicker(false);});
+$('chat-form').onsubmit=e=>{ e.preventDefault(); sendMessage($('chat-input').value); $('chat-input').value='';setEmojiPicker(false); $('chat-input').blur(); };
+
 $('play-btn').onclick=beginGame;
 $('respawn-btn').onclick=beginGame;
 $('back-to-lobby').onclick=enterLobby;

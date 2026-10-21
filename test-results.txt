@@ -1,58 +1,255 @@
-✔ exactly 10 local bots in every mode (17.584736ms)
-✔ Mega multi creates two playable cells, both starting at 5K (2.496346ms)
-✔ free local spectator has bots but no spectator player (0.385348ms)
-Vintage game server listening on http://0.0.0.0:3328; modes: ffa, dual, mega
-Vintage game server listening on http://0.0.0.0:3328; modes: ffa, dual, mega
-Vintage game server listening on http://0.0.0.0:3328; modes: ffa, dual, mega
-✔ split throttle: burst of 6 for macro splits, then refills over time (5.57932ms)
-✔ server origin allow-list rejects other websites, accepts the listed one (6.581793ms)
-✔ no ALLOWED_ORIGINS keeps the server open (backwards compatible) (3.819508ms)
-✔ per-IP connection cap blocks the 3rd socket, and frees slots on close (2.204208ms)
-✔ typing in a text field never fires hotkeys (S used to open Settings) (0.846983ms)
-✔ default hotkeys do not collide on S (0.332008ms)
-✔ server: eaten second player respawns at mouse with initial mass and cooldown (3.085836ms)
-✔ server: new multi cell gets brief protection, not indefinite invulnerability (0.832792ms)
-✔ local: eaten second multi cell respawns at cursor in FFA, Dual and Mega (7.970269ms)
-✔ macro-feed key uses held state rather than only four instant feeds (0.988556ms)
-✔ new FFA base velocity is less aggressive than v8 (0.208271ms)
-✔ browser and server physics are generated from one source (2.138639ms)
-✔ FFA split keeps every gram and sends child towards pointer (2.290285ms)
-✔ cells do not merge during cooldown but can really merge after cooldown (8.036828ms)
-✔ split 16 / 32 / 64 respects cell cap and available mass (0.938883ms)
-✔ eating only works with mass advantage and sufficiently deep overlap (0.544293ms)
-✔ FFA movement is approximately consistent at 30 FPS and 60 FPS (0.675771ms)
-✔ FFA game server still spawns 10 bots and maintains room isolation (7.232843ms)
-✔ split-launch travel stays close across 20, 30 and 60 FPS (1.811201ms)
-✔ all modes use the same movement and split rules (4.983312ms)
-✔ auto split splits only oversized cells (4.808818ms)
-✔ one consumed virus schedules exactly one replacement; cap permits consumption (0.432644ms)
-✔ pending virus replacements cannot exceed cap (0.946144ms)
-✔ OAuth verifies state and browser cookie, exchanges code server-side and signs session (4.513745ms)
-✔ unconfigured OAuth providers are reported honestly (0.561373ms)
-✔ three rooms are isolated and use correct initial mass (5.471367ms)
-✔ split follows cursor and retains mass (1.390834ms)
-✔ automatic split begins at 25,500 mass and respects cell cap (9.011092ms)
-✔ Tag chat recipients are private within a room (1.557817ms)
-✔ sanitizer limits tags and chat data (0.338327ms)
-Vintage game server listening on http://0.0.0.0:3327; modes: ffa, dual, mega
-Vintage game server listening on http://0.0.0.0:3327; modes: ffa, dual, mega
-✔ spectate uses an observer socket, without spawning an extra player (18.08943ms)
-✔ joining after spectating removes observer and creates one player (6.286775ms)
-✔ feeding a virus seven ejected pellets launches a new moving virus (1.304206ms)
-✔ virus collision bursts a large player cell and conserves mass plus viral bonus (0.389733ms)
-✔ small cells are not burst and virus count stays bounded (0.315398ms)
-✔ game server rooms each start with 10 bots and independent virus arrays (4.192139ms)
-ℹ tests 39
-ℹ suites 0
-ℹ pass 39
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 285.647879
-
-Browser QA: Desktop settings, theme selection, empty Asia list, local lobby resume: passed; no page errors.
-Live WebSocket browser QA: Both player IDs preserved through settings + lobby + Play; exactly 2 initial join messages; split reaches server; no page errors.
-Visual QA: Desktop and mobile rendered. Final CSS adjusts small-screen width and removes emoji placeholders.
-External OAuth provider login not tested with real credentials; state/cookie validation, code exchange, session signature, replay rejection tested with mock providers.
-Production deployment not performed; server/domain/OAuth credentials were absent from the supplied files.
+TAP version 13
+# Subtest: exactly 10 local bots in every mode
+ok 1 - exactly 10 local bots in every mode
+  ---
+  duration_ms: 12.55235
+  type: 'test'
+  ...
+# Subtest: Mega multi creates two playable cells, both starting at 5K
+ok 2 - Mega multi creates two playable cells, both starting at 5K
+  ---
+  duration_ms: 1.349544
+  type: 'test'
+  ...
+# Subtest: free local spectator has bots but no spectator player
+ok 3 - free local spectator has bots but no spectator player
+  ---
+  duration_ms: 0.200487
+  type: 'test'
+  ...
+# Vintage game server listening on http://0.0.0.0:3328; modes: ffa, dual, mega
+# Vintage game server listening on http://0.0.0.0:3328; modes: ffa, dual, mega
+# Vintage game server listening on http://0.0.0.0:3328; modes: ffa, dual, mega
+# Subtest: split throttle: burst of 6 for macro splits, then refills over time
+ok 4 - split throttle: burst of 6 for macro splits, then refills over time
+  ---
+  duration_ms: 2.602846
+  type: 'test'
+  ...
+# Subtest: server origin allow-list rejects other websites, accepts the listed one
+ok 5 - server origin allow-list rejects other websites, accepts the listed one
+  ---
+  duration_ms: 6.695683
+  type: 'test'
+  ...
+# Subtest: no ALLOWED_ORIGINS keeps the server open (backwards compatible)
+ok 6 - no ALLOWED_ORIGINS keeps the server open (backwards compatible)
+  ---
+  duration_ms: 1.304116
+  type: 'test'
+  ...
+# Subtest: per-IP connection cap blocks the 3rd socket, and frees slots on close
+ok 7 - per-IP connection cap blocks the 3rd socket, and frees slots on close
+  ---
+  duration_ms: 1.221745
+  type: 'test'
+  ...
+# Subtest: typing in a text field never fires hotkeys (S used to open Settings)
+ok 8 - typing in a text field never fires hotkeys (S used to open Settings)
+  ---
+  duration_ms: 1.307101
+  type: 'test'
+  ...
+# Subtest: default hotkeys do not collide on S
+ok 9 - default hotkeys do not collide on S
+  ---
+  duration_ms: 0.415347
+  type: 'test'
+  ...
+# Subtest: server: eaten second player respawns at mouse with initial mass and cooldown
+ok 10 - server: eaten second player respawns at mouse with initial mass and cooldown
+  ---
+  duration_ms: 1.546633
+  type: 'test'
+  ...
+# Subtest: server: new multi cell gets brief protection, not indefinite invulnerability
+ok 11 - server: new multi cell gets brief protection, not indefinite invulnerability
+  ---
+  duration_ms: 0.618979
+  type: 'test'
+  ...
+# Subtest: local: eaten second multi cell respawns at cursor in FFA, Dual and Mega
+ok 12 - local: eaten second multi cell respawns at cursor in FFA, Dual and Mega
+  ---
+  duration_ms: 12.387465
+  type: 'test'
+  ...
+# Subtest: macro-feed key uses held state rather than only four instant feeds
+ok 13 - macro-feed key uses held state rather than only four instant feeds
+  ---
+  duration_ms: 1.672108
+  type: 'test'
+  ...
+# Subtest: new FFA base velocity is less aggressive than v8
+ok 14 - new FFA base velocity is less aggressive than v8
+  ---
+  duration_ms: 0.163763
+  type: 'test'
+  ...
+# Subtest: browser and server physics are generated from one source
+ok 15 - browser and server physics are generated from one source
+  ---
+  duration_ms: 1.074455
+  type: 'test'
+  ...
+# Subtest: FFA split keeps every gram and sends child towards pointer
+ok 16 - FFA split keeps every gram and sends child towards pointer
+  ---
+  duration_ms: 1.963005
+  type: 'test'
+  ...
+# Subtest: cells do not merge during cooldown but can really merge after cooldown
+ok 17 - cells do not merge during cooldown but can really merge after cooldown
+  ---
+  duration_ms: 2.826948
+  type: 'test'
+  ...
+# Subtest: split 16 / 32 / 64 respects cell cap and available mass
+ok 18 - split 16 / 32 / 64 respects cell cap and available mass
+  ---
+  duration_ms: 0.306064
+  type: 'test'
+  ...
+# Subtest: eating only works with mass advantage and sufficiently deep overlap
+ok 19 - eating only works with mass advantage and sufficiently deep overlap
+  ---
+  duration_ms: 0.270732
+  type: 'test'
+  ...
+# Subtest: FFA movement is approximately consistent at 30 FPS and 60 FPS
+ok 20 - FFA movement is approximately consistent at 30 FPS and 60 FPS
+  ---
+  duration_ms: 0.26985
+  type: 'test'
+  ...
+# Subtest: FFA game server still spawns 10 bots and maintains room isolation
+ok 21 - FFA game server still spawns 10 bots and maintains room isolation
+  ---
+  duration_ms: 2.710835
+  type: 'test'
+  ...
+# Subtest: split-launch travel stays close across 20, 30 and 60 FPS
+ok 22 - split-launch travel stays close across 20, 30 and 60 FPS
+  ---
+  duration_ms: 1.004632
+  type: 'test'
+  ...
+# Subtest: all modes use the same movement and split rules
+ok 23 - all modes use the same movement and split rules
+  ---
+  duration_ms: 4.579129
+  type: 'test'
+  ...
+# Subtest: auto split splits only oversized cells
+ok 24 - auto split splits only oversized cells
+  ---
+  duration_ms: 2.009414
+  type: 'test'
+  ...
+# Subtest: one consumed virus schedules exactly one replacement; cap permits consumption
+ok 25 - one consumed virus schedules exactly one replacement; cap permits consumption
+  ---
+  duration_ms: 0.377251
+  type: 'test'
+  ...
+# Subtest: pending virus replacements cannot exceed cap
+ok 26 - pending virus replacements cannot exceed cap
+  ---
+  duration_ms: 0.691697
+  type: 'test'
+  ...
+# Subtest: OAuth verifies state and browser cookie, exchanges code server-side and signs session
+ok 27 - OAuth verifies state and browser cookie, exchanges code server-side and signs session
+  ---
+  duration_ms: 3.480278
+  type: 'test'
+  ...
+# Subtest: unconfigured OAuth providers are reported honestly
+ok 28 - unconfigured OAuth providers are reported honestly
+  ---
+  duration_ms: 0.2223
+  type: 'test'
+  ...
+# Subtest: three rooms are isolated and use correct initial mass
+ok 29 - three rooms are isolated and use correct initial mass
+  ---
+  duration_ms: 3.49508
+  type: 'test'
+  ...
+# Subtest: split follows cursor and retains mass
+ok 30 - split follows cursor and retains mass
+  ---
+  duration_ms: 1.054226
+  type: 'test'
+  ...
+# Subtest: automatic split begins at 25,500 mass and respects cell cap
+ok 31 - automatic split begins at 25,500 mass and respects cell cap
+  ---
+  duration_ms: 5.443473
+  type: 'test'
+  ...
+# Subtest: Tag chat recipients are private within a room
+ok 32 - Tag chat recipients are private within a room
+  ---
+  duration_ms: 1.213432
+  type: 'test'
+  ...
+# Subtest: sanitizer limits tags and chat data
+ok 33 - sanitizer limits tags and chat data
+  ---
+  duration_ms: 0.265515
+  type: 'test'
+  ...
+# Vintage game server listening on http://0.0.0.0:3327; modes: ffa, dual, mega
+# Vintage game server listening on http://0.0.0.0:3327; modes: ffa, dual, mega
+# Subtest: spectate uses an observer socket, without spawning an extra player
+ok 34 - spectate uses an observer socket, without spawning an extra player
+  ---
+  duration_ms: 12.033895
+  type: 'test'
+  ...
+# Subtest: joining after spectating removes observer and creates one player
+ok 35 - joining after spectating removes observer and creates one player
+  ---
+  duration_ms: 4.145306
+  type: 'test'
+  ...
+# Subtest: background and center logo are world-fixed and clipped to the square
+ok 36 - background and center logo are world-fixed and clipped to the square
+  ---
+  duration_ms: 19.993831
+  type: 'test'
+  ...
+# Subtest: feeding a virus seven ejected pellets launches a new moving virus
+ok 37 - feeding a virus seven ejected pellets launches a new moving virus
+  ---
+  duration_ms: 1.340952
+  type: 'test'
+  ...
+# Subtest: virus collision bursts a large player cell and conserves mass plus viral bonus
+ok 38 - virus collision bursts a large player cell and conserves mass plus viral bonus
+  ---
+  duration_ms: 0.560432
+  type: 'test'
+  ...
+# Subtest: small cells are not burst and virus count stays bounded
+ok 39 - small cells are not burst and virus count stays bounded
+  ---
+  duration_ms: 0.328397
+  type: 'test'
+  ...
+# Subtest: game server rooms each start with 10 bots and independent virus arrays
+ok 40 - game server rooms each start with 10 bots and independent virus arrays
+  ---
+  duration_ms: 1.916986
+  type: 'test'
+  ...
+1..40
+# tests 40
+# suites 0
+# pass 40
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 222.25691

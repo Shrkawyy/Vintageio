@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#10131b" />
   <meta name="description" content="Vintage — FFA, Dual and Mega cell game." />
   <title>VINTAGE.IO</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/styles.css?v=12" />
 </head>
 <body class="show-lobby">
   <canvas id="arena" aria-label="Vintage game field"></canvas>
@@ -34,6 +34,15 @@
     <div class="status-details"><span id="mode-label">FFA MODE</span><span id="fps-label">60 FPS</span></div>
   </section>
 
+  <div id="live-stats" class="live-stats" aria-label="Live game statistics">
+    <div><small>FPS</small><strong id="stat-fps">—</strong></div>
+    <div><small>PING</small><strong id="stat-ping">LOCAL</strong></div>
+    <div><small>SCORE</small><strong id="stat-score">0</strong></div>
+    <div><small>MASS</small><strong id="stat-mass">0</strong></div>
+    <div><small>CELLS</small><strong id="stat-cells">0</strong></div>
+    <div><small>ONLINE</small><strong id="stat-online">0</strong></div>
+  </div>
+
   <div id="minimap" class="hud-panel minimap"><canvas id="minimap-canvas" width="150" height="150"></canvas><span>GRID MAP</span></div>
   <div id="toast-area" aria-live="polite"></div>
 
@@ -41,7 +50,11 @@
     <div class="chat-head"><b>VINTAGE CHAT</b><span id="chat-online">LOCAL</span></div>
     <div class="chat-tabs"><button class="chat-tab active" data-channel="all">ALL</button><button class="chat-tab" data-channel="tag">TAG</button><small id="chat-tag-label">NO TAG</small></div>
     <div id="chat-messages" class="chat-messages"></div>
-    <form id="chat-form"><input id="chat-input" autocomplete="off" maxlength="180" placeholder="Press Enter to chat..." aria-label="Chat message"><button type="submit" title="Send chat">➤</button></form>
+    <div id="emoji-picker" class="emoji-picker hidden" aria-label="Choose an emoji">
+      <div class="emoji-toolbar"><strong>EMOJIS</strong><input id="emoji-search" aria-label="Find emoji" placeholder="Search emoji..." autocomplete="off" /></div>
+      <div id="emoji-grid" class="emoji-grid" role="group" aria-label="Emoji choices"></div>
+    </div>
+    <form id="chat-form"><button id="emoji-toggle" class="emoji-toggle" type="button" aria-label="Emoji picker" aria-expanded="false">☺</button><input id="chat-input" autocomplete="off" maxlength="180" placeholder="Enter message..." aria-label="Chat message"><button class="chat-send" type="submit" title="Send chat">➤</button></form>
   </aside>
 
   <main id="lobby" class="lobby vintage-stage" aria-label="Vintage home screen">
@@ -94,6 +107,6 @@
 
   <div id="servers-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Select server"><section class="server-dialog"><header><div><small>FIND YOUR WORLD</small><h2>VINTAGE SERVERS</h2></div><button id="close-servers" class="icon-btn" aria-label="Close servers">✕</button></header><nav id="server-regions"><button data-region="EU" class="active">EU</button><button data-region="NA">NA</button><button data-region="ASIA">ASIA</button></nav><div id="server-list"></div><p class="hint">Changing servers starts a new match. Your current match keeps running while menus are open.</p></section></div>
   <script src="/config.js"></script>
-  <script type="module" src="/client.js"></script>
+  <script type="module" src="/client.js?v=12"></script>
 </body>
 </html>
