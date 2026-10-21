@@ -38,8 +38,8 @@ test('small cells are not burst and virus count stays bounded',()=>{
 
 test('game server rooms each start with 10 bots and independent virus arrays',()=>{
   const f=core.createRoom('ffa'),m=core.createRoom('mega');
-  assert.equal(f.viruses.length,28);
-  assert.equal(m.viruses.length,28);
+  assert.equal(f.viruses.length,8);
+  assert.equal(m.viruses.length,8);
   assert.equal([...f.players.values()].filter(p=>p.npc).length,10);
   assert.notStrictEqual(f.viruses,m.viruses);
 });

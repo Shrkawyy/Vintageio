@@ -1,8 +1,8 @@
 /** Vintage crystal-virus rules. Shared by the offline client and authoritative server. */
 export const VIRUS_BASE_MASS = 100;
 export const VIRUS_FEEDS_TO_SHOOT = 7;
-export const VIRUS_MIN_COUNT = 28;
-export const VIRUS_MAX_COUNT = 34;
+export const VIRUS_MIN_COUNT = 8;
+export const VIRUS_MAX_COUNT = 32;
 export const virusRadius = virus => 36 + Math.min(16, (virus.feedCount || 0) * 2);
 export function makeVirus(x,y,angle=0) {
   return {x,y,mass:VIRUS_BASE_MASS,feedCount:0,vx:0,vy:0,angle};
@@ -11,7 +11,7 @@ const clamp = (v,min,max) => Math.min(max,Math.max(min,v));
 const distance = (x1,y1,x2,y2) => Math.hypot(x2-x1,y2-y1);
 
 /** Consumes ejected food, launches fed viruses, and bursts sufficiently large player cells. */
-export function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVirus}) {
+export function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVirus, addRespawn}) {
   for (const virus of viruses) {
     virus.x=clamp(virus.x+(virus.vx||0)*dt,virusRadius(virus),width-virusRadius(virus));
     virus.y=clamp(virus.y+(virus.vy||0)*dt,virusRadius(virus),width-virusRadius(virus));
@@ -49,7 +49,6 @@ export function stepViruses({viruses, food, players, width, maxCells, time, dt, 
           shoot.vy=Math.sin(angle)*540;
           viruses.push(shoot);
         } else {
-          // Keep growth bounded to preserve performance on the local and online servers.
           const spare=viruses.find(v=>v!==virus && Math.hypot(v.vx||0,v.vy||0)<5);
           if (spare) { spare.vx=Math.cos(angle)*540; spare.vy=Math.sin(angle)*540; }
         }
@@ -66,7 +65,6 @@ export function stepViruses({viruses, food, players, width, maxCells, time, dt, 
       for (const cell of [...p.cells]) {
         const r=Math.max(13,Math.sqrt(Math.max(1,cell.mass))*2.45);
         if (distance(cell.x,cell.y,virus.x,virus.y)>r+virusRadius(virus)*.3) continue;
-        // Smaller cells are not burst by a virus; they can pass around it.
         if (cell.mass<600 || p.cells.length>=maxCells) continue;
         const free=maxCells-p.cells.length;
         const copies=Math.min(free,Math.max(5,Math.min(15,Math.floor(cell.mass/180)))) ;
@@ -86,7 +84,12 @@ export function stepViruses({viruses, food, players, width, maxCells, time, dt, 
           });
         }
         viruses.splice(vi,1);
-        if (spawnVirus) viruses.push(spawnVirus());
+        // When eaten, respawn 8 viruses after 2 minutes (120 seconds) in different positions
+        if (addRespawn) {
+          addRespawn(time + 120, 8);
+        } else if (spawnVirus) {
+          viruses.push(spawnVirus());
+        }
         triggered=true;
         break;
       }

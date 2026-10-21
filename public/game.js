@@ -37,7 +37,8 @@ export class LocalArena{
     this.mode=MODES[mode]?mode:'ffa';this.elapsed=0;this._id=0;this.chat=[];
     const conf=MODES[this.mode];
     this.food=Array.from({length:260},foodPoint);
-    this.viruses=Array.from({length:28},()=>makeVirus(rand(120,WORLD_SIZE-120),rand(120,WORLD_SIZE-120)));
+    this.viruses=Array.from({length:8},()=>makeVirus(rand(120,WORLD_SIZE-120),rand(120,WORLD_SIZE-120)));
+    this.virusRespawns=[];
     this.players=[];this.myIds=[];
     if(!spectator){
       const me=player('local-1',name||'Vintage Player',tag||'',settings.ownColor,conf.start);
@@ -86,8 +87,19 @@ export class LocalArena{
       if(settings.autoSplit&&p.cells.some(c=>c.mass>=AUTO_SPLIT_MASS)&&p.cells.length<MAX_CELLS)splitCells(p,this.elapsed,WORLD_SIZE,MAX_CELLS,this.mode);
       if(this.elapsed%12<dt)for(const c of p.cells)c.mass*=.999;
     }
+    // Check pending virus respawns
+    for (let i = this.virusRespawns.length - 1; i >= 0; i--) {
+      const resp = this.virusRespawns[i];
+      if (this.elapsed >= resp.time) {
+        for (let k = 0; k < resp.count; k++) {
+          this.viruses.push(makeVirus(rand(120, WORLD_SIZE - 120), rand(120, WORLD_SIZE - 120)));
+        }
+        this.virusRespawns.splice(i, 1);
+      }
+    }
     stepViruses({viruses:this.viruses,food:this.food,players:this.players,width:WORLD_SIZE,maxCells:MAX_CELLS,time:this.elapsed,dt,
-      spawnVirus:()=>makeVirus(rand(120,WORLD_SIZE-120),rand(120,WORLD_SIZE-120))});
+      spawnVirus:()=>makeVirus(rand(120,WORLD_SIZE-120),rand(120,WORLD_SIZE-120)),
+      addRespawn:(time,count)=>this.virusRespawns.push({time,count})});
     absorbFood(this.players,this.food,this.mode);
     eatCells(this.players,this.mode,this.elapsed);
     while(this.food.length<270)this.food.push(foodPoint());
@@ -114,45 +126,37 @@ export class ArenaRenderer{
     if(settings.showBorders){ctx.strokeStyle=freeCamera?'#e2e9ef':settings.accentColor;ctx.globalAlpha=freeCamera?.83:.38;ctx.lineWidth=Math.max(settings.borderWidth||5,(freeCamera?2.1:1)/Math.max(this.zoom,.055));ctx.strokeRect(0,0,WORLD_SIZE,WORLD_SIZE);ctx.globalAlpha=1;}
     if(snapshot?.food&&settings.showFood){for(const f of snapshot.food){if(f.x<left-20||f.x>right+20||f.y<top-20||f.y>bottom+20)continue;const r=clamp(Math.sqrt(f.mass)*1.7*(settings.foodSize||1),3,15);ctx.beginPath();ctx.arc(f.x,f.y,r,0,Math.PI*2);ctx.fillStyle=f.color||'#83dbea';ctx.globalAlpha=.85;ctx.fill();}ctx.globalAlpha=1;}
     if(snapshot?.viruses&&settings.showViruses){
-      // An original neon-crystal virus: layered crystalline fins, a luminous core,
-      // subtle rotation and a fed-charge halo. Every visible crystal has gameplay collision.
       const tick=performance.now()/1000;
       for(const v of snapshot.viruses){
         const r=virusRadius(v);
         if(v.x<left-r*2||v.x>right+r*2||v.y<top-r*2||v.y>bottom+r*2)continue;
-        const glow=1+0.042*Math.sin(tick*2.2+(v.x+v.y)*.01);
-        ctx.save();ctx.translate(v.x,v.y);ctx.rotate(tick*.12+(v.angle||0)*.12);
+        const glow=1+0.05*Math.sin(tick*3+(v.x+v.y)*.02);
+        ctx.save();ctx.translate(v.x,v.y);ctx.rotate(tick*.5);
         const outer=r*glow;
-        const halo=ctx.createRadialGradient(0,0,outer*.32,0,0,outer*1.6);
-        halo.addColorStop(0,'rgba(61,230,211,.15)');
-        halo.addColorStop(.7,'rgba(30,179,171,.12)');
-        halo.addColorStop(1,'rgba(35,220,202,0)');
-        ctx.fillStyle=halo;ctx.beginPath();ctx.arc(0,0,outer*1.65,0,Math.PI*2);ctx.fill();
-        ctx.beginPath();
-        for(let i=0;i<32;i++){
-          const a=i*Math.PI/16,point=i%2?outer*.79:outer*1.12;
-          const x=Math.cos(a)*point,y=Math.sin(a)*point;
-          if(!i)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-        }
-        ctx.closePath();ctx.fillStyle='#123d49';ctx.fill();
-        ctx.lineWidth=3/Math.max(this.zoom,.08);ctx.strokeStyle='#58efda';ctx.stroke();
-        ctx.save();ctx.rotate(-tick*.2);
-        for(let i=0;i<8;i++){
-          const a=i*Math.PI/4;
-          ctx.beginPath();ctx.moveTo(Math.cos(a)*outer*.26,Math.sin(a)*outer*.26);
-          ctx.lineTo(Math.cos(a-.18)*outer*.8,Math.sin(a-.18)*outer*.8);
-          ctx.lineTo(Math.cos(a+.2)*outer*.84,Math.sin(a+.2)*outer*.84);
-          ctx.closePath();ctx.fillStyle=i%2?'#299a9f':'#1d747f';ctx.fill();
-        }
-        ctx.restore();
-        const core=ctx.createRadialGradient(-outer*.12,-outer*.13,1,0,0,outer*.49);
-        core.addColorStop(0,'#dcfffa');core.addColorStop(.26,'#71f6e5');core.addColorStop(.64,'#3bcebd');core.addColorStop(1,'#126276');
-        ctx.beginPath();ctx.arc(0,0,outer*.47,0,Math.PI*2);ctx.fillStyle=core;ctx.fill();
-        ctx.beginPath();ctx.arc(0,0,outer*.24,0,Math.PI*2);
-        ctx.strokeStyle='#e6fffd';ctx.lineWidth=1.6/Math.max(this.zoom,.08);ctx.stroke();
+        const ringGrad=ctx.createRadialGradient(0,0,outer*.6,0,0,outer*1.3);
+        ringGrad.addColorStop(0,'rgba(240,101,181,0.2)');
+        ringGrad.addColorStop(0.7,'rgba(214,63,88,0.5)');
+        ringGrad.addColorStop(1,'rgba(240,101,181,0)');
+        ctx.fillStyle=ringGrad;ctx.beginPath();ctx.arc(0,0,outer*1.4,0,Math.PI*2);ctx.fill();
+
+        ctx.beginPath();ctx.arc(0,0,outer,0,Math.PI*2);
+        ctx.fillStyle='#3a1224';ctx.fill();
+        ctx.lineWidth=4/Math.max(this.zoom,.08);ctx.strokeStyle='#f065b5';ctx.stroke();
+
+        ctx.beginPath();ctx.arc(0,0,outer*.75,0,Math.PI*2);
+        ctx.lineWidth=2/Math.max(this.zoom,.08);ctx.strokeStyle='#ff88b0';ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+
+        ctx.beginPath();ctx.arc(0,0,outer*.28,0,Math.PI*2);
+        const coreGrad=ctx.createRadialGradient(0,0,0,0,0,outer*.28);
+        coreGrad.addColorStop(0,'#ffffff');
+        coreGrad.addColorStop(0.5,'#f065b5');
+        coreGrad.addColorStop(1,'#801e36');
+        ctx.fillStyle=coreGrad;ctx.fill();
+        ctx.lineWidth=2/Math.max(this.zoom,.08);ctx.strokeStyle='#ff94d4';ctx.stroke();
+
         if(v.feedCount){
-          ctx.beginPath();ctx.arc(0,0,outer*1.23,-Math.PI/2,-Math.PI/2+Math.PI*2*(v.feedCount/7));
-          ctx.lineWidth=4/Math.max(this.zoom,.08);ctx.strokeStyle='#ffb65c';ctx.stroke();
+          ctx.beginPath();ctx.arc(0,0,outer*1.2,-Math.PI/2,-Math.PI/2+Math.PI*2*(v.feedCount/7));
+          ctx.lineWidth=4/Math.max(this.zoom,.08);ctx.strokeStyle='#ffd28a';ctx.stroke();
         }
         ctx.restore();
       }

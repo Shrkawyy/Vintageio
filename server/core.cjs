@@ -11,9 +11,9 @@ let nextId=0;
 const uid=()=>String(++nextId);
 function cell(x,y,mass,color){return{x,y,mass,color,vx:0,vy:0,mergeAt:0};}
 function makePlayer(mode,name,tag,npc=false,slot=0){const config=MODES[mode];const color=npc?COLORS[Math.floor(C.rand(0,COLORS.length))]:(slot===0?'#70e0ff':'#ff88b0');const x=C.rand(300,WIDTH-300),y=C.rand(300,WIDTH-300);return{id:uid(),name,tag,npc,slot,color,target:{x,y},cells:[cell(x,y,config.initialMass,color)],heading:C.rand(0,Math.PI*2),lastChat:0};}
-function createRoom(mode){if(!MODES[mode])throw Error('Unknown mode');const room={mode,players:new Map(),food:[],viruses:[],time:0};
+function createRoom(mode){if(!MODES[mode])throw Error('Unknown mode');const room={mode,players:new Map(),food:[],viruses:[],virusRespawns:[],time:0};
   for(let i=0;i<280;i++)room.food.push(newFood());
-  for(let i=0;i<28;i++)room.viruses.push(makeVirus(C.rand(120,WIDTH-120),C.rand(120,WIDTH-120)));
+  for(let i=0;i<8;i++)room.viruses.push(makeVirus(C.rand(120,WIDTH-120),C.rand(120,WIDTH-120)));
   for(let i=0;i<MODES[mode].bots;i++){const bot=makePlayer(mode,BOTS[i],'',true);bot.cells[0].mass=C.rand(600,MODES[mode].initialMass*1.7);room.players.set(bot.id,bot);}
   return room;
 }
@@ -50,7 +50,19 @@ function step(room,dt=1/30){
     if(p.cells.some(c=>c.mass>=AUTO_SPLIT_MASS)&&p.cells.length<MAX_CELLS)splitCells(p,room.time,WIDTH,MAX_CELLS,room.mode);
     if(room.time%12<dt)for(const c of p.cells)c.mass*=.999;
   }
-  stepViruses({viruses:room.viruses,food:room.food,players:[...room.players.values()],width:WIDTH,maxCells:MAX_CELLS,time:room.time,dt,spawnVirus:()=>makeVirus(C.rand(120,WIDTH-120),C.rand(120,WIDTH-120))});
+  // Check pending virus respawns
+  for (let i = room.virusRespawns.length - 1; i >= 0; i--) {
+    const resp = room.virusRespawns[i];
+    if (room.time >= resp.time) {
+      for (let k = 0; k < resp.count; k++) {
+        room.viruses.push(makeVirus(C.rand(120, WIDTH - 120), C.rand(120, WIDTH - 120)));
+      }
+      room.virusRespawns.splice(i, 1);
+    }
+  }
+  stepViruses({viruses:room.viruses,food:room.food,players:[...room.players.values()],width:WIDTH,maxCells:MAX_CELLS,time:room.time,dt,
+    spawnVirus:()=>makeVirus(C.rand(120,WIDTH-120),C.rand(120,WIDTH-120)),
+    addRespawn:(time,count)=>room.virusRespawns.push({time,count})});
   const all=[...room.players.values()];
   absorbFood(all,room.food,room.mode);
   eatCells(all,room.mode,room.time);
