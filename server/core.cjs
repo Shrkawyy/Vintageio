@@ -2,7 +2,22 @@
 const {makeVirus,stepViruses}=require('./virus.cjs');
 const {splitCells,moveCells,eatCells,absorbFood}=require('./physics.cjs');
 /** Authoritative, in-memory arena simulation. Three completely isolated rooms. */
-const MODES={ffa:{name:'FREE FOR ALL',initialMass:1000,bots:10},dual:{name:'DUAL',initialMass:1000,bots:10},mega:{name:'MEGA',initialMass:5000,bots:10}};
+const MODES={
+  ffa:{name:'FREE FOR ALL',initialMass:1000,bots:10,physics:'ffa'},
+  dual:{name:'DUAL',initialMass:1000,bots:10,physics:'ffa'},
+  mega:{name:'MEGA',initialMass:5000,bots:10,physics:'other'},
+  aster_dual:{name:'ASTER DUAL',initialMass:1000,bots:10,physics:'aster'},
+  samba_dual:{name:'SAMBA DUAL',initialMass:1000,bots:10,physics:'samba'},
+  samba_mega:{name:'SAMBA MEGA',initialMass:5000,bots:10,physics:'samba',maxMass:100000},
+  aster_mega:{name:'ASTER MEGA',initialMass:5000,bots:10,physics:'aster',maxMass:22400},
+  arab_mega:{name:'ARAB MEGA',initialMass:5000,bots:10,physics:'arab'},
+  venus_mega:{name:'VENUS MEGA',initialMass:5000,bots:10,physics:'gota'},
+  gota_mega:{name:'GOTA MEGA',initialMass:5000,bots:10,physics:'gota'},
+  samba_macro:{name:'SAMBA MACRO',initialMass:1000,bots:10,physics:'samba'},
+  samba_ffa:{name:'SAMBA FFA',initialMass:1000,bots:10,physics:'samba'},
+  agar_ffa:{name:'AGAR FFA',initialMass:1000,bots:10,physics:'agar'},
+  og_vanilla:{name:'OG VANILLA',initialMass:1000,bots:10,physics:'agar'},
+};
 const WIDTH=4800,MAX_CELLS=64,AUTO_SPLIT_MASS=25500;
 const C={clamp:(n,min,max)=>Math.max(min,Math.min(max,n)),rand:(a,b)=>Math.random()*(b-a)+a,radius:m=>Math.max(13,Math.sqrt(Math.max(1,m))*2.45)};
 const COLORS=['#ffb388','#b595fc','#86f6cd','#fa9dd7','#7cc3ed'];
@@ -30,11 +45,11 @@ function respawn(room,p,x,y){
   return true;
 }
 
-function split(room,p){return splitCells(p,room.time,WIDTH,MAX_CELLS,room.mode);}
-/** Network-facing split: allows a burst of 6 (macro splits), then refills 8 per second. Returns null when throttled. */
-function trySplit(room,p){const t=room.time,last=p.splitRefillAt??t;p.splitTokens=Math.min(6,(p.splitTokens??6)+(t-last)*8);p.splitRefillAt=t;if(p.splitTokens<1)return null;p.splitTokens-=1;return split(room,p);}
+function split(room,p){return splitCells(p,room.time,WIDTH,MAX_CELLS,MODES[room.mode].physics);}
 function feed(room,p){for(const c of p.cells){if(c.mass<100)continue;const dx=p.target.x-c.x,dy=p.target.y-c.y,len=Math.hypot(dx,dy)||1;c.mass-=22;room.food.push({x:C.clamp(c.x+dx/len*(C.radius(c.mass)+27),0,WIDTH),y:C.clamp(c.y+dy/len*(C.radius(c.mass)+27),0,WIDTH),mass:22,color:'#bdfdff',ejected:true,vx:dx/len*650,vy:dy/len*650});}}
 function step(room,dt=1/30){
+  const modeConfig = MODES[room.mode];
+  const maxMass = modeConfig.maxMass || AUTO_SPLIT_MASS;
   dt=Math.min(.08,Math.max(0,dt));room.time+=dt;
   for(const p of room.players.values()){
     if(!p.cells.length)continue;
@@ -46,14 +61,14 @@ function step(room,dt=1/30){
       if(dangers.length)p.heading=Math.atan2(lead.y-dangers[0].cells[0].y,lead.x-dangers[0].cells[0].x);
       p.target={x:C.clamp(lead.x+Math.cos(p.heading)*520,0,WIDTH),y:C.clamp(lead.y+Math.sin(p.heading)*520,0,WIDTH)};
     }
-    moveCells(p,dt,room.time,WIDTH,room.mode,p.npc?.73:1);
-    if(p.cells.some(c=>c.mass>=AUTO_SPLIT_MASS)&&p.cells.length<MAX_CELLS)splitCells(p,room.time,WIDTH,MAX_CELLS,room.mode);
+    moveCells(p,dt,room.time,WIDTH,modeConfig.physics,p.npc?.73:1);
+    if(p.cells.some(c=>c.mass>=maxMass)&&p.cells.length<MAX_CELLS)splitCells(p,room.time,WIDTH,MAX_CELLS,modeConfig.physics);
     if(room.time%12<dt)for(const c of p.cells)c.mass*=.999;
   }
   stepViruses({viruses:room.viruses,food:room.food,players:[...room.players.values()],width:WIDTH,maxCells:MAX_CELLS,time:room.time,dt,spawnVirus:()=>makeVirus(C.rand(120,WIDTH-120),C.rand(120,WIDTH-120))});
   const all=[...room.players.values()];
-  absorbFood(all,room.food,room.mode);
-  eatCells(all,room.mode,room.time);
+  absorbFood(all,room.food,modeConfig.physics);
+  eatCells(all,modeConfig.physics,room.time);
   for(const p of all)if(p.npc&&!p.cells.length){const spawned=makePlayer(room.mode,p.name,p.tag,true);p.cells=spawned.cells;p.heading=C.rand(0,Math.PI*2);p.target=spawned.target;}
   while(room.food.length<280)room.food.push(newFood());if(room.food.length>650)room.food.splice(0,room.food.length-650);
 }
@@ -61,4 +76,4 @@ function snapshot(room){return {type:'state',mode:room.mode,worldSize:WIDTH,play
 function cleanText(t,max=180){return String(t||'').replace(/[<>\u0000-\u001f\u007f]/g,'').trim().slice(0,max);}
 function cleanTag(t){return cleanText(t,8).toUpperCase();}
 function chatRecipients(room,p,channel){return [...room.players.values()].filter(x=>!x.npc&&(channel==='all'||(p.tag&&x.tag===p.tag)));}
-module.exports={MODES,WIDTH,MAX_CELLS,AUTO_SPLIT_MASS,createRoom,join,respawn,point,split,trySplit,feed,step,snapshot,cleanText,cleanTag,chatRecipients};
+module.exports={MODES,WIDTH,MAX_CELLS,AUTO_SPLIT_MASS,createRoom,join,respawn,point,split,feed,step,snapshot,cleanText,cleanTag,chatRecipients};
