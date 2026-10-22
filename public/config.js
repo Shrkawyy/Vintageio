@@ -3,6 +3,7 @@
 window.VINTAGE_CONFIG = {
   wsUrl: '',
   authBaseUrl: '', // e.g. https://api.your-domain.com; empty = same origin
+  // Set multi:false on a server entry for a single connection with natural cell colors.
   regions: {
     EU: [
       {id:'eu-ffa',name:'FFA',mode:'ffa',wsUrl:''},

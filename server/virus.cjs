@@ -12,10 +12,9 @@ const clamp = (v,min,max) => Math.min(max,Math.max(min,v));
 const distance = (x1,y1,x2,y2) => Math.hypot(x2-x1,y2-y1);
 
 /** Consumes ejected food, launches fed viruses, and bursts sufficiently large player cells. */
-function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVirus, addRespawn}) {
+function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVirus, addRespawn, physics={}, mergeDelay, findFoodReceiver}) {
   const virusDrag=-30*Math.log(.90),pelletDrag=-30*Math.log(.91);
   const virusTravel=(1-Math.exp(-virusDrag*dt))/virusDrag;
-  const pelletTravel=(1-Math.exp(-pelletDrag*dt))/pelletDrag;
   for (const virus of viruses) {
     virus.x=clamp(virus.x+(virus.vx||0)*virusTravel,virusRadius(virus),width-virusRadius(virus));
     virus.y=clamp(virus.y+(virus.vy||0)*virusTravel,virusRadius(virus),width-virusRadius(virus));
@@ -28,15 +27,40 @@ function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVi
   for (let i=food.length-1;i>=0;i--) {
     const pellet=food[i];
     if (!pellet.ejected) continue;
-    pellet.x=clamp(pellet.x+(pellet.vx||0)*pelletTravel,0,width);
-    pellet.y=clamp(pellet.y+(pellet.vy||0)*pelletTravel,0,width);
-    pellet.vx=(pellet.vx||0)*Math.pow(.91,dt*30);
-    pellet.vy=(pellet.vy||0)*Math.pow(.91,dt*30);
-    for (const virus of [...viruses]) {
-      if (distance(pellet.x,pellet.y,virus.x,virus.y) > virusRadius(virus)+9) continue;
-      const dx=pellet.x-virus.x,dy=pellet.y-virus.y;
+    if(time>=(pellet.expiresAt??Infinity)){food.splice(i,1);continue;}
+    const drag=pellet.drag||pelletDrag,travel=(1-Math.exp(-drag*dt))/drag;
+    const startX=pellet.x,startY=pellet.y;
+    pellet.previousX=startX;pellet.previousY=startY;
+    pellet.x=clamp(pellet.x+(pellet.vx||0)*travel,0,width);
+    pellet.y=clamp(pellet.y+(pellet.vy||0)*travel,0,width);
+    pellet.vx=(pellet.vx||0)*Math.exp(-drag*dt);
+    pellet.vy=(pellet.vy||0)*Math.exp(-drag*dt);
+    // Sweep the whole flight segment: fast feed must not jump through a virus between ticks.
+    const dx=pellet.x-startX,dy=pellet.y-startY,length2=dx*dx+dy*dy;
+    let hit=null,first=Infinity;
+    for(const virus of viruses){
+      const radius=virusRadius(virus)+Math.sqrt(pellet.mass||24)*.85;
+      const ox=startX-virus.x,oy=startY-virus.y,c=ox*ox+oy*oy-radius*radius;
+      let at=0;
+      if(c>0){
+        if(!length2)continue;
+        const b=ox*dx+oy*dy,disc=b*b-length2*c;
+        if(disc<0)continue;
+        at=(-b-Math.sqrt(disc))/length2;
+        if(at<0||at>1)continue;
+      }
+      if(at<first){hit=virus;first=at;}
+    }
+    if(hit&&findFoodReceiver){
+      const receiver=findFoodReceiver(pellet);
+      if(receiver&&receiver.at<=first)hit=null;
+    }
+    if(hit){
+      const virus=hit;
+      pellet.x=startX+dx*first;pellet.y=startY+dy*first;
+      const impactX=pellet.x-virus.x,impactY=pellet.y-virus.y;
       const incoming=Math.hypot(pellet.vx||0,pellet.vy||0);
-      const angle=incoming>3?Math.atan2(pellet.vy,pellet.vx):Math.atan2(dy,dx);
+      const angle=incoming>3?Math.atan2(pellet.vy,pellet.vx):Math.atan2(impactY,impactX);
       virus.feedCount=(virus.feedCount||0)+1;
       virus.mass=VIRUS_BASE_MASS+virus.feedCount*22;
       virus.angle=angle;
@@ -57,7 +81,6 @@ function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVi
           if (spare) { spare.vx=Math.cos(angle)*540; spare.vy=Math.sin(angle)*540; }
         }
       }
-      break;
     }
   }
 
@@ -71,20 +94,25 @@ function stepViruses({viruses, food, players, width, maxCells, time, dt, spawnVi
         if (distance(cell.x,cell.y,virus.x,virus.y)>r+virusRadius(virus)*.3) continue;
         if (cell.mass<600) continue;
         const free=maxCells-p.cells.length;
-        const copies=Math.min(free,Math.max(5,Math.min(15,Math.floor(cell.mass/180)))) ;
+        // Distribute the entire struck piece into all available fragment slots.
+        const copies=Math.max(0,Math.min(free,Math.floor((cell.mass+VIRUS_BASE_MASS)/25)-1));
         // At the fragment cap a virus is consumed without adding cells.
         const newCount=copies+1, total=cell.mass+VIRUS_BASE_MASS;
-        const massEach=total/newCount;
-        cell.mass=massEach;
-        cell.mergeAt=time+13;
+        const retained=total/newCount;
+        const massEach=copies?(total-retained)/copies:total;
+        const cooldown=mergeDelay?mergeDelay(Math.max(retained,massEach)):13;
+        const mergeAt=Math.max(cell.mergeAt||0,time+cooldown);
+        cell.mass=retained;
+        cell.mergeAt=mergeAt;
+        cell.collideAt=time+.6;
         for (let k=0;k<copies;k++) {
           const theta=k*Math.PI*2/copies+(virus.angle||0);
           const impulse=220+Math.min(260,Math.sqrt(total)*5);
           p.cells.push({
-            x:clamp(cell.x+Math.cos(theta)*Math.sqrt(massEach)*1.35,20,width-20),
-            y:clamp(cell.y+Math.sin(theta)*Math.sqrt(massEach)*1.35,20,width-20),
+            x:clamp(cell.x+Math.cos(theta)*Math.sqrt(massEach)*1.35,Math.max(13,Math.sqrt(massEach)*2.45),width-Math.max(13,Math.sqrt(massEach)*2.45)),
+            y:clamp(cell.y+Math.sin(theta)*Math.sqrt(massEach)*1.35,Math.max(13,Math.sqrt(massEach)*2.45),width-Math.max(13,Math.sqrt(massEach)*2.45)),
             mass:massEach,color:cell.color,
-            vx:Math.cos(theta)*impulse,vy:Math.sin(theta)*impulse,mergeAt:time+13
+            vx:Math.cos(theta)*impulse,vy:Math.sin(theta)*impulse,mergeAt,collideAt:time+.6
           });
         }
         viruses.splice(vi,1);

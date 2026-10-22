@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#10131b" />
   <meta name="description" content="Vintage — FFA, Dual and Mega cell game." />
   <title>VINTAGE.IO</title>
-  <link rel="stylesheet" href="/styles.css?v=13" />
+  <link rel="stylesheet" href="/styles.css?v=25-world-ui" />
 </head>
 <body class="show-lobby">
   <canvas id="arena" aria-label="Vintage game field"></canvas>
@@ -50,7 +50,7 @@
 
   <aside id="chat" class="hud-panel chatbox">
     <div class="chat-head"><b>VINTAGE CHAT</b><span id="chat-online">LOCAL</span></div>
-    <div class="chat-tabs"><button class="chat-tab active" data-channel="all">ALL</button><button class="chat-tab" data-channel="tag">TAG</button><small id="chat-tag-label">NO TAG</small></div>
+    <div class="chat-tabs"><button class="chat-tab active" data-channel="all">ALL</button><button class="chat-tab" data-channel="tag">TAG</button></div>
     <div id="chat-messages" class="chat-messages"></div>
     <div id="emoji-picker" class="emoji-picker hidden" aria-label="Choose an emoji">
       <div class="emoji-toolbar"><strong>EMOJIS</strong><input id="emoji-search" aria-label="Find emoji" placeholder="Search emoji..." autocomplete="off" /></div>
@@ -86,7 +86,7 @@
       <div class="v-launch-top"><div><span class="v-launch-kicker" id="world-status">CURRENT WORLD · LOCAL DEMO</span><h1 id="lobby-mode-name">FREE FOR ALL</h1><small id="lobby-mode-mass">STARTS AT 1,000 MASS</small></div><button type="button" class="v-launch-settings" id="lobby-settings-secondary" aria-label="Open settings" title="Settings">⚙</button></div>
       <button id="server-picker-btn" class="server-picker-btn">SELECT SERVER <span>EU · FFA ▾</span></button><div class="v-launch-fields"><label><span>PLAYER NAME</span><input id="nickname" autocomplete="nickname" maxlength="18" value="Vintage Player" placeholder="Nickname" /></label><label><span>TAG</span><input id="team-tag" maxlength="8" placeholder="Tag" /></label></div>
       <div class="v-launch-actions"><button id="play-btn" class="v-play-button"><span>▶</span> PLAY NOW <span>↗</span></button><button id="spectate-btn" class="v-spectate-button">◉ SPECTATE</button></div>
-      <div class="v-launch-foot"><span id="world-detail">10 AI PLAYERS</span><span>MULTI ENABLED</span></div>
+      <div class="v-launch-foot"><span id="world-detail">10 AI PLAYERS</span><span id="multibox-status">MULTI ENABLED</span></div>
     </section>
     <div class="v-stage-bottom-note"><span>VINTAGE.IO ORIGINAL EXPERIENCE</span><span>FFA / DUAL / MEGA <b>•</b> INDEPENDENT WORLDS</span></div>
   </main>
@@ -110,6 +110,13 @@
 
   <div id="servers-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Select server"><section class="server-dialog"><header><div><small>FIND YOUR WORLD</small><h2>VINTAGE SERVERS</h2></div><button id="close-servers" class="icon-btn" aria-label="Close servers">✕</button></header><nav id="server-regions"><button data-region="EU" class="active">EU</button><button data-region="NA">NA</button><button data-region="ASIA">ASIA</button></nav><div id="server-list"></div><p class="hint">Changing servers starts a new match. Your current match keeps running while menus are open.</p></section></div>
   <script src="/config.js"></script>
-  <script type="module" src="/client.js?v=13"></script>
+  <script type="module" src="/client.js?v=25-world-ui"></script>
 </body>
 </html>
+
+
+
+
+
+
+

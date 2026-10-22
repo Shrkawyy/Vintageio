@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const core=require('../server/core.cjs');
@@ -43,3 +43,9 @@ test('game server rooms each start with 10 bots and independent virus arrays',()
   assert.equal([...f.players.values()].filter(p=>p.npc).length,10);
   assert.notStrictEqual(f.viruses,m.viruses);
 });
+
+
+
+
+
+

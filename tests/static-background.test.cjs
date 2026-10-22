@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -7,8 +7,8 @@ const base=path.resolve(__dirname,'../public');
 async function loadGame(){
   const encode=p=>'data:text/javascript;charset=utf-8,'+encodeURIComponent(fs.readFileSync(path.join(base,p),'utf8'));
   const src=fs.readFileSync(path.join(base,'game.js'),'utf8')
-    .replace("'./virus-rules.js'",JSON.stringify(encode('virus-rules.js')))
-    .replace("'./physics.js'",JSON.stringify(encode('physics.js')));
+    .replace("'./virus-rules.js?v=3-full-burst'",JSON.stringify(encode('virus-rules.js')))
+    .replace("'./physics.js?v=11-world-ui'",JSON.stringify(encode('physics.js')));
   return import('data:text/javascript;charset=utf-8,'+encodeURIComponent(src));
 }
 function mockCanvas(){
@@ -52,3 +52,9 @@ test('background and center logo are world-fixed and clipped to the square',asyn
     }
   }
 });
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -49,3 +49,9 @@ test('joining after spectating removes observer and creates one player',()=>{
   assert.equal(states.at(-1).players.filter(p=>!p.npc).length,1);
   ws.emit('close');
 });
+
+
+
+
+
+

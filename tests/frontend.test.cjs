@@ -1,7 +1,7 @@
-'use strict';
+﻿'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 let game;
-async function getGame(){if(!game){const virusSource=fs.readFileSync(path.join(__dirname,'../public/virus-rules.js'),'utf8');const virusUrl='data:text/javascript;charset=utf-8,'+encodeURIComponent(virusSource);const physicsSource=fs.readFileSync(path.join(__dirname,'../public/physics.js'),'utf8');const physicsUrl='data:text/javascript;charset=utf-8,'+encodeURIComponent(physicsSource);const source=fs.readFileSync(path.join(__dirname,'../public/game.js'),'utf8').replace("'./virus-rules.js'",JSON.stringify(virusUrl)).replace("'./physics.js'",JSON.stringify(physicsUrl));game=await import('data:text/javascript;charset=utf-8,'+encodeURIComponent(source));}return game;}
+async function getGame(){if(!game){const virusSource=fs.readFileSync(path.join(__dirname,'../public/virus-rules.js'),'utf8');const virusUrl='data:text/javascript;charset=utf-8,'+encodeURIComponent(virusSource);const physicsSource=fs.readFileSync(path.join(__dirname,'../public/physics.js'),'utf8');const physicsUrl='data:text/javascript;charset=utf-8,'+encodeURIComponent(physicsSource);const source=fs.readFileSync(path.join(__dirname,'../public/game.js'),'utf8').replace("'./virus-rules.js?v=3-full-burst'",JSON.stringify(virusUrl)).replace("'./physics.js?v=11-world-ui'",JSON.stringify(physicsUrl));game=await import('data:text/javascript;charset=utf-8,'+encodeURIComponent(source));}return game;}
 test('exactly 10 local bots in every mode',async()=>{
  const {LocalArena,MODES,DEFAULT_SETTINGS}=await getGame();
  for(const mode of Object.keys(MODES)){
@@ -22,3 +22,24 @@ test('free local spectator has bots but no spectator player',async()=>{
  assert.equal(arena.players.filter(p=>!p.npc).length,0);
  assert.equal(arena.players.filter(p=>p.npc).length,10);
 });
+test('local bot splits toward a nearby prey cell it can eat',async()=>{
+ const {LocalArena,DEFAULT_SETTINGS}=await getGame();
+ const arena=new LocalArena();arena.reset('ffa','Tester','',false,DEFAULT_SETTINGS);
+ arena.viruses=[];arena.food=[];
+ const bot=arena.players.find(p=>p.npc),prey=arena.getById(arena.myIds[0]);
+ bot.cells[0].x=2000;bot.cells[0].y=2000;bot.cells[0].mass=2000;
+ for(const other of arena.players){
+  if(other.npc&&other!==bot){other.cells[0].x=4300;other.cells[0].y=4300;other.cells[0].mass=500;}
+ }
+ prey.cells[0].x=2300;prey.cells[0].y=2000;prey.cells[0].mass=500;
+ prey.target={x:2300,y:2000};
+ arena.tick(.01,DEFAULT_SETTINGS);
+ assert.equal(bot.cells.length,2);
+ assert.ok(bot.target.x>bot.cells[0].x,'bot aims toward its prey while attacking');
+});
+
+
+
+
+
+

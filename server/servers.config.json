@@ -8,9 +8,9 @@
     { "id": "classic", "title": "Classic / OG" },
     { "id": "competitive", "title": "Competitive – Bot Free" }
   ],
-  "defaults": { "region": "EU", "maxPlayers": 50, "bots": 10, "initialMass": 1000, "feedInterval": 0.075, "maxCells": 64, "macro": false },
+  "defaults": { "region": "EU", "maxPlayers": 50, "bots": 10, "initialMass": 1000, "maxCells": 64, "macro": false },
   "servers": [
-    { "id": "senpa-ffa",       "name": "Senpa FFA",         "category": "ffa",     "engineMode": "ffa",  "physics": "senpa" },
+    { "id": "senpa-ffa",       "name": "Senpa FFA",         "category": "ffa",     "engineMode": "ffa",  "physics": "senpa_ffa" },
     { "id": "agar-ffa",        "name": "Agar FFA",          "category": "ffa",     "engineMode": "ffa",  "physics": "classic" },
     { "id": "vintage-ffa",     "name": "Vintage FFA",       "category": "ffa",     "engineMode": "ffa",  "physics": "vintage_ffa" },
 

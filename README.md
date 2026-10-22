@@ -1,3 +1,45 @@
+# Mega stability, input and chat — 22 October 2026
+
+See **MEGA-STABILITY-INPUT-CHAT.md** for the comparison of the two latest videos
+and the bot, mass, feed, split, control and chat fixes. Bots now spawn at 300–1,500
+mass and return after five minutes outside player fragments. Mass decays
+proportionally; MASS counts both owned connections and SCORE records the peak.
+Controls migrate automatically to physical English keys, and every mouse button
+supports all split/feed/switch actions. Names no longer receive ` II`; matching
+tags share a bright label color, and untagged names/mass are white.
+
+# FFA video calibration — 22 October 2026
+
+FFA movement and split launch are now calibrated against the supplied `ffa.mp4`.
+See **PHYSICS-FFA-CALIBRATION.md** for measurements, applied settings, validation,
+and limits. Mega is now calibrated separately from `shrkawyy.mp4`; see
+**PHYSICS-MEGA-CALIBRATION.md**. Its cells automatically split at 100,000 mass;
+FFA and Dual retain 25,500. Dual still awaits its own recording. The playable
+page is `public/index.html`; the current default configuration uses local AI.
+
+**Cell animation:** Settings → Game → Cells → Animation controls visual movement
+and size transitions from 0–500 ms (default 120 ms). Lower values respond faster;
+0 displays changes immediately. It saves in the browser and is included in
+settings import/export. Physics, movement speed and authoritative mass stay the
+same. Online animation uses stable cell IDs from the updated Node backend.
+
+**Cell appearance:** Theme → Cells provides opacity, independent nickname/mass
+sizes, compact mass labels and Multibox / Normal colors. Multibox fills the
+controlled connection's cells with blue (`#09759d`) and the other connection
+with fixed white, matching the Mega recording. Tab swaps their active state,
+including split fragments and online play. Normal keeps the game colors and
+uses a blue active border / white inactive indicator. Theme → ActiveCell
+adjusts the active color, inactive indicator radius (0–200%) and outline width
+(default 10%). Multibox bodies stay flat; indicator controls apply to Normal.
+The camera follows both connections without switching its target on Tab.
+Single-connection play and spectators use each player's underlying game color.
+Set `multi:false` on an entry in `public/config.js` to start only one connection;
+FFA, Dual and Mega keep their existing multibox support. Primary/secondary cell,
+nickname and mass color overrides have been removed from settings, presets,
+custom themes and imports. Locked-name styling is reserved for a future change.
+Canvas cell effects restores Vintage's shaded cell style; the default is flat.
+This option affects cell rendering only.
+
 # Current release: Vintage.io v13
 
 Start with **UPDATE-v13-AR.md** for the latest grid map, team visibility, improved chat and scheduled world reset instructions. The v12/v11 notes below document prior versions.
@@ -24,6 +66,7 @@ This release fixes the gameplay problems shown in the user-supplied 41.6-second 
 - **Multi when consumed:** If your main cell consumes the second Multi connection, keep playing, move the cursor to the new location and press **Tab**. The next connection's dead cell respawns with the mode's initial mass (FFA/Dual: 1000, Mega: 5000) at your cursor's game-world position. Switching to a live cell still works normally. Each connection must already belong to your Multi setup; Tab does not spawn unlimited connections.
 - **Corrected Game Over detection:** Losing the currently active Multi cell does **not** end the session while another of your Multi cells is alive.
 - **Held Macro Feed:** Hold **E** to continuously eject mass at approximately 11–12 actions per second; release E to stop. **W** remains the regular single feed key. The game server rate-limits received feed actions to stop redundant bursts.
+- **Smarter bots:** Local and server bots look for nearby cells they can eat with a split, aim toward the selected prey and attack only when the split remains edible and no larger nearby cell makes the attack unsafe. Bots continue to evade dangerous cells and ignore spawn-protected targets.
 - **Spawn safety:** A newly respawned cell gets 1.5 seconds of protection from being consumed and a 1.8-second per-connection respawn cooldown. This allows a Multi cell to appear at the cursor instead of instantly disappearing inside your main cell.
 - All rooms still have **10 bots** and **FFA, Dual and Mega** remain isolated.
 - Online Tab respawning requires deploying updated `server/` code to the separate persistent WebSocket host, **not just the Vercel frontend**.

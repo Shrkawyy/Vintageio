@@ -12,7 +12,7 @@ const rooms=Object.fromEntries(registry.servers.map(cfg=>[cfg.id,core.createRoom
 // Legacy clients send {mode:'ffa'|'dual'|'mega'}; map them to the default server of that mode.
 const LEGACY={ffa:'vintage-ffa',dual:'senpa-dual',mega:'senpa-mega'};
 const resolveRoom=msg=>Object.hasOwn(rooms,msg.serverId)?msg.serverId:(Object.hasOwn(LEGACY,msg.mode)?LEGACY[msg.mode]:null);
-const publicInfo=()=>registry.servers.map(cfg=>{const room=rooms[cfg.id];return{id:cfg.id,name:cfg.name,category:cfg.category,mode:cfg.engineMode,physics:cfg.physics,region:cfg.region,maxPlayers:cfg.maxPlayers,botFree:cfg.bots===0,macro:!!cfg.macro,competitive:!!cfg.competitive,players:[...room.players.values()].filter(p=>!p.npc).length,bots:cfg.bots,spectators:spectators[cfg.id].size,status:room.crashed?'error':'online'};});
+const publicInfo=()=>registry.servers.map(cfg=>{const room=rooms[cfg.id];return{id:cfg.id,name:cfg.name,category:cfg.category,mode:cfg.engineMode,physics:cfg.physics,region:cfg.region,maxPlayers:cfg.maxPlayers,botFree:cfg.bots===0,macro:!!cfg.macro,competitive:!!cfg.competitive,players:[...room.players.values()].filter(p=>!p.npc).length,bots:[...room.players.values()].filter(p=>p.npc&&p.cells.length).length,spectators:spectators[cfg.id].size,status:room.crashed?'error':'online'};});
 const host='0.0.0.0',port=Number(process.env.PORT||3001);
 const clients=new Map();
 const restartCycle=new RestartCycle();
@@ -53,21 +53,23 @@ wss.on('connection',(ws,req)=>{reply(ws,restartCycle.schedule());const ip=client
       const room=rooms[rid];
       if(room.crashed){reply(ws,{type:'error',message:'Server temporarily unavailable'});return;}
       if(room.config&&[...room.players.values()].filter(p=>!p.npc).length>=room.config.maxPlayers){reply(ws,{type:'error',message:'Server full'});return;}const tag=core.cleanTag(msg.tag),name=core.cleanText(msg.name,18)||'Vintage Player';const player=core.join(room,name,tag,0);
-      current={room,player};clients.set(player.id,ws);reply(ws,{type:'welcome',mode:room.mode,serverId:room.id,playerId:player.id,initialMass:room.initialMass,autoSplitMass:core.AUTO_SPLIT_MASS});return;
+      current={room,player};clients.set(player.id,ws);reply(ws,{type:'welcome',mode:room.mode,serverId:room.id,playerId:player.id,initialMass:room.initialMass,autoSplitMass:core.autoSplitMassFor(room.physics)});return;
     }
     if(msg.type==='ping'){reply(ws,{type:'pong',nonce:msg.nonce});return;}
     if(!current)return;
     const {room,player}=current;
     if(msg.type==='move'){core.point(room,player,Number(msg.x),Number(msg.y));return;}
+    if(msg.type==='stopMove'){core.stopMove(room,player,msg.stopped);return;}
     if(msg.type==='respawn'){
       const x=Number(msg.x),y=Number(msg.y);
       if(core.respawn(room,player,x,y))reply(ws,{type:'respawned',playerId:player.id});
       return;
     }
-    if(msg.type==='split'){core.trySplit(room,player);return;}
+    if(msg.type==='split'){core.trySplit(room,player,msg.count);return;}
     if(msg.type==='feed'){
-      if(room.time-(player.lastFeedAt??-100)<(room.config?.feedInterval??.075))return;
-      player.lastFeedAt=room.time;core.feed(room,player);return;
+      const now=Date.now()/1000;
+      if(now-(player.lastFeedWallAt??-1e10)<(room.config?.feedInterval??core.feedIntervalFor(room.physics,true))-.002)return;
+      player.lastFeedWallAt=now;core.feed(room,player);return;
     }
     if(msg.type==='chat'){
       const now=Date.now();if(player.lastChat>now-350)return;

@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),{spawn}=require('node:child_process'),path=require('node:path');
 const {WebSocket}=require('../server/node_modules/ws');
 const core=require('../server/core.cjs'),physics=require('../server/physics.cjs');
@@ -51,12 +51,30 @@ test('live WebSocket: join by serverId, legacy mode join, spectate, macro feed r
     const h=await get('/health');
     assert.equal(h.rooms['senpa-mega'].players,1);assert.equal(h.rooms['comp-ffa'].players,1);assert.equal(h.rooms['aster-mega'].spectators,1);assert.equal(h.rooms['og-vanilla'].players,0);
     const srv=await get('/servers');assert.equal(srv.servers.length,17);assert.ok(srv.servers.every(s=>s.status==='online'));
-    // Feed throttling: macro server accepts ~3x more feeds than a normal server over the same window.
-    const feeds=async(id)=>{const w=await open();w.send(JSON.stringify({type:'join',serverId:id,name:'F'}));await wait(w,'welcome');w.send(JSON.stringify({type:'move',x:2400,y:2400}));
-      const before=(await get('/health')); const t0=Date.now();while(Date.now()-t0<1000){w.send(JSON.stringify({type:'feed'}));await new Promise(r=>setTimeout(r,5));}
-      await new Promise(r=>setTimeout(r,150));const st=w.msgs.filter(m=>m.type==='state').pop();w.close();return st.food.filter(f=>f.ejected).length;};
+    // Measure time to spend 180 mass. A fixed one-second pellet count exhausts
+    // both 1K players at nine feeds and cannot measure the rate difference.
+    const feeds=async(id)=>{const w=await open();
+      try{
+        w.send(JSON.stringify({type:'join',serverId:id,name:'F'}));const welcome=await wait(w,'welcome');
+        w.send(JSON.stringify({type:'move',x:0,y:0}));
+        const t0=Date.now();
+        while(Date.now()-t0<1500){
+          w.send(JSON.stringify({type:'feed'}));await new Promise(r=>setTimeout(r,5));
+          const st=w.msgs.filter(m=>m.type==='state').at(-1),player=st?.players.find(p=>p.id===welcome.playerId);
+          if(player?.cells.length&&player.cells.reduce((mass,c)=>mass+c.mass,0)<=820)return Date.now()-t0;
+        }
+        assert.fail(id+' did not spend 180 mass within 1.5 seconds');
+      }finally{w.close();}
+    };
     const normal=await feeds('senpa-ffa'),macro=await feeds('vintage-macro');
-    assert.ok(macro>normal*1.5,`macro ejected ${macro} vs normal ${normal}`);
+    assert.ok(macro<normal*.8,`macro took ${macro} ms vs normal ${normal} ms`);
     for(const w of [a,b,legacy,bad,sp])w.close();
   }finally{child.kill();}
 });
+
+
+
+
+
+
+

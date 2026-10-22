@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -50,12 +50,18 @@ test('per-IP connection cap blocks the 3rd socket, and frees slots on close',()=
 });
 test('typing in a text field never fires hotkeys (S used to open Settings)',()=>{
   const src=fs.readFileSync(path.join(__dirname,'../public/client.js'),'utf8');
-  const guard=src.indexOf("['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){ if(k==='ESCAPE')");
+  const guard=src.indexOf("['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable){ if(k==='ESCAPE')");
   assert.ok(guard>0,'input guard exists');
   assert.ok(guard<src.indexOf('if(k===settings.keySettings)'),'guard precedes settings hotkey');
   assert.ok(guard<src.indexOf('if(k===settings.keyMenu)'),'guard precedes menu hotkey');
 });
 test('default hotkeys do not collide on S',async()=>{
   const g=fs.readFileSync(path.join(__dirname,'../public/game.js'),'utf8');
-  assert.match(g,/keySettings:'S'/);assert.match(g,/keyToggleSkin:'NO KEY'/);
+  assert.ok(g.includes("keySettings:'NO KEY'"));assert.ok(g.includes("keyToggleSkin:'S'"));
 });
+
+
+
+
+
+
