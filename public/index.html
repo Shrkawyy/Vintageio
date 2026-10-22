@@ -1,115 +1,159 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#10131b" />
-  <meta name="description" content="Vintage — FFA, Dual and Mega cell game." />
-  <title>VINTAGE.IO</title>
-  <link rel="stylesheet" href="/styles.css?v=13" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07090d">
+  <meta name="description" content="VINTAGE.IO — Coming Soon. The arena is evolving. We’ll be back soon.">
+  <meta property="og:title" content="VINTAGE.IO — Coming Soon">
+  <meta property="og:description" content="The arena is evolving. We'll be back soon.">
+  <title>VINTAGE.IO — Coming Soon</title>
+  <style>
+    :root {
+      color-scheme:dark;
+      --bg: #07090d;
+      --fg: #f3f5f7;
+      --silver: #abb6c4;
+      --muted: #808997;
+      --border: rgba(220,231,244,.13);
+      --accent: #c0cbd7;
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    html{min-height:100%;background:var(--bg)}
+    body{min-height:100svh;margin:0;overflow-x:hidden;background:#07090d;color:var(--fg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+    ::selection{background:#d3dfe9;color:#0a0e15}
+    .scene{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;background:
+      radial-gradient(ellipse 42% 46% at 50% 42%,rgba(75,103,134,.18),transparent 75%),
+      radial-gradient(ellipse 48% 70% at 2% -20%,rgba(103,115,144,.12),transparent 72%),
+      radial-gradient(ellipse 42% 54% at 101% 110%,rgba(83,99,130,.12),transparent 72%),
+      #07090d}
+    .scene:before{content:"";position:absolute;inset:0;opacity:.2;background-image:linear-gradient(rgba(148,164,187,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(148,164,187,.12) 1px,transparent 1px);background-size:66px 66px;mask-image:linear-gradient(to bottom,transparent 3%,#000 35%,#000 75%,transparent)}
+    .scene:after{content:"";position:absolute;inset:0;opacity:.32;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(200,213,237,.016) 4px 5px);mix-blend-mode:screen}
+    #starfield{position:absolute;inset:0;width:100%;height:100%;opacity:.72}
+    .halo{position:absolute;width:min(900px,95vw);aspect-ratio:1;left:50%;top:41%;transform:translate(-50%,-50%);border:1px solid rgba(191,208,234,.075);border-radius:50%;box-shadow:0 0 0 105px rgba(176,198,231,.008),0 0 0 245px rgba(176,198,231,.008);background:radial-gradient(circle,rgba(165,192,223,.055) 0 8%,transparent 65%)}
+    .halo:before,.halo:after{content:"";position:absolute;border:1px solid rgba(187,204,223,.06);inset:12%;border-radius:50%;transform:rotate(15deg) scaleY(.63)}
+    .halo:after{transform:rotate(-22deg) scaleY(.72);inset:20%;opacity:.8}
+    .layout{isolation:isolate;position:relative;z-index:1;min-height:100svh;display:flex;flex-direction:column;margin:auto;padding:32px clamp(24px,5.3vw,100px) 22px;max-width:1850px}
+    header,footer{display:flex;align-items:center;justify-content:space-between;gap:15px;direction:ltr}
+    .brand{display:flex;align-items:center;gap:13px;text-decoration:none;color:var(--fg);font-size:19px;font-weight:950;letter-spacing:.12em}
+    .emblem{position:relative;width:39px;height:39px;border:1px solid rgba(241,249,255,.42);display:grid;place-items:center;transform:rotate(45deg);border-radius:6px;background:linear-gradient(140deg,rgba(230,240,255,.15),rgba(130,142,159,.035));box-shadow:inset 0 0 13px rgba(196,213,234,.13),0 0 20px rgba(176,192,222,.06)}
+    .emblem svg{transform:rotate(-45deg);width:24px;height:24px;filter:drop-shadow(0 1px 4px rgba(220,236,253,.33))}
+    .dot-io{color:#94a1b3}
+    .status-top{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:100px;padding:11px 16px;background:rgba(14,18,26,.56);backdrop-filter:blur(14px);font:650 10px/1.1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.13em;color:#b5becb}
+    .status-top .pulse{width:7px;height:7px;border-radius:50%;background:#b6c8dc;box-shadow:0 0 10px rgba(187,213,245,.8);animation:breathe 2.6s infinite}
+    main{width:100%;flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px 0 24px}
+    .hero{width:min(100%,900px);display:flex;align-items:center;flex-direction:column;position:relative}
+    .symbol-wrap{position:relative;width:148px;height:148px;margin:0 auto 24px;display:grid;place-items:center}
+    .orbit{position:absolute;inset:0;border:1px solid rgba(206,222,246,.2);border-radius:50%;animation:rotate 26s linear infinite}
+    .orbit:after{content:"";position:absolute;top:10%;left:13%;width:5px;height:5px;border-radius:50%;background:#e5f1ff;box-shadow:0 0 12px #d0e9ff}
+    .orbit.inner{inset:11px;border-color:rgba(192,207,229,.08);animation-duration:19s;animation-direction:reverse}
+    .orbit.inner:after{top:71%;left:3%;width:3px;height:3px}
+    .insignia{width:92px;height:92px;position:relative;display:grid;place-items:center;border:1px solid rgba(225,238,255,.37);transform:rotate(45deg);border-radius:16px;background:linear-gradient(135deg,#202935 0%,#0d121a 48%,#101722 100%);box-shadow:0 20px 80px rgba(0,0,0,.45),inset 1px 1px 0 rgba(255,255,255,.12),0 0 54px rgba(137,175,219,.12)}
+    .insignia:after{content:"";position:absolute;inset:7px;border:1px solid rgba(206,220,238,.12);border-radius:11px}
+    .insignia svg{width:51px;height:51px;transform:rotate(-45deg);filter:drop-shadow(0 0 9px rgba(215,228,247,.20))}
+    .eyebrow{display:flex;align-items:center;gap:13px;direction:ltr;margin:0 0 20px;color:#a9b6c6;font:700 11px/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.24em}
+    .eyebrow:before,.eyebrow:after{content:"";width:34px;height:1px;background:linear-gradient(90deg,transparent,#b8cbdf)}
+    .eyebrow:after{transform:rotate(180deg)}
+    h1{margin:0;color:#fff;font-weight:900;line-height:.94;letter-spacing:-.09em;font-size:clamp(66px,10.5vw,153px);direction:ltr;text-align:center;font-stretch:condensed;text-shadow:0 12px 55px rgba(205,227,255,.10)}
+    h1 span{display:block;background:linear-gradient(180deg,#ffffff 4%,#e0e7ee 38%,#8794a6 77%,#c5d1de 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding:0 .12em .13em}
+    .underlined{margin-top:3px;color:#e7edf5;font-size:clamp(19px,2.4vw,26px);font-weight:750;letter-spacing:-.03em;line-height:1.8}
+    .description{max-width:610px;margin:10px auto 0;color:#a4aebb;font-size:clamp(13px,1.4vw,16px);font-weight:450;line-height:2}
+    .label-english{font-size:11px;font-weight:700;letter-spacing:.3em;color:#8391a3;margin:25px 0 0;direction:ltr}
+    .pill-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:32px;direction:ltr}
+    .info-pill{display:inline-flex;gap:9px;align-items:center;border-radius:100px;border:1px solid rgba(183,203,228,.18);padding:12px 18px;background:linear-gradient(125deg,rgba(194,219,247,.07),rgba(0,0,0,.13));color:#ced6e1;font:650 10px/1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.16em}
+    .info-pill svg{width:13px;height:13px;stroke:#bfccdb}
+    .info-pill .spinning{animation:rotate 12s linear infinite}
+    .separator{height:1px;width:min(330px,65%);margin:36px auto 0;background:linear-gradient(90deg,transparent,rgba(207,228,250,.35),transparent)}
+    .footer-left,.footer-right{font:600 10px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.15em;color:#738094}
+    .footer-center{display:flex;align-items:center;gap:8px;font:650 10px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.11em;color:#8b98a9}
+    .mini-dot{width:5px;height:5px;border-radius:50%;background:#a3bedc}
+    @keyframes rotate{to{transform:rotate(360deg)}}
+    @keyframes breathe{0%,100%{opacity:.55;box-shadow:0 0 5px rgba(187,213,245,.4)}50%{opacity:1;box-shadow:0 0 15px rgba(187,213,245,1)}}
+    @media(max-width:700px){
+      .layout{padding:22px 19px 20px;min-height:100svh}
+      .brand{font-size:15px;gap:11px}
+      .emblem{width:32px;height:32px}.emblem svg{width:19px;height:19px}
+      .status-top{padding:10px 11px;font-size:8px;letter-spacing:.06em}
+      main{padding:10px 0 24px}
+      .symbol-wrap{transform:scale(.82);margin-bottom:4px}
+      .eyebrow{font-size:9px;letter-spacing:.13em;gap:9px}.eyebrow:before,.eyebrow:after{width:21px}
+      h1{font-size:clamp(52px,14vw,90px);letter-spacing:-.08em}
+      .underlined{font-size:19px;margin-top:10px}
+      .description{font-size:13px;line-height:1.9;margin-top:10px;max-width:340px}
+      .label-english{font-size:9px;letter-spacing:.17em;margin-top:22px}
+      .pill-row{gap:9px;margin-top:28px}.info-pill{font-size:9px;padding:12px 14px;letter-spacing:.07em}
+      .separator{margin-top:30px}
+      footer{flex-wrap:wrap;justify-content:center;gap:12px}.footer-left,.footer-right{font-size:9px}.footer-center{display:none}
+      .halo{width:790px}
+    }
+    @media(max-width:380px){.status-top{font-size:7px}.brand{font-size:13px}.pill-row{flex-direction:column}.symbol-wrap{margin-bottom:0}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important}#starfield{opacity:.4}}
+  </style>
 </head>
-<body class="show-lobby">
-  <canvas id="arena" aria-label="Vintage game field"></canvas>
-  <div id="noise"></div>
-
-  <header class="topbar">
-    <div class="brand" aria-label="Vintage"><img class="vintage-logo" src="/assets/vintage-logo.png" alt="VINTAGE"></div>
-    <div id="top-mode" class="mode-pill">FFA · EUROPE</div>
-    <div class="top-actions">
-      <span id="connection-status" class="connection-pill"><i></i> DEMO MODE</span>
-      <button id="menu-btn" class="icon-btn" title="Lobby" aria-label="Lobby">⌂</button>
-      <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings">⚙</button>
-    </div>
-  </header>
-
-  <section id="leaderboard" class="hud-panel leader">
-    <div class="hud-heading"><span id="allies-heading">SOLO PLAYERS</span><small id="player-count">0 VISIBLE</small></div>
-    <div id="board-entries"></div>
-  </section>
-
-  <section id="score-box" class="hud-panel status-card">
-    <div class="status-label">YOUR TOTAL MASS</div>
-    <div class="score-line"><strong id="mass-label">1,000</strong><span id="cell-label">1 CELL</span></div>
-    <div class="mini-progress"><span id="mass-progress"></span></div>
-    <div class="status-details"><span id="mode-label">FFA MODE</span><span id="fps-label">60 FPS</span></div>
-  </section>
-
-  <div id="live-stats" class="live-stats" aria-label="Live game statistics">
-    <div><small>FPS</small><strong id="stat-fps">—</strong></div>
-    <div><small>PING</small><strong id="stat-ping">LOCAL</strong></div>
-    <div><small>SCORE</small><strong id="stat-score">0</strong></div>
-    <div><small>MASS</small><strong id="stat-mass">0</strong></div>
-    <div><small>CELLS</small><strong id="stat-cells">0</strong></div>
-    <div><small>ONLINE</small><strong id="stat-online">0</strong></div>
-  </div>
-
-  <div id="minimap" class="hud-panel minimap"><div class="map-head"><strong>GRID MAP</strong><small id="map-sector">—</small></div><canvas id="minimap-canvas" width="240" height="240"></canvas><div class="map-foot"><span id="map-team">NO TAG</span><span>A1–E5 · LIVE</span></div></div>
-  <div id="restart-status" class="restart-clock hidden"><span id="restart-label">SERVER RESTART</span><strong id="restart-countdown">03:00:00</strong></div>
-  <div id="server-announcement" class="server-announcement hidden" role="status" aria-live="polite"></div>
-  <div id="toast-area" aria-live="polite"></div>
-
-  <aside id="chat" class="hud-panel chatbox">
-    <div class="chat-head"><b>VINTAGE CHAT</b><span id="chat-online">LOCAL</span></div>
-    <div class="chat-tabs"><button class="chat-tab active" data-channel="all">ALL</button><button class="chat-tab" data-channel="tag">TAG</button><small id="chat-tag-label">NO TAG</small></div>
-    <div id="chat-messages" class="chat-messages"></div>
-    <div id="emoji-picker" class="emoji-picker hidden" aria-label="Choose an emoji">
-      <div class="emoji-toolbar"><strong>EMOJIS</strong><input id="emoji-search" aria-label="Find emoji" placeholder="Search emoji..." autocomplete="off" /></div>
-      <div id="emoji-grid" class="emoji-grid" role="group" aria-label="Emoji choices"></div>
-    </div>
-    <div class="chat-emoji-toolbar"><span>EMOJIS</span><div id="emoji-quick" class="emoji-quick" aria-label="Quick chat emojis"></div><span class="emoji-hint">OPEN ALL ↓</span></div>
-    <form id="chat-form"><button id="emoji-toggle" class="emoji-toggle" type="button" aria-label="Emoji picker" aria-expanded="false">☺</button><input id="chat-input" autocomplete="off" maxlength="180" placeholder="Enter message..." aria-label="Chat message"><button class="chat-send" type="submit" title="Send chat">➤</button></form>
-  </aside>
-
-  <main id="lobby" class="lobby vintage-stage" aria-label="Vintage home screen">
-    <div class="v-stage-light" aria-hidden="true"></div>
-    <div class="v-stage-noise" aria-hidden="true"></div>
-    <header class="v-stage-header">
-      <div class="v-stage-logo"><img class="vintage-logo" src="/assets/vintage-logo.png" alt="VINTAGE"></div>
-      <nav class="v-stage-nav" aria-label="Main navigation">
-        <button type="button" class="v-stage-nav-link" id="lobby-settings-btn">SETTINGS</button>
-      </nav>
-      <div class="v-stage-account"><span class="v-guest-indicator"></span><span id="account-name">GUEST ACCESS</span><button type="button" id="v-login-trigger" class="v-login-btn" aria-expanded="false" aria-controls="auth-menu">LOG IN <span>↗</span></button><div id="auth-menu" class="v-auth-menu hidden"><div>ACCOUNT CONNECTION</div><button class="v-auth-option" data-provider="discord">Discord <span>CONNECT ↗</span></button><button class="v-auth-option" data-provider="facebook">Facebook <span>CONNECT ↗</span></button><button id="logout-btn" class="v-auth-option hidden">Log out</button><small id="auth-status" role="status"></small></div></div>
+<body>
+  <div class="scene" aria-hidden="true"><canvas id="starfield"></canvas><div class="halo"></div></div>
+  <div class="layout">
+    <header>
+      <div class="brand" aria-label="Vintage IO">
+        <span class="emblem" aria-hidden="true"><svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 11L26 48H34L53 11H41L30 34L19 11H7Z" fill="url(#metal1)"/><defs><linearGradient id="metal1" x1="10" y1="9" x2="50" y2="48"><stop stop-color="#fff"/><stop offset=".5" stop-color="#a0aebd"/><stop offset="1" stop-color="#f5faff"/></linearGradient></defs></svg></span>
+        <span>VINTAGE<span class="dot-io">.IO</span></span>
+      </div>
+      <div class="status-top"><span class="pulse"></span> TEMPORARILY OFFLINE</div>
     </header>
-    <div class="v-stage-center">
-      <div class="v-halo v-halo-one"></div>
-      <div class="v-halo v-halo-two"></div>
-      <div class="v-center-orb">
-        <div class="v-center-orb-hemisphere left"><div class="v-orb-mark">V</div></div>
-        <div class="v-center-orb-hemisphere right"><span class="v-orb-number">26</span></div>
-        <div class="v-orb-sheen"></div>
-      </div>
-      <button class="v-skin-control v-skin-left soon-btn" type="button" data-soon="Vintage skin 01 is coming soon">SKIN 01 <small>SOON</small></button>
-      <button class="v-skin-control v-skin-right soon-btn" type="button" data-soon="Vintage skin 02 is coming soon">SKIN 02 <small>SOON</small></button>
-      <div class="v-center-caption"><span>YOUR CELL. YOUR RULES.</span><strong>MAKE YOUR MARK</strong></div>
-    </div>
-    <section class="v-launch-panel" aria-label="Start playing">
-      <div class="v-launch-top"><div><span class="v-launch-kicker" id="world-status">CURRENT WORLD · LOCAL DEMO</span><h1 id="lobby-mode-name">FREE FOR ALL</h1><small id="lobby-mode-mass">STARTS AT 1,000 MASS</small></div><button type="button" class="v-launch-settings" id="lobby-settings-secondary" aria-label="Open settings" title="Settings">⚙</button></div>
-      <button id="server-picker-btn" class="server-picker-btn">SELECT SERVER <span>EU · FFA ▾</span></button><div class="v-launch-fields"><label><span>PLAYER NAME</span><input id="nickname" autocomplete="nickname" maxlength="18" value="Vintage Player" placeholder="Nickname" /></label><label><span>TAG</span><input id="team-tag" maxlength="8" placeholder="Tag" /></label></div>
-      <div class="v-launch-actions"><button id="play-btn" class="v-play-button"><span>▶</span> PLAY NOW <span>↗</span></button><button id="spectate-btn" class="v-spectate-button">◉ SPECTATE</button></div>
-      <div class="v-launch-foot"><span id="world-detail">10 AI PLAYERS</span><span>MULTI ENABLED</span></div>
-    </section>
-    <div class="v-stage-bottom-note"><span>VINTAGE.IO ORIGINAL EXPERIENCE</span><span>FFA / DUAL / MEGA <b>•</b> INDEPENDENT WORLDS</span></div>
-  </main>
-
-  <div id="zoom-panel" class="zoom-panel hidden" aria-label="Camera zoom controls"><button id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-value">100%</span><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-reset" aria-label="Reset zoom" title="Reset zoom">⟲</button></div>
-  <section id="gameover" class="gameover hidden"><div class="gameover-card"><small>THE MATCH NEVER SLEEPS</small><h2>YOU WERE EATEN</h2><p id="death-score"></p><button id="respawn-btn" class="main-btn play-blue">Respawn</button><button id="back-to-lobby" class="link-button">BACK TO LOBBY</button></div></section>
-
-  <div id="settings-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Game settings">
-    <div class="settings-shell">
-      <div class="settings-header">
-        <div class="settings-brand-wrap">
-          <div class="settings-brand"><img class="vintage-logo" src="/assets/vintage-logo.png" alt="VINTAGE"><small>SETTINGS</small></div>
+    <main>
+      <section class="hero" aria-labelledby="coming-title">
+        <div class="symbol-wrap" aria-hidden="true">
+          <div class="orbit"></div><div class="orbit inner"></div>
+          <div class="insignia"><svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 9L26 51H34L55 9H41L30 34L19 9H5Z" fill="url(#metal2)"/><path d="M18 9L30 34L42 9" stroke="white" stroke-opacity=".30"/><defs><linearGradient id="metal2" x1="8" y1="6" x2="48" y2="52"><stop stop-color="#fff"/><stop offset=".48" stop-color="#9eabb9"/><stop offset=".7" stop-color="#e6effb"/><stop offset="1" stop-color="#8b9aaa"/></linearGradient></defs></svg></div>
         </div>
-        <button id="close-settings" class="icon-btn settings-close" aria-label="Close settings">✕</button>
-      </div>
-      <div id="settings-tabs" class="settings-tabs"><button data-tab="game" class="active">Game</button><button data-tab="theme">Theme</button><button data-tab="controls">Controls</button><button data-tab="import">Import/Export</button></div>
-      <div class="settings-body"><nav id="settings-nav" class="settings-nav"></nav><div id="settings-content" class="settings-content"></div></div>
-      <div class="settings-foot"><span>VINTAGE.IO SETTINGS • SAVED LOCALLY</span><button id="settings-done">DONE ✓</button></div>
-    </div>
+        <p class="eyebrow">A NEW CHAPTER BEGINS</p>
+        <h1 id="coming-title"><span>COMING</span><span>SOON</span></h1>
+        <div class="underlined">THE VINTAGE ARENA WILL RETURN</div>
+        <p class="description">We're upgrading the arena to deliver an even better gaming experience. Gameplay is temporarily unavailable while we work on improvements. Thank you for your patience and support.</p>
+        <div class="label-english">THE ARENA IS EVOLVING</div>
+        <div class="pill-row" aria-label="Game status">
+          <div class="info-pill"><svg class="spinning" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/><path d="m17 3 4 0 0 4"/></svg> UPGRADE IN PROGRESS</div>
+          <div class="info-pill"><svg fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 1 1 8 0v3"/></svg> PLAY TEMPORARILY PAUSED</div>
+        </div>
+        <div class="separator" aria-hidden="true"></div>
+      </section>
+    </main>
+    <footer>
+      <span class="footer-left">© <span id="year">2026</span> VINTAGE.IO</span>
+      <span class="footer-center"><span class="mini-dot"></span> BUILT FOR THE NEXT LEVEL</span>
+      <span class="footer-right">WE'LL BE BACK SOON</span>
+    </footer>
   </div>
-
-  <div id="servers-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Select server"><section class="server-dialog"><header><div><small>FIND YOUR WORLD</small><h2>VINTAGE SERVERS</h2></div><button id="close-servers" class="icon-btn" aria-label="Close servers">✕</button></header><nav id="server-regions"><button data-region="EU" class="active">EU</button><button data-region="NA">NA</button><button data-region="ASIA">ASIA</button></nav><div id="server-list"></div><p class="hint">Changing servers starts a new match. Your current match keeps running while menus are open.</p></section></div>
-  <script src="/config.js"></script>
-  <script type="module" src="/client.js?v=13"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    (() => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const canvas = document.getElementById('starfield');
+      const context = canvas.getContext('2d');
+      if (!context) return;
+      let width = 0, height = 0, stars = [], frame = 0, id = null;
+      function size() {
+        width = window.innerWidth; height = window.innerHeight;
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(width * pixelRatio); canvas.height = Math.round(height * pixelRatio);
+        context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        const count = Math.min(100, Math.max(30, Math.floor(width * height / 15500)));
+        stars = Array.from({length: count}, () => ({ x: Math.random() * width, y: Math.random() * height, size: Math.random() * 1.35 + .25, phase: Math.random() * 6.28, speed: Math.random() * .012 + .006 }));
+      }
+      function draw() {
+        context.clearRect(0, 0, width, height);
+        for (const s of stars) {
+          const opacity = .2 + .38 * (1 + Math.sin(frame * s.speed + s.phase)) / 2;
+          context.fillStyle = `rgba(207,225,248,${opacity})`;
+          context.beginPath();context.arc(s.x,s.y,s.size,0,Math.PI*2);context.fill();
+        }
+        frame++; id = requestAnimationFrame(draw);
+      }
+      const onVisibility = () => { if (document.hidden) { cancelAnimationFrame(id); id = null; } else if (!id) draw(); };
+      window.addEventListener('resize', size, {passive:true});
+      document.addEventListener('visibilitychange', onVisibility);
+      size();draw();
+    })();
+  </script>
 </body>
 </html>
