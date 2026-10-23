@@ -1,5 +1,5 @@
 ﻿import {makeVirus, stepViruses, virusRadius} from './virus-rules.js?v=3-full-burst';
-import {splitCell, splitCells, findSplitHunt, moveCells, eatCells, absorbFood, autoSplitMassFor as physicsAutoSplitMassFor, findSafeSpawn, randomBotMass, maintainBots, decayMass, ejectMass, startSplitMacro, stepSplitMacro, physicsFor, mergeDelayFor, feedIntervalFor, findFoodRecipient, worldSizeFor} from './physics.js?v=11-world-ui';
+import {splitCell, splitCells, stepAutoSplit, findSplitHunt, moveCells, eatCells, absorbFood, autoSplitMassFor as physicsAutoSplitMassFor, findSafeSpawn, randomBotMass, maintainBots, decayMass, ejectMass, startSplitMacro, stepSplitMacro, physicsFor, mergeDelayFor, feedIntervalFor, findFoodRecipient, worldSizeFor} from './physics.js?v=11-world-ui';
 export {feedIntervalFor};
 export const MODES = Object.freeze({
   ffa: {title:'FREE FOR ALL',start:1000,color:'#73e5f1',botCount:10,multi:true},
@@ -251,9 +251,7 @@ export class LocalArena{
         }
       }
       moveCells(p,dt,this.elapsed,this.worldSize,this.mode,p.npc?.73:1);
-      // Auto split is evaluated once per player per update, never inside an expanding cell loop.
-      const autoSplitMass=autoSplitMassFor(this.mode);
-      if(p.cells.some(c=>c.mass>=autoSplitMass)&&p.cells.length<MAX_CELLS)splitCells(p,this.elapsed,this.worldSize,MAX_CELLS,this.mode,autoSplitMass);
+      stepAutoSplit(p,this.elapsed,this.worldSize,MAX_CELLS,this.mode);
     }
     // Check pending virus respawns
     for (let i = this.virusRespawns.length - 1; i >= 0; i--) {
@@ -511,7 +509,6 @@ export class ArenaRenderer{
       ctx.fillStyle=mine?'#fff':'#d8e9f3';ctx.fillText(label,px,labelY);
     }
   }}
-
 
 
 

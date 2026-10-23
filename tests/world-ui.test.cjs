@@ -21,10 +21,13 @@ test('movement, split, feed and respawn work beyond the old Mega boundary in bot
   assert.equal(local?a.respawn(q.id,6800,6500):core.respawn(a,q,6800,6500),true);assert.ok(q.cells[0].x>4800&&q.cells[0].y>4800);
  }
 });
-test('a virus splits only the entire struck piece into remaining slots while preserving total mass and other pieces',()=>{
+test('a virus splits only the struck piece into progressively smaller fragments and preserves all mass',()=>{
  const untouched={x:5000,y:5000,mass:2000},p={cells:[{x:3000,y:3000,mass:83000},untouched]},before=85000;
  virus.stepViruses({players:[p],food:[],viruses:[virus.makeVirus(3000,3000)],width:7200,maxCells:64,time:1,dt:0});
- assert.equal(p.cells.length,64);assert.equal(untouched.mass,2000);assert.ok(p.cells.filter(c=>c!==untouched).every(c=>Math.abs(c.mass-83100/63)<1e-9));assert.ok(Math.abs(p.cells.reduce((s,c)=>s+c.mass,0)-(before+100))<1e-6);
+ const burst=p.cells.filter(c=>c!==untouched).map(c=>c.mass).sort((a,b)=>b-a);
+ assert.equal(p.cells.length,10);assert.equal(untouched.mass,2000);
+ assert.deepEqual(burst,[41550,20775,10387.5,5193.75,2596.875,1298.4375,649.21875,324.609375,324.609375]);
+ assert.ok(Math.abs(p.cells.reduce((s,c)=>s+c.mass,0)-(before+100))<1e-6);
 });
 test('settings migration removes grid, keeps the background and custom controls, and assigns S to skins',async()=>{
  const g=await game(),old={...g.DEFAULT_SETTINGS,visualStyleVersion:3,controlsVersion:1,showGrid:true,backgroundImage:true,keySettings:'S',keyToggleSkin:'NO KEY',keyStopMove:'U',mouseRight:'feed'};
@@ -41,4 +44,3 @@ test('skin visibility suppresses actual image drawing and disabled background fi
   calls.length=0;renderer.draw({worldSize:4800,players:[p]},'p',{...s,showSkins:false});assert.ok(!calls.some(c=>c.image));
  }finally{for(const [k,v]of Object.entries(old)){if(v===undefined)delete global[k];else global[k]=v;}}
 });
-

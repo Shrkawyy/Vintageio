@@ -1,6 +1,6 @@
 ﻿'use strict';
 const {makeVirus,stepViruses}=require('./virus.cjs');
-const {splitCell,splitCells,findSplitHunt,moveCells,eatCells,absorbFood,autoSplitMassFor,findSafeSpawn,randomBotMass,maintainBots,decayMass,ejectMass,startSplitMacro,stepSplitMacro,physicsFor,mergeDelayFor,feedIntervalFor,findFoodRecipient,worldSizeFor}=require('./physics.cjs');
+const {splitCell,splitCells,stepAutoSplit,findSplitHunt,moveCells,eatCells,absorbFood,autoSplitMassFor,findSafeSpawn,randomBotMass,maintainBots,decayMass,ejectMass,startSplitMacro,stepSplitMacro,physicsFor,mergeDelayFor,feedIntervalFor,findFoodRecipient,worldSizeFor}=require('./physics.cjs');
 /** Authoritative, in-memory arena simulation. Three completely isolated rooms. */
 const MODES={ffa:{name:'FREE FOR ALL',initialMass:1000,bots:10},dual:{name:'DUAL',initialMass:1000,bots:10},mega:{name:'MEGA',initialMass:5000,bots:10}};
 const fs=require('node:fs'),pathMod=require('node:path');
@@ -101,8 +101,7 @@ function step(room,dt=1/30){
       }
     }
     moveCells(p,dt,room.time,room.worldSize,room.physics,p.npc?.73:1);
-    const autoSplitMass=autoSplitMassFor(room.physics);
-    if(p.cells.some(c=>c.mass>=autoSplitMass)&&p.cells.length<room.maxCells)splitCells(p,room.time,room.worldSize,room.maxCells,room.physics,autoSplitMass);
+    stepAutoSplit(p,room.time,room.worldSize,room.maxCells,room.physics);
   }
   // Check pending virus respawns
   for (let i = room.virusRespawns.length - 1; i >= 0; i--) {
@@ -135,4 +134,3 @@ function cleanText(t,max=180){return String(t||'').replace(/[<>\u0000-\u001f\u00
 function cleanTag(t){return cleanText(String(t||'').normalize('NFKC'),8).toUpperCase();}
 function chatRecipients(room,p,channel){return [...room.players.values()].filter(x=>!x.npc&&(channel==='all'||(p.tag&&x.tag===p.tag)));}
 module.exports={loadRegistry,MODES,WIDTH,MAX_CELLS,AUTO_SPLIT_MASS,autoSplitMassFor,feedIntervalFor,createRoom,join,respawn,point,stopMove,split,trySplit,feed,step,snapshot,cleanText,cleanTag,chatRecipients};
-

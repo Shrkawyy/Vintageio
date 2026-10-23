@@ -111,11 +111,12 @@ test('feed leaves the entire split cluster, loses only its configured cost and c
   assert.ok(rules.absorbFood([target],food,'dual',1.1)>0);assert.ok(mass(target)>before,'other connections can receive fresh feed');
 });
 
-test('feeding 64 small Mega fragments works and firing against a wall never recycles food inside the source',()=>{
-  const p={id:'one',target:{x:4500,y:2400},cells:[{x:2400,y:2400,mass:5000}]};
+test('Mega feed emits two pellets from split cells and firing against a wall never recycles food inside the source',()=>{
+  const p={id:'one',target:{x:4500,y:2400},cells:[{x:2400,y:2400,mass:16000}]};
   for(let i=0;i<6;i++)rules.splitCells(p,0,4800,64,'mega');assert.equal(p.cells.length,64);
-  const food=[];assert.equal(rules.ejectMass(p,food,1,4800,'mega'),64);assert.equal(food.length,64);
-  assert.ok(Math.abs(mass(p)+food.reduce((s,f)=>s+f.mass,0)-(5000-64*4))<1e-7);
+  const initial=mass(p),food=[];assert.equal(rules.ejectMass(p,food,1,4800,'mega'),128);assert.equal(food.length,128);
+  assert.ok(food.every(f=>f.mass===100));
+  assert.ok(Math.abs(mass(p)+food.reduce((s,f)=>s+f.mass,0)-initial)<1e-7);
   const wall={id:'wall',target:{x:0,y:2400},cells:[{x:rules.cellRadius(1000),y:2400,mass:1000}]};
   assert.equal(rules.ejectMass(wall,food,1,4800,'mega'),0);assert.equal(mass(wall),1000);
 });
@@ -145,8 +146,6 @@ test('untagged labels are white and matching tags get the same bright color acro
   const colors=new Set();for(let i=0;i<100;i++){const color=tagColor('TAG'+i);assert.match(color,/^#[0-9a-f]{6}$/);assert.ok(!['#ffffff','#000000'].includes(color));colors.add(color);}
   assert.ok(colors.size>8);
 });
-
-
 
 
 

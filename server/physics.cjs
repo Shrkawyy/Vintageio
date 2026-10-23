@@ -23,9 +23,13 @@ const FFA_PHYSICS = Object.freeze({
   feedCost: 18, feedMass: 14, feedSpeed: 900, feedDrag: 2.6,
   feedPlacement: 'cell', feedInterval: .14, macroFeedInterval: .08,
 });
+const LARGE_FEED_RULES = Object.freeze({
+  feedCost: 100, feedMass: 100, feedPelletsPerCell: 2, feedMaxDistance: 2, feedPlacement: 'cell',
+});
 const MEGA_PHYSICS = Object.freeze({
   // FFA feed/merge rules, with a more responsive Mega launch and run at large masses.
   ...FFA_PHYSICS,
+  ...LARGE_FEED_RULES,
   baseSpeed:560,minSpeed:55,
   splitImpulse:780,splitDrag:2.8,splitMassPower:.04,splitReach:1.05,
   steerDuringBoost:.85,splitCollisionDelay:.55,
@@ -42,10 +46,10 @@ const PHYSICS_PRESETS = Object.freeze({
   classic: preset({ speedPower: .24, splitImpulse: 700, minMergeTime: 15, maxMergeTime: 30, mergeBase: 12 }),
   aster: preset({ baseSpeed: 700, splitImpulse: 700, minMergeTime: 6, maxMergeTime: 20 }),
   senpa_mega: MEGA_PHYSICS,
-  aster_mega: preset({ baseSpeed: 720, splitImpulse: 780, splitDrag: 3.6, minMergeTime: 3, maxMergeTime: 9, mergeBase: 3, cellPush: .45, mergePull: 5.5 }),
-  arab: preset({ baseSpeed: 700, splitImpulse: 740, splitDrag: 3.5, minMergeTime: 5, maxMergeTime: 12, mergeBase: 4, mergePull: 4.8 }),
-  gota: preset({ baseSpeed: 680, splitImpulse: 820, splitDrag: 3.4, minMergeTime: 5, maxMergeTime: 14, mergeBase: 4, mergePull: 4.5 }),
-  macro: preset({ baseSpeed: 760, splitImpulse: 700, minMergeTime: 5, maxMergeTime: 12, mergeBase: 4 }),
+  aster_mega: preset({ ...LARGE_FEED_RULES, baseSpeed: 720, splitImpulse: 780, splitDrag: 3.6, minMergeTime: 3, maxMergeTime: 9, mergeBase: 3, cellPush: .45, mergePull: 5.5 }),
+  arab: preset({ ...LARGE_FEED_RULES, baseSpeed: 700, splitImpulse: 740, splitDrag: 3.5, minMergeTime: 5, maxMergeTime: 12, mergeBase: 4, mergePull: 4.8 }),
+  gota: preset({ ...LARGE_FEED_RULES, baseSpeed: 680, splitImpulse: 820, splitDrag: 3.4, minMergeTime: 5, maxMergeTime: 14, mergeBase: 4, mergePull: 4.5 }),
+  macro: preset({ ...LARGE_FEED_RULES, baseSpeed: 760, splitImpulse: 700, minMergeTime: 5, maxMergeTime: 12, mergeBase: 4 }),
 });
 // Legacy mode ids still resolve, so existing rooms/tests keep working.
 const LEGACY_PRESET = Object.freeze({ ffa: 'vintage_ffa', dual: 'senpa', mega: 'senpa_mega' });
@@ -136,27 +140,33 @@ function ejectMass(player,food,time,width,mode='ffa'){
   for(const c of player.cells){
     if(food.length>=6000)break;
     if(c.mass<=cost+25)continue;
+    let perCell=rules.feedPelletsPerCell??1;
     const dx=(player.target?.x??c.x)-c.x,dy=(player.target?.y??c.y)-c.y,length=Math.hypot(dx,dy);
     const ux=length>.001?dx/length:1,uy=length>.001?dy/length:0;
-    let travel=cellRadius(c.mass-cost)+pelletRadius+12;
-    for(const other of rules.feedPlacement==='cluster'?player.cells:[]){
-      const ox=other.x-c.x,oy=other.y-c.y,along=ox*ux+oy*uy,side2=ox*ox+oy*oy-along*along;
-      const clearance=cellRadius(other.mass)+pelletRadius+12;
-      if(side2<clearance*clearance)travel=Math.max(travel,along+Math.sqrt(clearance*clearance-Math.max(0,side2)));
+    while(c.mass>cost+25&&perCell>0&&food.length<6000){
+      let travel=cellRadius(c.mass-cost)+pelletRadius+12;
+      for(const other of rules.feedPlacement==='cluster'?player.cells:[]){
+        const ox=other.x-c.x,oy=other.y-c.y,along=ox*ux+oy*uy,side2=ox*ox+oy*oy-along*along;
+        const clearance=cellRadius(other.mass)+pelletRadius+12;
+        if(side2<clearance*clearance)travel=Math.max(travel,along+Math.sqrt(clearance*clearance-Math.max(0,side2)));
+      }
+      const maxDistance=rules.feedMaxDistance?cellRadius(c.mass)*rules.feedMaxDistance:Infinity;
+      travel=Math.min(travel,maxDistance);
+      const point={x:c.x+ux*travel,y:c.y+uy*travel};
+      // Firing into a wall must not clamp the pellet back inside its sender.
+      if(point.x<pelletRadius||point.x>width-pelletRadius||point.y<pelletRadius||point.y>width-pelletRadius)break;
+      c.mass-=cost;count++;perCell--;
+      c.feedSourceId??=++nextFeedSourceId;
+      food.push({...point,mass:pelletMass,color:player.color||c.color,ejected:true,ownerId:player.id,sourceId:c.feedSourceId,bornAt:time,
+        sourceX:c.x,sourceY:c.y,maxTravelDistance:Number.isFinite(maxDistance)?maxDistance:undefined,
+        ownerCollectAt:rules.feedPlacement==='cluster'?time+.6:time,sourceCollectAt:time+rules.feedSourceGrace,
+        expiresAt:time+12,drag:rules.feedDrag??2.2,vx:ux*(rules.feedSpeed??1100),vy:uy*(rules.feedSpeed??1100)});
     }
-    const point={x:c.x+ux*travel,y:c.y+uy*travel};
-    // Firing into a wall must not clamp the pellet back inside its sender.
-    if(point.x<pelletRadius||point.x>width-pelletRadius||point.y<pelletRadius||point.y>width-pelletRadius)continue;
-    c.mass-=cost;count++;
-    c.feedSourceId??=++nextFeedSourceId;
-    food.push({...point,mass:pelletMass,color:player.color||c.color,ejected:true,ownerId:player.id,sourceId:c.feedSourceId,bornAt:time,
-      ownerCollectAt:rules.feedPlacement==='cluster'?time+.6:time,sourceCollectAt:time+rules.feedSourceGrace,
-      expiresAt:time+12,drag:rules.feedDrag??2.2,vx:ux*(rules.feedSpeed??1100),vy:uy*(rules.feedSpeed??1100)});
   }
   return count;
 }
 
-function splitCell(player,c,time,width,mode='ffa') {
+function splitCell(player,c,time,width,mode='ffa',extraGap=0) {
   if(!player?.cells?.includes(c))return null;
   const rules=physicsFor(mode);
   if(c.mass<rules.minSplitMass)return null;
@@ -171,7 +181,7 @@ function splitCell(player,c,time,width,mode='ffa') {
   c.collideAt=collideAt;
   const launch=Math.max(rules.splitImpulse * Math.pow(1000/Math.max(100,half),rules.splitMassPower),
     cellRadius(half)*(rules.splitReach||0)*rules.splitDrag);
-  const distance=cellRadius(half)*rules.splitGap;
+  const distance=cellRadius(half)*rules.splitGap+Math.max(0,extraGap);
   const duration=mergeDelayFor(half,mode);
   c.mergeAt=Math.max(c.mergeAt||0,time+duration);
   return {
@@ -180,6 +190,20 @@ function splitCell(player,c,time,width,mode='ffa') {
     mass:half,color:c.color,collideAt,
     vx:ux*launch,vy:uy*launch,mergeAt:c.mergeAt,
   };
+}
+
+function stepAutoSplit(player,time,width,maxCells,mode='ffa'){
+  if(!player?.cells?.length)return 0;
+  const threshold=autoSplitMassFor(mode);
+  if(player.cells.length>=maxCells){player.nextAutoSplitAt=0;return 0;}
+  const source=player.cells.find(c=>c.mass>=threshold);
+  if(!source){player.nextAutoSplitAt=0;return 0;}
+  if(time<(player.nextAutoSplitAt||0))return 0;
+  const child=splitCell(player,source,time,width,mode,cellRadius(source.mass/2)*.35);
+  if(!child)return 0;
+  player.cells.push(child);
+  player.nextAutoSplitAt=time+.12;
+  return 1;
 }
 
 function splitCells(player,time,width,maxCells,mode='ffa',minimumMass=null) {
@@ -385,4 +409,4 @@ function absorbFood(players,food,mode='ffa',time=Infinity) {
   return gained;
 }
 
-module.exports={worldSizeFor,FFA_PHYSICS,MEGA_PHYSICS,DUAL_PHYSICS,PHYSICS_PRESETS,OTHER_PHYSICS,clamp,cellRadius,physicsFor,autoSplitMassFor,mergeDelayFor,feedIntervalFor,BOT_MIN_MASS,BOT_MAX_MASS,BOT_RESPAWN_SECONDS,randomBotMass,findSafeSpawn,maintainBots,decayMass,ejectMass,splitCell,splitCells,startSplitMacro,stepSplitMacro,findSplitHunt,moveCells,mergeCells,eatCells,findFoodRecipient,absorbFood};
+module.exports={worldSizeFor,FFA_PHYSICS,MEGA_PHYSICS,DUAL_PHYSICS,PHYSICS_PRESETS,OTHER_PHYSICS,clamp,cellRadius,physicsFor,autoSplitMassFor,mergeDelayFor,feedIntervalFor,BOT_MIN_MASS,BOT_MAX_MASS,BOT_RESPAWN_SECONDS,randomBotMass,findSafeSpawn,maintainBots,decayMass,ejectMass,splitCell,stepAutoSplit,splitCells,startSplitMacro,stepSplitMacro,findSplitHunt,moveCells,mergeCells,eatCells,findFoodRecipient,absorbFood};
