@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
@@ -8,8 +8,8 @@ async function game(){
   const base=path.resolve(__dirname,'../public');
   const encode=file=>'data:text/javascript;charset=utf-8,'+encodeURIComponent(fs.readFileSync(path.join(base,file),'utf8'));
   const source=fs.readFileSync(path.join(base,'game.js'),'utf8')
-    .replace("'./virus-rules.js?v=3-full-burst'",JSON.stringify(encode('virus-rules.js')))
-    .replace("'./physics.js?v=11-world-ui'",JSON.stringify(encode('physics.js')));
+    .replace("'./virus-rules.js?v=5-smooth-launch'",JSON.stringify(encode('virus-rules.js')))
+    .replace("'./physics.js?v=16-multi-fixes'",JSON.stringify(encode('physics.js')));
   return import('data:text/javascript;charset=utf-8,'+encodeURIComponent(source));
 }
 const player=(cells,id='p')=>({id,cells});
@@ -65,7 +65,7 @@ test('invalid animation settings fall back or clamp, and large respawn correctio
   for(const value of [undefined,null,'120',NaN,Infinity])assert.equal(normalizeAnimation(value),DEFAULT_SETTINGS.animation);
   assert.equal(normalizeAnimation(-100),0);assert.equal(normalizeAnimation(9999),500);assert.equal(normalizeAnimation(123),120);
   const animator=new CellAnimator();animator.sample([player([cell()])]);
-  assert.equal(animator.sample([player([cell(4000)])],500,1/60)[0].cells[0].x,4000);
+  assert.equal(animator.sample([player([cell(6000)])],500,1/60)[0].cells[0].x,6000);
 });
 
 test('server snapshots keep unique stable cell IDs through movement, split and removal',()=>{

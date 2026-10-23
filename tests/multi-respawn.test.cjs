@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -11,7 +11,7 @@ async function localGame(){
  const root=path.join(__dirname,'../public');
  const physicsURL='data:text/javascript;charset=utf-8,'+encodeURIComponent(fs.readFileSync(path.join(root,'physics.js'),'utf8'));
  const virusURL='data:text/javascript;charset=utf-8,'+encodeURIComponent(fs.readFileSync(path.join(root,'virus-rules.js'),'utf8'));
- const src=fs.readFileSync(path.join(root,'game.js'),'utf8').replace("'./physics.js?v=11-world-ui'",JSON.stringify(physicsURL)).replace("'./virus-rules.js?v=3-full-burst'",JSON.stringify(virusURL));
+ const src=fs.readFileSync(path.join(root,'game.js'),'utf8').replace("'./physics.js?v=16-multi-fixes'",JSON.stringify(physicsURL)).replace("'./virus-rules.js?v=5-smooth-launch'",JSON.stringify(virusURL));
  game=await import('data:text/javascript;charset=utf-8,'+encodeURIComponent(src));return game;
 }
 test('server: eaten second player respawns at mouse with initial mass and cooldown',()=>{
@@ -36,14 +36,16 @@ test('server: new multi cell gets brief protection, not indefinite invulnerabili
  assert.equal(physics.eatCells([big,small],'ffa',r.time+1),0);
  assert.equal(physics.eatCells([big,small],'ffa',r.time+2),1);
 });
-test('local: eaten second multi cell respawns at cursor in FFA, Dual and Mega',async()=>{
+test('local: eaten owned connection respawns beside its sibling in FFA, Dual and Mega',async()=>{
  const {LocalArena,DEFAULT_SETTINGS,MODES}=await localGame();
  for(const mode of Object.keys(MODES)){
   const local=new LocalArena();local.reset(mode,'My player','',true,DEFAULT_SETTINGS);
   local.players=local.players.filter(p=>!p.npc);
   const second=local.getById(local.myIds[1]);second.cells=[];
   assert.equal(local.respawn(second.id,1900,1300),true,mode);
-  assert.equal(second.cells[0].x,1900);assert.equal(second.cells[0].y,1300);
+  const anchor=local.getById(local.myIds[0]).cells[0],spawn=second.cells[0];
+  const gap=Math.hypot(spawn.x-anchor.x,spawn.y-anchor.y)-physics.cellRadius(anchor.mass)-physics.cellRadius(spawn.mass);
+  assert.ok(gap>=24&&gap<=272,'spawn remains beside its owned sibling');
   assert.equal(second.cells[0].mass,MODES[mode].start);
   second.cells=[];assert.equal(local.respawn(second.id,2200,1300),false,'cooldown '+mode);
   local.elapsed+=2;
@@ -120,8 +122,8 @@ test('macro-feed key uses held state rather than only four instant feeds',()=>{
  const source=fs.readFileSync(path.join(__dirname,'../public/client.js'),'utf8');
  assert.ok(source.includes('feedHeld||macroFeedHeld||mouseFeedButtons.size||mouseMacroButtons.size'),'keyboard and mouse feed sources share the held-input loop');
  assert.ok(source.includes("addEventListener('keyup'"));
- assert.ok(source.includes("settings.keyFeed.split('+').at(-1))feedHeld=false"),'release survives changes in modifier state');
- assert.ok(source.includes("settings.keyMacroFeed.split('+').at(-1))macroFeedHeld=false"));
+ assert.ok(source.includes("settings.keyFeed.split('+').includes(k.split('+').at(-1)))feedHeld=false"),'release survives changes in modifier state');
+ assert.ok(source.includes("settings.keyMacroFeed.split('+').includes(k.split('+').at(-1)))macroFeedHeld=false"));
  assert.ok(source.includes('feedHeld=false;macroFeedHeld=false;rightDown=false'));
  assert.ok(source.includes("if(!feedHeld){feedHeld=true;doAction('feed')"));
 });

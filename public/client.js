@@ -1,5 +1,9 @@
-﻿import {THEMES} from './themes.js';
-import {MODES, DEFAULT_SETTINGS, LocalArena, ArenaRenderer, autoSplitMassFor, WORLD_SIZE, respawnPosition, sectorAt, totalMass, getVisibleAllies, normalizeAnimation, normalizeVisualSettings, supportsMultibox, INPUT_ACTIONS, CONTROL_KEYS, physicalKey, normalizeControlSettings, tagColor, feedIntervalFor, worldSizeFor} from './game.js?v=16-world-ui';
+import {THEMES} from './themes.js';
+import {mountBackgroundStudio} from './background-studio.js?v=2-shapes';
+import {mountThemeScene} from './theme-scene.js?v=1-live-theme';
+import {TagVoice} from './tag-voice.js?v=2-audio';
+import {SETTING_HELP,SETTINGS_CATEGORIES} from './settings-help.js?v=4-live-scene';
+import {MODES, DEFAULT_SETTINGS, LocalArena, ArenaRenderer, drawArenaGuides, drawBackgroundDesign, normalizeBackgroundDesign, BACKGROUND_MAX_ELEMENTS, BACKGROUND_MAX_POINTS, autoSplitMassFor, WORLD_SIZE, radius, respawnPosition, sectorAt, totalMass, getVisibleAllies, normalizeAnimation, normalizeVisualSettings, supportsMultibox, INPUT_ACTIONS, CONTROL_KEYS, physicalKey, normalizeControlSettings, tagColor, feedIntervalFor, worldSizeFor, ZOOM_MIN, ZOOM_MAX} from './game.js?v=25-multi-virus';
 
 const $ = id => document.getElementById(id);
 const SETTINGS_KEY = 'vintage-settings-v2';
@@ -19,9 +23,9 @@ const valueSafe = (saved={},migrate=false) => {
     if (Array.isArray(next[key]) && Array.isArray(val)) next[key] = [...val].slice(0, 10);
     else if(key==='customTheme' && val && typeof val==='object' && !Array.isArray(val)){
       const colors={};
-      for(const prop of ['accentColor','panelColor','textColor','bgColor','gridColor','foodColor','virusColor'])
+      for(const prop of ['accentColor','panelColor','textColor','bgColor','gridColor','foodColor','virusColor','borderColor','sectorGridColor','sectorColor'])
         colors[prop]=cleanHex(val[prop],next[prop]);
-      next.customTheme={name:String(val.name||'My theme').slice(0,32),...colors,backgroundUrl:cleanAssetUrl(val.backgroundUrl),worldLogoUrl:cleanAssetUrl(val.worldLogoUrl)};
+      next.customTheme={name:String(val.name||'My theme').slice(0,32),...colors,backgroundUrl:cleanAssetUrl(val.backgroundUrl),worldLogoUrl:cleanAssetUrl(val.worldLogoUrl),artwork:normalizeBackgroundDesign(val.artwork)};
     }
     else if (typeof val === typeof next[key]) next[key] = val;
   }
@@ -85,26 +89,32 @@ const stoppedConnections=new Set();
 let pointerOverField=false, draggingCamera=false, dragPointer=null;
 const mouseFeedButtons=new Set(),mouseMacroButtons=new Set();
 function releaseInputs(){feedHeld=false;macroFeedHeld=false;rightDown=false;mouseFeedButtons.clear();mouseMacroButtons.clear();}
-let settingsTab='game', settingsPage='Render';
+let settingsTab='game',settingsPage='Camera',settingsOpeningCopy=null,selectedSetting=null,settingsTrigger=null;
+let backgroundStudio=null,settingsPreviewAt=0;
+let themeDraft=null,scenePreview=null,lobbyArtwork=null,lobbyArtworkSource=null,lobbyArtworkSize='';
+function isCustomThemeOpen(){return isSettingsOpen&&settingsTab==='theme'&&settingsPage==='PUT UR THEME'&&!$('settings-search').value.trim();}
+function currentVisualSettings(){return isCustomThemeOpen()&&themeDraft?themeDraft:settings;}
 
 const arena = new LocalArena();
 arena.reset('ffa', nickname, tag, currentMulti(), settings);
 const renderer = new ArenaRenderer($('arena'), $('minimap-canvas'));
 renderer.resize();
+const voice=new TagVoice($('tag-voice'),{iceServers:()=>window.VINTAGE_CONFIG?.voiceIceServers});
 
 const toName = (s,max=18)=>String(s||'').trim().slice(0,max).replace(/[<>\u0000-\u001f]/g,'')||'Vintage Player';
 const toTag = s => String(s||'').normalize('NFKC').trim().slice(0,8).replace(/[<>\u0000-\u001f]/g,'').toUpperCase();
 
-function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }catch{} applySettings(); }
+function saveSettings(){let saved=true;try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}catch{saved=false;toast('Browser storage is full. Export your settings to keep your work.');}applySettings();if(isSettingsOpen)refreshSettingsDetail();return saved;}
 function updateProfileName(){ const name = toName($('nickname')?.value || nickname); const node = $('profile-name'); if(node) node.textContent = name; }
 function applySettings(){
-  document.documentElement.style.setProperty('--accent', cleanHex(settings.accentColor,'#a9dcff'));
-  const theme=THEMES[settings.themePreset] || THEMES.vintage;
-  const custom=settings.themePreset==='custom' && settings.customTheme;
-  document.body.dataset.theme=custom?'custom':(THEMES[settings.themePreset]?settings.themePreset:'vintage');
-  document.documentElement.style.setProperty('--theme-panel',cleanHex(custom?.panelColor||settings.panelColor||theme.panel,theme.panel));
-  document.documentElement.style.setProperty('--text',cleanHex(custom?.textColor||settings.textColor,'#f5f9ff'));
-  document.documentElement.style.setProperty('--hud-border',cleanHex(settings.gridColor,'#27323e'));
+  const visual=currentVisualSettings();
+  document.documentElement.style.setProperty('--accent', cleanHex(visual.accentColor,'#a9dcff'));
+  const theme=THEMES[visual.themePreset] || THEMES.vintage;
+  const custom=visual.themePreset==='custom';
+  document.body.dataset.theme=custom?'custom':(THEMES[visual.themePreset]?visual.themePreset:'vintage');
+  document.documentElement.style.setProperty('--theme-panel',cleanHex(visual.panelColor||theme.panel,theme.panel));
+  document.documentElement.style.setProperty('--text',cleanHex(visual.textColor,'#f5f9ff'));
+  document.documentElement.style.setProperty('--hud-border',cleanHex(visual.gridColor,'#27323e'));
   document.documentElement.style.setProperty('--pink','#f065b5');
   document.documentElement.style.setProperty('--accent2','#bd93ff');
   document.documentElement.style.setProperty('--theme-radius',theme.radius);
@@ -115,25 +125,34 @@ function applySettings(){
   $('help-panel')?.classList.toggle('hidden', !settings.showHelp || !hudVisible);
   document.body.classList.toggle('hud-hidden',!hudVisible);
   if(!hudVisible)closeChat();
+  updateLobbyArtwork(visual);
+}
+function updateLobbyArtwork(visual=currentVisualSettings()){
+  const design=visual.showThemeArtwork&&visual.themeArtwork;
+  if(!design){if(lobbyArtwork)lobbyArtwork.hidden=true;return;}
+  if(!lobbyArtwork){lobbyArtwork=document.createElement('canvas');lobbyArtwork.id='theme-artwork-overlay';lobbyArtwork.setAttribute('aria-hidden','true');$('lobby').prepend(lobbyArtwork);}
+  lobbyArtwork.hidden=false;
+  const w=innerWidth,h=innerHeight,ratio=Math.min(devicePixelRatio||1,2),key=w+'x'+h+'@'+ratio;
+  if(lobbyArtworkSource===design&&lobbyArtworkSize===key)return;
+  lobbyArtwork.width=w*ratio;lobbyArtwork.height=h*ratio;
+  const g=lobbyArtwork.getContext('2d'),span=Math.min(w,h)*.92;
+  g.setTransform(ratio,0,0,ratio,0,0);g.translate((w-span)/2,(h-span)/2);drawBackgroundDesign(g,design,span);
+  lobbyArtworkSource=design;lobbyArtworkSize=key;
 }
 function setLobbyState(isLobby){ document.body.classList.toggle('show-lobby', !!isLobby); document.body.classList.toggle('is-spectating', !isLobby&&spectating); }
 function setCameraControlsVisible(){
-  const active=(playing||spectating) && !document.body.classList.contains('show-lobby');
-  $('zoom-panel').classList.toggle('hidden', !active || spectating);
   document.body.classList.toggle('is-spectating',spectating);
-  $('zoom-value').textContent=Math.round(settings.zoom*100)+'%';
 }
 function adjustZoom(factor,x=innerWidth/2,y=innerHeight/2){
   if(!playing&&!spectating)return;
   const before=spectating?renderer.toWorld(x,y):null;
-  const next=clampClient(settings.zoom*factor, spectating?.07:.25, spectating?5.5:4.2);
+  const next=clampClient(settings.zoom*factor, ZOOM_MIN,ZOOM_MAX);
   settings.zoom=next;
   if(spectating){
     renderer.zoom=next;
     renderer.cam.x=clampClient(before.x-(x-renderer.screenW/2)/next,0,(remoteSnapshot?.worldSize||worldSizeFor(mode)));
     renderer.cam.y=clampClient(before.y-(y-renderer.screenH/2)/next,0,(remoteSnapshot?.worldSize||worldSizeFor(mode)));
   }
-  $('zoom-value').textContent=Math.round(next*100)+'%';
   saveSettings();
 }
 const clampClient=(v,min,max)=>Math.max(min,Math.min(max,v));
@@ -144,7 +163,6 @@ function updateMode(next){
   mode = next;
   document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('selected', b.dataset.mode===mode));
   $('top-mode').textContent = mode.toUpperCase() + ' · '+region;
-  $('mode-label').textContent = MODES[mode].title + ' MODE';
   const label=$('lobby-mode-name'),mass=$('lobby-mode-mass');
   if(label)label.textContent=MODES[mode].title;
   if(mass)mass.textContent='STARTS AT '+MODES[mode].start.toLocaleString('en-US')+' MASS';
@@ -160,6 +178,7 @@ function enterLobby(){
   setCameraControlsVisible();
 }
 function leaveSession(){
+  voice.detach();voice.setContext({tagged:false});
   stoppedConnections.clear();
   releaseInputs();peakScore=0;
   playing=false;spectating=false;showDeaths=false;
@@ -176,6 +195,7 @@ function beginGame(){
   leaveSession();sessionMode=mode;sessionServerId=serverId;sessionMulti=currentMulti();
 
   nickname = toName($('nickname').value); tag = toTag($('team-tag').value);
+  voice.setContext({tagged:!!tag});
   $('nickname').value = nickname; $('team-tag').value = tag;
   if(!tag){chatChannel='all';updateChatTabs();}
   updateProfileName();
@@ -183,6 +203,7 @@ function beginGame(){
   setLobbyState(false);
   setCameraControlsVisible();
   $('lobby').classList.add('hidden'); $('gameover').classList.add('hidden'); clearChat();
+  $('toast-area').replaceChildren();
   const multi = sessionMulti;
   arena.reset(mode, nickname, tag, multi, settings);
   renderer.resetAnimations();
@@ -197,12 +218,11 @@ function beginGame(){
   }else{
     $('connection-status').innerHTML = '<i></i> DEMO MODE';
     $('chat-online').textContent = 'LOCAL DEMO';
-    addChat('system','You are playing against local AI. Configure /config.js for online multiplayer.','all');
   }
 }
 
 class RemoteArena{
-  constructor(url,opts){ this.url=url; this.opts=opts; this.sockets=[]; this.myIds=[]; this.latest=null; this.connected=false;
+  constructor(url,opts){ this.url=url; this.opts=opts; this.sockets=[];this.multiKey=Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join(''); this.myIds=[]; this.latest=null; this.connected=false;
     this.latencyMs=null;this.lastPingAt=0;this.pingStarted=0;this.pingId=0;this.pingTimer=null; }
   connect(){ const total=this.opts.spectator?1:(this.opts.multi?2:1); for(let n=0;n<total;n++) this.open(n);
     this.pingTimer=setInterval(()=>this.probe(),2500); }
@@ -212,7 +232,7 @@ class RemoteArena{
   open(slot){
     let ws; try{ ws=new WebSocket(this.url); }catch{ toast('Invalid WebSocket server URL'); return; }
     this.sockets[slot]=ws;
-    ws.addEventListener('open',()=>{ const packet=this.opts.spectator?{type:'spectate',mode:this.opts.mode}:{type:'join',mode:this.opts.mode,name:this.opts.nickname,tag:this.opts.tag};ws.send(JSON.stringify(packet)); });
+    ws.addEventListener('open',()=>{ const packet=this.opts.spectator?{type:'spectate',mode:this.opts.mode}:{type:'join',mode:this.opts.mode,name:this.opts.nickname,tag:this.opts.tag,multiKey:this.multiKey};ws.send(JSON.stringify(packet)); });
     ws.addEventListener('message',e=>{
       let payload; try{ payload=JSON.parse(e.data); }catch{ return; }
       if(payload.type==='spectator_welcome'){
@@ -221,7 +241,7 @@ class RemoteArena{
       if(payload.type==='welcome'){
         this.myIds[slot]=payload.playerId; this.connected=true;
         $('connection-status').innerHTML='<i></i> ONLINE'; $('connection-status').classList.add('online'); $('chat-online').textContent='LIVE';
-        if(slot===0){ addChat('system','Connected to the '+MODES[mode].title+' room.','all');this.probe(); }
+        if(slot===0){this.probe();if(remote===this)voice.bind(this);}
       }
       if(payload.type==='state' && slot===0){ this.latest=payload; remoteSnapshot=payload; }
       if(payload.type==='server_schedule' && slot===0) setRestartClock(payload.nextRestartAt);
@@ -231,12 +251,13 @@ class RemoteArena{
         displayServerNotice('Server restarted • Reconnecting all players...');
       }
       if(payload.type==='pong' && slot===0 && payload.nonce===this.pingId){this.latencyMs=Math.round(performance.now()-this.pingStarted);}
+      if(slot===0&&remote===this&&String(payload.type||'').startsWith('voice_')){voice.handle(payload);return;}
 
-      if(payload.type==='respawned' && slot===0) toast('Multi respawned at cursor');
-      if(payload.type==='chat' && slot===0) addChat(payload.name,payload.text,payload.channel,payload.tag);
+      if(payload.type==='chat' && slot===0) addChat(payload.name,payload.text,payload.channel,payload.teamId);
       if(payload.type==='error' && slot===0) toast(payload.message || 'Server error');
     });
     ws.addEventListener('close',event=>{
+      if(slot===0)voice.detach(this);
       if(slot===0 && event.code===4001 && remote===this && (playing||spectating)){
         this.connected=false;this.myIds=[];this.latest=null;remoteSnapshot=null;
         clearInterval(this.pingTimer);this.pingTimer=null;
@@ -257,7 +278,7 @@ class RemoteArena{
   setMovementStopped(slot,stopped){this.send(slot,{type:'stopMove',stopped});}
   sendAction(slot,action,count=1){ this.send(slot,{type:action,...(action==='split'?{count}:{} )}); }
   respawn(slot,position){this.send(slot,{type:'respawn',x:position.x,y:position.y});}
-  disconnect(){ clearInterval(this.pingTimer);this.pingTimer=null; for(const s of this.sockets){ if(s && [0,1].includes(s.readyState)){ try{s.close(1000,'Switch game');}catch{} } } this.connected=false; this.sockets=[]; }
+  disconnect(){voice.detach(this); clearInterval(this.pingTimer);this.pingTimer=null; for(const s of this.sockets){ if(s && [0,1].includes(s.readyState)){ try{s.close(1000,'Switch game');}catch{} } } this.connected=false; this.sockets=[];this.multiKey=Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join(''); }
 }
 
 function clearChat(){ chatHistory.length=0;$('chat-messages').replaceChildren(); }
@@ -275,7 +296,7 @@ function renderChat(){
     if(line.name==='system'){ p.className+=' system'; p.textContent=line.text; }
     else {
       const time=document.createElement('time');time.dateTime=new Date(line.time).toISOString();time.textContent=new Date(line.time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-      const n=document.createElement('span'); n.className='who'; n.textContent=(line.tag?'['+line.tag+'] ':'')+line.name+': ';n.style.color=tagColor(line.tag);
+      const n=document.createElement('span'); n.className='who'; n.textContent=line.name+': ';n.style.color=tagColor(line.tag);
       p.append(time,n,document.createTextNode(line.text));
     }
     list.appendChild(p);
@@ -310,23 +331,22 @@ function beginSpectate(){
   arena.reset(mode, 'Spectator', '', false, settings, true);
   renderer.resetAnimations();
   renderer.cam={x:worldSizeFor(mode)/2,y:worldSizeFor(mode)/2};
-  renderer.zoom=clampClient(settings.zoom,.07,5.5);
+  renderer.zoom=clampClient(settings.zoom,ZOOM_MIN,ZOOM_MAX);
   if(wsUrl && /^wss?:\/\//i.test(wsUrl)){
     remote=new RemoteArena(wsUrl,{mode,nickname:'Spectator',tag:'',multi:false,spectator:true});
     remote.connect(); $('connection-status').innerHTML='<i></i> CONNECTING'; $('chat-online').textContent='CONNECTING';
   }else{
     $('connection-status').innerHTML='<i></i> DEMO MODE'; $('chat-online').textContent='LOCAL';
-    addChat('system','Free camera: move mouse to explore, drag to pan, wheel to zoom.','all');
   }
   setCameraControlsVisible();
 }
 function changeSlot(){
-  if(!sessionMulti){toast('This mode uses a single connection');return;}
+  if(!sessionMulti)return;
   const ids=remote?.connected?remote.myIds:arena.myIds;
-  if(ids.length<2){toast('Waiting for Multi Connect 2');return;}
+  if(ids.length<2)return;
   const next=(activeSlot+1)%ids.length;
   const id=ids[next];
-  if(!id){toast('Waiting for Multi connection');return;}
+  if(!id)return;
   const snap=remote?.connected?remoteSnapshot:arena.snapshot;
   const target=snap?.players?.find(p=>p.id===id);
   activeSlot=next;
@@ -334,11 +354,11 @@ function changeSlot(){
     const world=renderer.toWorld(pointer.x,pointer.y);
     const anchor=ids.filter(playerId=>playerId!==id)
       .flatMap(playerId=>snap?.players?.find(p=>p.id===playerId)?.cells||[])
-      .sort((a,b)=>b.mass-a.mass)[0];
+      .sort((a,b)=>(Math.hypot(a.x-world.x,a.y-world.y)-radius(a.mass))-(Math.hypot(b.x-world.x,b.y-world.y)-radius(b.mass)))[0];
     const position=respawnPosition(anchor,world,MODES[mode].start,snap?.worldSize||worldSizeFor(mode));
-    if(remote?.connected){remote.respawn(next,position);toast('Respawning Connect '+(next+1)+' near your other cell, toward cursor');}
-    else {if(arena.respawn(id,position.x,position.y))toast('Connect '+(next+1)+' respawned near your other cell');else toast('Waiting for respawn cooldown');}
-  }else toast('Controlling Connect '+(next+1));
+    if(remote?.connected)remote.respawn(next,position);
+    else arena.respawn(id,position.x,position.y);
+  }
 }
 
 function doAction(action,count=1){
@@ -360,49 +380,37 @@ function stopMovement(){
   if(stopped)stoppedConnections.add(id);else stoppedConnections.delete(id);
   if(remote?.connected)remote.setMovementStopped(activeSlot,stopped);
   else arena.setMovementStopped(id,stopped);
-  toast(stopped?'Stop movement ON — press again to resume':'Stop movement OFF');
 }
-function setZoomLevel(level){ const values=[0.55,0.75,0.95,1.15,1.35]; settings.zoom = values[level-1] || 1; saveSettings(); setCameraControlsVisible(); toast('Zoom level '+level); }
-function toggleSetting(key,label){ settings[key]=!settings[key]; saveSettings(); if(label) toast(label+' '+(settings[key]?'enabled':'disabled')); }
+function setZoomLevel(level){ const values=[0.55,0.75,0.95,1.15,1.35]; settings.zoom = values[level-1] || 1; saveSettings(); setCameraControlsVisible(); }
+function toggleSetting(key){ settings[key]=!settings[key]; saveSettings(); }
 function triggerCommand(index){ const msg=settings.chatCommands[index]; if(msg) sendMessage(msg); }
 function gameover(){ releaseInputs();showDeaths=true; playing=false; spectating=false; $('gameover').classList.remove('hidden'); $('death-score').textContent='Peak score: '+Math.floor(peakScore).toLocaleString('en-US'); if(settings.autoRespawn) setTimeout(()=>{ if(showDeaths && !$('gameover').classList.contains('hidden')) beginGame(); },1800); }
 function updateHUD(snapshot){
-  const focusId=selectedId(snapshot);
-  const me=snapshot?.players?.find(p=>p.id===focusId);
-  $('top-mode').textContent=mode.toUpperCase()+' · '+region+(me?.movementStopped?' · STOP MOVE':'');
+  const focusId=selectedId(snapshot),me=snapshot?.players?.find(p=>p.id===focusId);
+  $('top-mode').textContent=mode.toUpperCase()+' \u00b7 '+region+(me?.movementStopped?' \u00b7 STOP MOVE':'');
   const ownIds=remote?.connected?remote.myIds:arena.myIds;
   const ownPlayers=(snapshot?.players||[]).filter(p=>ownIds.includes(p.id));
-  const ownMass=ownPlayers.reduce((sum,p)=>sum+totalMass(p),0),ownCells=ownPlayers.reduce((n,p)=>n+(p.cells?.length||0),0);
+  const ownMass=ownPlayers.reduce((sum,p)=>sum+totalMass(p),0);
   if(playing)peakScore=Math.max(peakScore,ownMass);
-  $('mass-label').textContent=Math.floor(ownMass).toLocaleString('en-US');
-  $('cell-label').textContent=ownCells+' CELL'+(ownCells===1?'':'S');
-  const autoSplitMass=snapshot?.autoSplitMass||autoSplitMassFor(mode),largestCellMass=Math.max(0,...ownPlayers.flatMap(p=>(p.cells||[]).map(c=>c.mass)));
-  $('mass-progress').style.width=Math.min(100,largestCellMass/autoSplitMass*100)+'%';
-  $('mass-progress').title='Auto split per cell: '+autoSplitMass.toLocaleString('en-US');
-  $('fps-label').textContent=renderer.fps+' FPS';
-  const realOnline=remote?.connected?(snapshot?.players||[]).filter(p=>!p.npc).length:0;
+  const connections=$('own-connections');connections.replaceChildren();
+  for(const id of ownIds){
+    const p=ownPlayers.find(p=>p.id===id);if(!p?.cells?.length)continue;
+    const row=document.createElement('div');row.className='connection-row';
+    const mass=document.createElement('span'),name=document.createElement('span');
+    mass.textContent=String(Math.floor(totalMass(p)));name.textContent=p.name||'Player';
+    row.append(mass,name);connections.appendChild(row);
+  }
+  $('tag-voice').style.top=(document.body.classList.contains('show-lobby')?125:Math.max(100,connections.getBoundingClientRect().bottom+10))+'px';
   $('stat-fps').textContent=String(renderer.fps);
-  $('stat-ping').textContent=remote?.connected ? (remote.latencyMs!==null && Date.now()-remote.lastPingAt<10000 ? remote.latencyMs+' ms':'—') : (remote?'OFFLINE':'LOCAL');
-  $('stat-score').textContent=Math.floor(peakScore).toLocaleString('en-US');
-  $('stat-mass').textContent=Math.floor(ownMass).toLocaleString('en-US');
-  $('stat-cells').textContent=String(ownCells);
-  $('stat-online').textContent=remote?.connected?String(realOnline):'DEMO';
-  const visible=getVisibleAllies(snapshot,focusId);
-  const teamTag=String(me?.tag||'').trim();
-  $('allies-heading').textContent=teamTag?'ALLIES · '+teamTag.toUpperCase():'SOLO PLAYERS';
-  $('player-count').textContent=visible.length+' VISIBLE';
-  $('map-sector').textContent=me?.cells?.length?sectorAt(me.cells[0].x,me.cells[0].y,snapshot.worldSize):'—';
-  $('map-team').textContent=teamTag?'#'+teamTag.toUpperCase():'NO TAG';
-  const rows=visible.map(p=>({...p,total:totalMass(p)})).sort((a,b)=>b.total-a.total).slice(0,8);
+  $('stat-ping').textContent=remote?.connected ? (remote.latencyMs!==null && Date.now()-remote.lastPingAt<10000 ? remote.latencyMs+'ms':'\u2014') : (remote?'OFFLINE':'LOCAL');
+  const rows=getVisibleAllies(snapshot,focusId).map(p=>({...p,total:totalMass(p)})).sort((a,b)=>b.total-a.total).slice(0,10);
   const container=$('board-entries');container.replaceChildren();
-  for(let i=0;i<rows.length;i++){
-    const p=rows[i],line=document.createElement('div');line.className='leader-entry'+(p.id===focusId?' is-me':'');
-    const place=document.createElement('span'),n=document.createElement('b'),m=document.createElement('em');
-    place.textContent=String(i+1);n.textContent=p.name;
-    m.textContent=p.total>=1000?(p.total/1000).toFixed(1)+'k':Math.floor(p.total).toString();
-    const sector=document.createElement('small');sector.className='ally-sector';
-    sector.textContent=p.cells.length?sectorAt(p.cells[0].x,p.cells[0].y,snapshot.worldSize):'—';
-    line.append(place,m,sector,n);container.appendChild(line);
+  for(const p of rows){
+    const line=document.createElement('div');line.className='leader-entry';
+    const name=document.createElement('span'),mass=document.createElement('span');
+    name.className='leader-name';mass.className='leader-mass';name.textContent=p.name||'Player';
+    mass.textContent=p.total>=1000?(p.total/1000).toFixed(1)+'k':String(Math.floor(p.total));
+    line.append(name,mass);container.appendChild(line);
   }
 }
 
@@ -429,8 +437,11 @@ function gameLoop(now){
   if(!remote && !showDeaths) arena.tick((playing||spectating)?dt:dt*.45,settings);
   const snap = remote ? (remoteSnapshot || {players:[],food:[],viruses:[],worldSize:worldSizeFor(mode)}) : arena.snapshot;
   const focusId=selectedId(snap);
-  const renderSettings=hudVisible?settings:{...settings,showGrid:false,showSectors:false,showBorders:false,showMinimap:false};
+  const visual=currentVisualSettings();
+  const renderSettings=hudVisible?{...visual,showThemeArtwork:visual.showThemeArtwork&&!document.body.classList.contains('show-lobby')}:{...visual,showGrid:false,showSectors:false,showBorders:false,showMinimap:false};
   renderer.draw(snap, focusId, renderSettings, playing, dt, spectating, spectating?[]:(remote?remote.myIds:arena.myIds));
+  if(isSettingsOpen&&!backgroundStudio&&now-settingsPreviewAt>32){settingsPreviewAt=now;drawSettingsArtwork(now);}
+  if(document.body.classList.contains('show-lobby'))updateLobbyArtwork(visual);
   if(now-hudAt>280){ hudAt=now; updateHUD(snap); if(playing && (!remote || remote.connected) && snap.players?.length){const ids=remote?.connected?remote.myIds:arena.myIds;if(ids.length && ids.every(id=>id && !snap.players.find(p=>p.id===id)?.cells?.length)){gameover();}} }
   if(now-hudAt<20) updateRestartClock(Date.now());
   requestAnimationFrame(gameLoop);
@@ -440,9 +451,8 @@ const S = {
   game:{
     Render:[
       {key:'showGrid',label:'Background grid',type:'toggle'},
-      {key:'showSectors',label:'Sector labels',type:'toggle'},
+      {key:'showSectors',label:'Atlas sectors',type:'toggle'},
       {key:'showBorders',label:'World border',type:'toggle'},
-      {key:'borderWidth',label:'Border width',type:'range',min:1,max:12,step:1},
     ],
     Cells:[
       {key:'showSkins',label:'Player skins',type:'toggle'},
@@ -458,7 +468,7 @@ const S = {
       {key:'foodSize',label:'Food size',type:'range',min:.5,max:2,step:.1},
     ],
     Camera:[
-      {key:'zoom',label:'Camera zoom',type:'range',min:.3,max:3.2,step:.1},
+      {key:'zoom',label:'Camera zoom',type:'range',min:ZOOM_MIN,max:ZOOM_MAX,step:.02},
       {key:'wheelZoom',label:'Mouse wheel zoom',type:'toggle'},
       {key:'wheelZoomSensitivity',label:'Wheel zoom sensitivity',type:'range',min:.4,max:2,step:.1},
       {key:'cameraSmoothing',label:'Camera smoothing',type:'range',min:.02,max:.6,step:.02},
@@ -500,15 +510,37 @@ const S = {
       {key:'activeCellBorderWidth',label:'Active cell border width',type:'range',min:0,max:100,step:1,wide:true,unit:'%',hint:'Normal coloring only. Multibox always uses flat cell colors.'},
     ],
     Border:[
-      {key:'gridColor',label:'Grid color',type:'color'},
+      {key:'showBorders',label:'World border',type:'toggle'},
+      {key:'borderStyle',label:'Edge style',type:'select',options:[['solid','Solid'],['prism','Prism flow']]},
+      {key:'prismSpeed',label:'Rainbow flow speed',type:'range',min:.2,max:3,step:.1,unit:'x'},
+      {key:'borderColor',label:'Border color',type:'color'},
+      {key:'borderWidth',label:'Border width',type:'range',min:1,max:24,step:1,unit:' px'},
+      {key:'borderGlow',label:'Edge glow',type:'toggle'},
+      {key:'borderGlowColor',label:'Glow color',type:'color'},
+      {key:'borderGlowDistance',label:'Glow spread',type:'range',min:0,max:100,step:1,unit:' px'},
+      {key:'borderGlowStrength',label:'Glow intensity',type:'range',min:0,max:100,step:1,unit:'%'},
+    ],
+    Sectors:[
+      {key:'showSectors',label:'Atlas sectors',type:'toggle'},
+      {key:'sectorScale',label:'Sector size',type:'range',min:50,max:250,step:5,unit:'%'},
+      {key:'sectorRainbow',label:'Rainbow sector grid',type:'toggle'},
+      {key:'prismSpeed',label:'Rainbow flow speed',type:'range',min:.2,max:3,step:.1,unit:'x'},
+      {key:'sectorGridColor',label:'Sector grid color',type:'color'},
+      {key:'sectorGridWidth',label:'Sector line width',type:'range',min:.5,max:12,step:.5,unit:' px'},
       {key:'sectorColor',label:'Sector label color',type:'color'},
-      {key:'borderWidth',label:'Border width',type:'range',min:1,max:12,step:1},
+      {key:'sectorLabelSize',label:'Coordinate size',type:'range',min:8,max:96,step:1,unit:' px'},
+      {key:'sectorLabelPosition',label:'Coordinate placement',type:'select',options:[['corner','Atlas corners'],['center','Sector centers']]},
     ],
     Background:[
+      {key:'showThemeArtwork',label:'Theme scene objects',type:'toggle'},
+      {key:'useDrawnBackground',label:'Use my drawing',type:'toggle'},
+      {key:'backgroundDesign',label:'Background Studio',type:'drawing',hint:'Draw a custom background with colors, shapes, stickers and symbols.'},
       {key:'bgColor',label:'Background color',type:'color'},
       {key:'backgroundImage',label:'Use background image',type:'toggle'},
       {key:'backgroundUrl',label:'Static background URL (inside server square)',type:'url'},
       {key:'worldLogoUrl',label:'Center logo URL (fit inside square)',type:'url'},
+      {key:'showGrid',label:'Background grid',type:'toggle'},
+      {key:'gridColor',label:'Background grid color',type:'color'},
     ],
     'Theme presets':[],
     'PUT UR THEME':[],
@@ -566,30 +598,111 @@ const S = {
   import:{'Import / Export':[]}
 };
 
-function showSettings(){ releaseInputs();isSettingsOpen=true; $('settings-overlay').classList.remove('hidden'); renderSettings(); }
-function hideSettings(){ isSettingsOpen=false; $('settings-overlay').classList.add('hidden'); }
+S.graphics={World:S.game.Render,Cells:S.game.Cells,Elements:S.game.Elements};
+S.chat={Display:S.game.Helpers.filter(item=>item.key==='showChat'),Messages:S.controls.Commands.filter(item=>item.type==='commands')};
+S.hud={Panels:S.game.Helpers.filter(item=>['showLeaderboard','showMinimap'].includes(item.key))};
+S.game={Camera:S.game.Camera,Respawn:S.game.Helpers.filter(item=>item.key==='autoRespawn')};
+
+function showSettings(){
+  releaseInputs();settingsTrigger=document.activeElement;settingsOpeningCopy=JSON.parse(JSON.stringify(settings));
+  themeDraft=null;scenePreview?.reset();
+  isSettingsOpen=true;$('settings-search').value='';$('settings-overlay').classList.remove('hidden');renderSettings();
+  $('settings-search').focus({preventScroll:true});
+}
+function hideSettings(){backgroundStudio?.close();isSettingsOpen=false;themeDraft=null;applySettings();$('settings-overlay').classList.add('hidden');settingsTrigger?.focus?.({preventScroll:true});}
+function openBackgroundStudio(){
+  const trigger=document.activeElement,overlay=$('settings-overlay');overlay.classList.add('studio-open');
+  backgroundStudio=mountBackgroundStudio(overlay,{
+    design:settings.backgroundDesign,draw:drawBackgroundDesign,normalize:normalizeBackgroundDesign,maxElements:BACKGROUND_MAX_ELEMENTS,maxPoints:BACKGROUND_MAX_POINTS,
+    onSave(design,use){
+      const previous={backgroundDesign:settings.backgroundDesign,useDrawnBackground:settings.useDrawnBackground};
+      settings.backgroundDesign=design;settings.useDrawnBackground=use||settings.useDrawnBackground;
+      if(!saveSettings()){Object.assign(settings,previous);applySettings();return false;}
+      renderSettings();toast(use?'Your drawing is now the arena background':'Background drawing saved');return true;
+    },
+    onClose(){backgroundStudio=null;overlay.classList.remove('studio-open');if(trigger?.isConnected)trigger.focus({preventScroll:true});else $('settings-search').focus({preventScroll:true});}
+  });
+}
+function settingValue(item,values=settings){
+  if(!item)return '—';const value=values[item.key];
+  if(item.type==='toggle')return value?'ON':'OFF';
+  if(item.key==='themePreset')return THEMES[value]?.label||String(value);
+  if(item.key==='customTheme')return value?'Custom':'None';
+  if(item.type==='drawing')return value?value.elements.length+' elements':'No drawing yet';
+  if(item.type==='select')return item.options?.find(([key])=>key===value)?.[1]||String(value);
+  if(item.key==='zoom')return Math.round(value*100)+'%';
+  if(item.key==='animation')return value+' ms';
+  if(['cellOpacity','activeCellIndicatorSize','activeCellBorderWidth','borderGlowStrength','sectorScale'].includes(item.key))return value+'%';
+  if(['borderWidth','borderGlowDistance','sectorGridWidth','sectorLabelSize'].includes(item.key))return value+' px';
+  if(['mouseSensitivity','wheelZoomSensitivity','prismSpeed'].includes(item.key))return Number(value).toFixed(1)+'x';
+  if(item.type==='commands')return '10 messages';
+  return value===''?'Not set':value==='NO KEY'?'Not assigned':String(value??'—');
+}
+function selectSetting(item){
+  selectedSetting=item;
+  document.querySelectorAll('#settings-content [data-setting]').forEach(row=>row.classList.toggle('is-selected',row.dataset.setting===item?.key));
+  refreshSettingsDetail();
+}
+function refreshSettingsDetail(){
+  const category=SETTINGS_CATEGORIES[settingsTab],item=selectedSetting;
+  $('settings-detail-category').textContent=item?.section||category.label;
+  $('settings-detail-title').textContent=item?.label||category.label;
+  const fallback=item?.type==='key'?'Click the binding and press a key. Release Shift, Ctrl or Alt to bind it alone, or add another key for a combination. Use Clear to remove it.':category.description;
+  $('settings-detail-description').textContent=item?(SETTING_HELP[item.key]||item.hint||fallback):category.description;
+  $('settings-detail-value').textContent=settingValue(item);$('settings-detail-default').textContent=settingValue(item,DEFAULT_SETTINGS);
+  $('settings-detail-note').textContent=isCustomThemeOpen()?'Live draft. Save & apply keeps colors and objects in the game and lobby. Back closes an unsaved draft.':'Changes apply immediately. Discard restores your setup from when this panel opened.';
+  const saveState=document.querySelector('.settings-save-state');if(saveState?.lastChild)saveState.lastChild.textContent=isCustomThemeOpen()?' LIVE DRAFT / SAVE TO KEEP':' SAVED ON THIS DEVICE';
+  const preview=$('settings-preview');
+  preview.style.setProperty('--preview-cell',settings.activeCellBorderColor);preview.style.setProperty('--preview-opacity',settings.cellOpacity/100);
+  preview.style.setProperty('--preview-food',settings.foodColor);preview.style.setProperty('--preview-grid',settings.showGrid?'.35':'.08');
+  preview.style.setProperty('--preview-scale',Math.max(.65,Math.min(1.35,Math.pow(settings.zoom,.15))));
+  preview.style.setProperty('--preview-border',settings.showBorders?settings.borderColor:'transparent');
+  preview.style.setProperty('--preview-border-width',Math.min(settings.borderWidth,8)+'px');
+  preview.style.setProperty('--preview-glow',settings.borderGlow?`0 0 ${settings.borderGlowDistance/2}px ${settings.borderGlowColor}`:'none');
+  preview.classList.add('show-atlas-preview');drawSettingsArtwork(performance.now());
+  preview.classList.toggle('hide-preview-names',!settings.showNames);preview.classList.toggle('hide-preview-mass',!settings.showMass);preview.classList.toggle('hide-preview-food',!settings.showFood);
+}
+function drawSettingsArtwork(now){
+  const preview=$('settings-preview');
+  if(!scenePreview)scenePreview=mountThemeScene(preview,{Renderer:ArenaRenderer,getSettings:currentVisualSettings,canEdit:isCustomThemeOpen,normalize:normalizeBackgroundDesign,maxElements:BACKGROUND_MAX_ELEMENTS,onArtworkChange(design){if(themeDraft){themeDraft.themeArtwork=design;themeDraft.showThemeArtwork=true;applySettings();}}});
+  scenePreview.draw(now);
+}
 
 function renderSettings(){
   if(!(settingsPage in S[settingsTab])) settingsPage = Object.keys(S[settingsTab])[0];
-  document.querySelectorAll('#settings-tabs button').forEach(b=>b.classList.toggle('active', b.dataset.tab===settingsTab));
+  applySettings();
+  document.querySelectorAll('#settings-tabs button').forEach(b=>{b.classList.toggle('active',b.dataset.tab===settingsTab);b.setAttribute('aria-pressed',String(b.dataset.tab===settingsTab));});
+  const query=$('settings-search').value.trim().toLowerCase();$('settings-reset-tab').disabled=!!query||settingsTab==='import';
   const nav = $('settings-nav'); nav.replaceChildren();
   for(const name of Object.keys(S[settingsTab])){
-    const b=document.createElement('button'); b.textContent=name; b.className=name===settingsPage?'active':''; b.onclick=()=>{ settingsPage=name; renderSettings(); }; nav.appendChild(b);
+    const b=document.createElement('button'); b.textContent=name==='PUT UR THEME'?'Scene Lab':name; b.className=name===settingsPage?'active':'';b.setAttribute('aria-pressed',String(name===settingsPage)); b.onclick=()=>{settingsPage=name;$('settings-search').value='';renderSettings();};nav.appendChild(b);
   }
   const area = $('settings-content'); area.replaceChildren();
   area.lang=settingsTab==='controls'?'en':'';area.dir='ltr';
-  if(settingsTab === 'import'){ renderImport(area); return; }
-  const heading=document.createElement('h3');heading.className='settings-section-title';heading.textContent=settingsPage.toUpperCase();area.append(heading);
+  if(query){
+    const seen=new Set(),matches=[];
+    for(const [tab,pages]of Object.entries(S))for(const [page,items]of Object.entries(pages))for(const item of items){
+      if(seen.has(item.key)||!`${item.label} ${item.hint||''} ${item.key}`.toLowerCase().includes(query))continue;
+      seen.add(item.key);matches.push({...item,section:SETTINGS_CATEGORIES[tab].label+' / '+page});
+    }
+    const title=document.createElement('h3');title.className='settings-section-title';title.textContent=matches.length+' RESULTS';area.append(title);
+    if(!matches.length){const empty=document.createElement('p');empty.className='hint';empty.textContent='No settings match. Try camera, grid, colors or split.';area.append(empty);}
+    for(const item of matches)renderSettingRow(area,item);
+    selectSetting(matches.find(item=>item.key===selectedSetting?.key)||matches[0]||null);return;
+  }
+  if(settingsTab === 'import'){selectedSetting=null;renderImport(area);refreshSettingsDetail();return;}
+  const heading=document.createElement('h3');heading.className='settings-section-title';heading.textContent=settingsPage==='PUT UR THEME'?'SCENE LAB':settingsPage.toUpperCase();area.append(heading);
   if(settingsTab==='controls'){
     const tools=document.createElement('div');tools.className='controls-toolbar';
-    const hint=document.createElement('p');hint.className='hint';hint.textContent='Physical English keys work with any keyboard layout. Click a binding to change it; Backspace clears it. Changes save immediately.';
+    const hint=document.createElement('p');hint.className='hint';hint.textContent='Any keyboard layout. Bind a key or combination; use Clear to unbind. Changes save immediately.';
     const reset=document.createElement('button');reset.type='button';reset.className='settings-action';reset.textContent='RESET CONTROLS';
     reset.onclick=()=>{settings=normalizeControlSettings({...settings,controlsVersion:0},true);releaseInputs();saveSettings();renderSettings();toast('Controls restored');};
     tools.append(hint,reset);area.append(tools);
   }
-  if(settingsTab==='theme' && settingsPage==='Theme presets'){renderThemePresets(area);return;}
-  if(settingsTab==='theme' && settingsPage==='PUT UR THEME'){renderCustomTheme(area);return;}
+  if(settingsTab==='theme' && settingsPage==='Theme presets'){renderThemePresets(area);selectSetting({key:'themePreset',label:'Theme preset',type:'select'});return;}
+  if(settingsTab==='theme' && settingsPage==='PUT UR THEME'){renderCustomTheme(area);selectSetting({key:'customTheme',label:'Live theme scene',type:'select'});return;}
   for(const item of S[settingsTab][settingsPage]) renderSettingRow(area,item);
+  selectSetting(S[settingsTab][settingsPage].find(item=>item.key===selectedSetting?.key)||S[settingsTab][settingsPage][0]||null);
 }
 
 function renderThemePresets(area){
@@ -601,52 +714,61 @@ function renderThemePresets(area){
     const desc=document.createElement('span');desc.textContent=t.description;
     const preview=document.createElement('div');preview.className='theme-preview';preview.innerHTML='<i></i><i></i><i></i>';
     card.append(preview,title,desc);card.onclick=()=>{
+      themeDraft=null;scenePreview?.reset();
       for(const key of ['accentColor','bgColor','gridColor']) settings[key]=t[key];
       settings.themePreset=id;settings.panelColor=t.panel;settings.textColor='#f5f9ff';saveSettings();renderSettings();
     };grid.append(card);
   }
   const custom=document.createElement('button');custom.type='button';custom.className='theme-card custom-theme-card';
-  const customTitle=document.createElement('strong');customTitle.textContent='PUT UR THEME';
+  const customTitle=document.createElement('strong');customTitle.textContent='SCENE LAB';
   const customDesc=document.createElement('span');customDesc.textContent='Create your own theme • Choose all colors, a background and a center logo • Save locally';
   const customPreview=document.createElement('div');customPreview.className='theme-preview';customPreview.innerHTML='<i></i><i></i><i></i>';
   custom.append(customPreview,customTitle,customDesc);custom.onclick=()=>{settingsPage='PUT UR THEME';renderSettings();};grid.append(custom);
   area.append(grid);
 }
 function renderCustomTheme(area){
-  const base=settings.customTheme||{};
-  const defaults={name:'My Vintage Theme',accentColor:settings.accentColor,panelColor:settings.panelColor,textColor:settings.textColor,
-    bgColor:settings.bgColor,gridColor:settings.gridColor,
-    foodColor:settings.foodColor,virusColor:settings.virusColor,backgroundUrl:settings.backgroundUrl,worldLogoUrl:settings.worldLogoUrl};
-  const draft={...defaults,...base};
-  const intro=document.createElement('p');intro.className='theme-intro';intro.textContent='Customize your entire game. Your theme is saved on this browser only and can be exported from Import / Export.';
+  if(!themeDraft)themeDraft={...settings,name:settings.customTheme?.name||'My Vintage Theme',themePreset:'custom',themeArtwork:normalizeBackgroundDesign(settings.themeArtwork)};
+  const draft=themeDraft;
+  const intro=document.createElement('p');intro.className='theme-intro';intro.textContent='Build your Vintage scene. Colors update the live stage immediately. Add objects beside the stage and drag them into place; save to show your design in the arena and lobby.';
   area.append(intro);
   function makeInput(title,key,type){
     const wrap=document.createElement('label');wrap.className='theme-field';
     const text=document.createElement('span');text.textContent=title;
     const inp=document.createElement('input');inp.type=type;inp.value=draft[key]|| (type==='color'?'#ffffff':'');
+    inp.setAttribute('aria-label','Theme '+title);
     if(type==='text')inp.maxLength=32;
     if(type==='url'){inp.placeholder='https://example.com/image.png';inp.maxLength=1200;}
-    inp.addEventListener('input',()=>{draft[key]=inp.value;});
+    inp.addEventListener('input',()=>{
+      if(type==='url'){
+        const value=cleanAssetUrl(inp.value);if(inp.value.trim()&&!value){inp.setAttribute('aria-invalid','true');return;}inp.removeAttribute('aria-invalid');draft[key]=value;draft.backgroundImage=true;
+      }else draft[key]=inp.value;
+      if(key==='gridColor')draft.showGrid=true;if(key==='foodColor')draft.rainbowFood=false;
+      applySettings();refreshSettingsDetail();
+    });
     wrap.append(text,inp);return wrap;
   }
   const title=document.createElement('div');title.className='theme-name-field';title.append(makeInput('YOUR THEME NAME','name','text'));area.append(title);
   const controls=document.createElement('div');controls.className='custom-colors';
   const fields=[['Accent','accentColor'],['Panel / HUD','panelColor'],['Interface text','textColor'],['Field background','bgColor'],
-    ['Grid','gridColor'],['Food','foodColor'],['Virus','virusColor']];
+    ['Grid','gridColor'],['Food','foodColor'],['Virus','virusColor'],['World border','borderColor'],['Sector lines','sectorGridColor'],['Sector labels','sectorColor']];
   for(const [name,key] of fields)controls.append(makeInput(name,key,'color'));
   area.append(controls);
   const assets=document.createElement('div');assets.className='theme-assets';assets.append(makeInput('BACKGROUND URL (fixed inside server square)','backgroundUrl','url'),makeInput('CENTER LOGO URL','worldLogoUrl','url'));area.append(assets);
+  const artworkLabel=document.createElement('label');artworkLabel.className='scene-show-artwork';const artworkSwitch=document.createElement('input');artworkSwitch.type='checkbox';artworkSwitch.checked=draft.showThemeArtwork;artworkSwitch.setAttribute('aria-label','Show scene objects');artworkSwitch.onchange=()=>{draft.showThemeArtwork=artworkSwitch.checked;applySettings();};artworkLabel.append(artworkSwitch,document.createTextNode('Show objects in the game and lobby'));area.append(artworkLabel);
   const actions=document.createElement('div');actions.className='custom-theme-actions';
   const save=document.createElement('button');save.type='button';save.className='settings-action blue';save.textContent='SAVE & APPLY THEME';
   save.onclick=()=>{
-    const preset={name:String(draft.name||'My Vintage Theme').trim().slice(0,32)||'My Vintage Theme',backgroundUrl:cleanAssetUrl(draft.backgroundUrl),worldLogoUrl:cleanAssetUrl(draft.worldLogoUrl)};
-    for(const [,key] of fields)preset[key]=cleanHex(draft[key],defaults[key]);
+    if(area.querySelector('[aria-invalid="true"]')){toast('Finish the image link or clear it before saving');return;}
+    const preset={name:String(draft.name||'My Vintage Theme').trim().slice(0,32)||'My Vintage Theme',backgroundUrl:cleanAssetUrl(draft.backgroundUrl),worldLogoUrl:cleanAssetUrl(draft.worldLogoUrl),artwork:normalizeBackgroundDesign(draft.themeArtwork)};
+    for(const [,key] of fields)preset[key]=cleanHex(draft[key],settings[key]);
     if(draft.backgroundUrl&&!preset.backgroundUrl||draft.worldLogoUrl&&!preset.worldLogoUrl){toast('Use a valid http(s) image URL');return;}
-    settings.customTheme=preset;settings.themePreset='custom';
+    const previous={...settings};settings.customTheme=preset;settings.themePreset='custom';
     for(const [,key] of fields)settings[key]=preset[key];
     settings.backgroundUrl=preset.backgroundUrl;settings.worldLogoUrl=preset.worldLogoUrl;
-    settings.backgroundImage=true;
-    saveSettings();toast('Theme saved: '+preset.name);renderSettings();
+    settings.backgroundImage=draft.backgroundImage;settings.showGrid=draft.showGrid;settings.rainbowFood=draft.rainbowFood;
+    settings.themeArtwork=preset.artwork;settings.showThemeArtwork=draft.showThemeArtwork;
+    if(!saveSettings()){settings=previous;applySettings();return;}
+    themeDraft=null;toast('Theme saved: '+preset.name);renderSettings();
   };
   actions.append(save);
   const reset=document.createElement('button');reset.type='button';reset.className='settings-action';reset.textContent='BACK TO PRESETS';
@@ -655,17 +777,24 @@ function renderCustomTheme(area){
 }
 function renderSettingRow(area,item){
   const row=document.createElement('div'); row.className='setting-row';
+  row.dataset.setting=item.key;row.addEventListener('pointerenter',()=>selectSetting(item));row.addEventListener('focusin',()=>selectSetting(item));
   const lab=document.createElement('div'); lab.className='setting-label'; lab.textContent=item.label;
   if(item.hint){const hint=document.createElement('small');hint.textContent=item.hint;lab.append(hint);}
   const box=document.createElement('div'); box.className='setting-control';
   if(item.type==='toggle'){
     row.classList.add('is-toggle');
     const labelWrap=document.createElement('label'); labelWrap.className='toggle-switch';
-    const field=document.createElement('input'); field.type='checkbox'; field.checked=!!settings[item.key]; field.onchange=()=>{ settings[item.key]=field.checked; status.textContent=field.checked?'ON':'OFF'; saveSettings(); };
+    const field=document.createElement('input'); field.type='checkbox'; field.checked=!!settings[item.key]; field.onchange=()=>{if(item.key==='useDrawnBackground'&&field.checked&&!settings.backgroundDesign){field.checked=false;openBackgroundStudio();return;}settings[item.key]=field.checked; status.textContent=field.checked?'ON':'OFF'; saveSettings(); };
     field.setAttribute('aria-label',item.label);
     const slider=document.createElement('span'); slider.className='toggle-slider';
     const status=document.createElement('span'); status.className='toggle-status'; status.textContent=field.checked?'ON':'OFF';
     labelWrap.append(field,slider,status); box.append(labelWrap);
+  } else if(item.type==='drawing'){
+    row.classList.add('background-design-row');
+    const info=document.createElement('p');info.textContent=settings.backgroundDesign?'Your editable canvas is saved on this device.':'Create a world with your own colors, drawing, shapes, stickers and text.';
+    const open=document.createElement('button');open.type='button';open.className='settings-action';open.textContent=settings.backgroundDesign?'EDIT DRAWING':'OPEN BACKGROUND STUDIO';open.onclick=openBackgroundStudio;
+    if(settings.backgroundDesign){const thumbnail=document.createElement('canvas');thumbnail.width=192;thumbnail.height=192;drawBackgroundDesign(thumbnail.getContext('2d'),settings.backgroundDesign,192);box.appendChild(thumbnail);}
+    box.append(info,open);
   } else if(item.type==='range'){
     const field=document.createElement('input'); field.type='range'; field.min=item.min; field.max=item.max; field.step=item.step; field.value=settings[item.key];
     const v=document.createElement('span'); v.className='setting-value'; v.textContent=settings[item.key];
@@ -673,9 +802,7 @@ function renderSettingRow(area,item){
     const animation=item.key==='animation';
     const updateRange=()=>{
       v.textContent=animation?settings.animation+' ms':field.value+(item.unit||'');
-      if(animation||item.wide){
-        field.style.setProperty('--range-progress',((Number(field.value)-item.min)/(item.max-item.min)*100)+'%');
-      }
+      field.style.setProperty('--range-progress',((Number(field.value)-item.min)/(item.max-item.min)*100)+'%');
       if(animation){
         field.setAttribute('aria-valuetext',settings.animation===0?'Instant':settings.animation+' milliseconds');
       }
@@ -705,16 +832,24 @@ function renderSettingRow(area,item){
   } else if(item.type==='url'){
     const field=document.createElement('input'); field.type='url'; field.value=settings[item.key]; field.placeholder='https://...'; field.onchange=()=>{ const val=cleanAssetUrl(field.value);if(field.value.trim()&&!val){toast('Use an http(s) image link');field.value=settings[item.key];return;}settings[item.key]=val;saveSettings(); }; box.append(field);
   } else if(item.type==='key'){
-    const field=document.createElement('input'); field.type='text'; field.className='keybind'; field.readOnly=true; field.value=settings[item.key]; field.title='Click, then press an English key';field.setAttribute('aria-label',item.label);field.lang='en';field.dir='ltr';
+    const field=document.createElement('input'); field.type='text'; field.className='keybind'; field.readOnly=true; field.value=settings[item.key]; field.title='Press any key or key combination. Use Clear to unbind.';field.setAttribute('aria-label',item.label);field.lang='en';field.dir='ltr';
+    let pendingModifier=null;
+    const bind=k=>{
+      if(k==='NO KEY')return;
+      for(const key of CONTROL_KEYS)if(key!==item.key&&settings[key]===k)settings[key]='NO KEY';
+      pendingModifier=null;settings[item.key]=k;field.value=k;field.blur();saveSettings();renderSettings();
+    };
     field.onfocus=()=>{ field.value='PRESS KEY...'; };
     field.onkeydown=e=>{
-      e.preventDefault();e.stopPropagation();const pressed=normalizeKey(e),k=['BACKSPACE','DELETE'].includes(pressed)?'NO KEY':pressed;
-      if(k==='NO KEY'&&!['BACKSPACE','DELETE'].includes(pressed))return;
-      if(k!=='NO KEY')for(const key of CONTROL_KEYS)if(key!==item.key&&settings[key]===k)settings[key]='NO KEY';
-      settings[item.key]=k;field.value=k;field.blur();saveSettings();renderSettings();
+      e.preventDefault();e.stopPropagation();const k=normalizeKey(e);
+      if(['SHIFT','CTRL','ALT','META','ALTGRAPH'].includes(k)){pendingModifier=k;field.value=k+'…';return;}
+      bind(k);
     };
-    field.onblur=()=>{ field.value=settings[item.key]; };
-    box.append(field);
+    field.onkeyup=e=>{e.preventDefault();e.stopPropagation();if(pendingModifier===normalizeKey(e))bind(pendingModifier);};
+    field.onblur=()=>{pendingModifier=null;field.value=settings[item.key];};
+    const clear=document.createElement('button');clear.type='button';clear.className='settings-action';clear.textContent='Clear';clear.setAttribute('aria-label','Clear '+item.label);
+    clear.onclick=()=>{settings[item.key]='NO KEY';saveSettings();renderSettings();};
+    box.append(field,clear);
   } else if(item.type==='coming'){
     const badge=document.createElement('span'); badge.className='coming-pill'; badge.textContent='COMING SOON'; box.append(badge);
   } else if(item.type==='commands'){
@@ -736,11 +871,11 @@ function renderImport(area){
   const text=document.createElement('textarea'); text.id='settings-json'; text.placeholder='Paste an exported JSON file here, or click Export to display the current configuration.';
   const actions=document.createElement('div'); actions.className='import-actions';
   const exp=document.createElement('button'); exp.className='settings-action pink'; exp.textContent='↓ EXPORT JSON'; exp.onclick=()=>{ const json=JSON.stringify(settings,null,2); text.value=json; const blob=new Blob([json],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a'); a.href=url; a.download='vintage-settings.json'; a.click(); URL.revokeObjectURL(url); toast('Settings exported'); };
-  const imp=document.createElement('button'); imp.className='settings-action blue'; imp.textContent='↑ IMPORT JSON'; imp.onclick=()=>{ try{ const data=JSON.parse(text.value); if(!data || typeof data!=='object' || Array.isArray(data)) throw Error('Invalid'); settings=valueSafe(data); saveSettings(); toast('Settings imported'); renderSettings(); }catch{ toast('Invalid settings JSON'); } };
-  const reset=document.createElement('button'); reset.className='settings-action red'; reset.textContent='↺ RESET DEFAULTS'; reset.onclick=()=>{ if(confirm('Reset all Vintage settings to defaults?')){ settings=cloneDefaults(); saveSettings(); renderSettings(); toast('Defaults restored'); } };
+  const imp=document.createElement('button'); imp.className='settings-action blue'; imp.textContent='↑ IMPORT JSON'; imp.onclick=()=>{ try{ const data=JSON.parse(text.value); if(!data || typeof data!=='object' || Array.isArray(data)) throw Error('Invalid'); settings=valueSafe(data);themeDraft=null;scenePreview?.reset(); saveSettings(); toast('Settings imported'); renderSettings(); }catch{ toast('Invalid settings JSON'); } };
+  const reset=document.createElement('button'); reset.className='settings-action red'; reset.textContent='↺ RESET DEFAULTS'; reset.onclick=()=>{ if(confirm('Reset all Vintage settings to defaults?')){ settings=cloneDefaults();themeDraft=null;scenePreview?.reset();saveSettings(); renderSettings(); toast('Defaults restored'); } };
   actions.append(exp,imp,reset);
   const fileWrap=document.createElement('label'); fileWrap.className='file-pick'; fileWrap.textContent='Choose JSON file';
-  const file=document.createElement('input'); file.type='file'; file.accept='.json,application/json'; file.onchange=async()=>{ const chosen=file.files?.[0]; if(chosen){ text.value=(await chosen.text()).slice(0,100000); fileWrap.dataset.filename=chosen.name; } }; fileWrap.append(file);
+  const file=document.createElement('input'); file.type='file'; file.accept='.json,application/json'; file.onchange=async()=>{const chosen=file.files?.[0];if(chosen){if(chosen.size>2000000){toast('Choose a settings file smaller than 2 MB');return;}text.value=await chosen.text();fileWrap.dataset.filename=chosen.name;}};fileWrap.append(file);
   area.append(h,p,actions,fileWrap,text);
 }
 
@@ -748,8 +883,20 @@ function normalizeKey(e){return physicalKey(e);}
 function isEditing(){ return ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable||isSettingsOpen; }
 
 window.addEventListener('keydown',e=>{
-  if(isSettingsOpen){ if(e.key==='Escape'){ hideSettings(); e.preventDefault(); } return; }
-  const k=normalizeKey(e);
+  if(isSettingsOpen){
+    if(e.key==='Escape'){hideSettings();e.preventDefault();}
+    else if(e.key==='Tab'){
+      const fields=[...$('settings-overlay').querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]')].filter(field=>field.offsetParent!==null);
+      const first=fields[0],last=fields.at(-1);
+      if(e.shiftKey&&document.activeElement===first){last?.focus();e.preventDefault();}
+      else if(!e.shiftKey&&document.activeElement===last){first?.focus();e.preventDefault();}
+    }
+    return;
+  }
+  let k=normalizeKey(e);
+  // Holding a separately bound Shift/Ctrl/etc. must not block ordinary feed keys.
+  const parts=k.split('+');
+  if(parts.length>1&&!CONTROL_KEYS.some(key=>settings[key]===k)&&parts.slice(0,-1).some(mod=>CONTROL_KEYS.some(key=>settings[key]===mod)))k=parts.at(-1);
   if(k==='NO KEY')return;
   if(document.activeElement === $('chat-input')){
     if(e.isComposing)return;
@@ -791,8 +938,8 @@ window.addEventListener('keydown',e=>{
 
 window.addEventListener('keyup',e=>{
   const k=normalizeKey(e);
-  if(k.split('+').at(-1)===settings.keyFeed.split('+').at(-1))feedHeld=false;
-  if(k.split('+').at(-1)===settings.keyMacroFeed.split('+').at(-1))macroFeedHeld=false;
+  if(settings.keyFeed.split('+').includes(k.split('+').at(-1)))feedHeld=false;
+  if(settings.keyMacroFeed.split('+').includes(k.split('+').at(-1)))macroFeedHeld=false;
 });
 function updateChatTabs(){ document.querySelectorAll('.chat-tab').forEach(b=>b.classList.toggle('active', b.dataset.channel===chatChannel)); renderChat(); }
 
@@ -849,15 +996,23 @@ $('lobby-settings-secondary').onclick=showSettings;
 $('v-login-trigger').onclick=()=>{const menu=$('auth-menu');const open=menu.classList.toggle('hidden')===false;$('v-login-trigger').setAttribute('aria-expanded',String(open));};
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.v-stage-account')){$('auth-menu')?.classList.add('hidden');$('v-login-trigger')?.setAttribute('aria-expanded','false');}});
 $('spectate-btn').onclick=beginSpectate;
-$('zoom-in').onclick=()=>adjustZoom(1.18);
-$('zoom-out').onclick=()=>adjustZoom(1/1.18);
-$('zoom-reset').onclick=()=>adjustZoom(1/Math.max(settings.zoom,.01));
 $('close-settings').onclick=hideSettings;
 $('settings-done').onclick=hideSettings;
+$('settings-search').addEventListener('input',renderSettings);
+$('settings-discard').onclick=()=>{
+  if(settingsOpeningCopy){settings=valueSafe(settingsOpeningCopy);releaseInputs();saveSettings();}
+  hideSettings();
+};
+$('settings-reset-tab').onclick=()=>{
+  const keys=new Set(Object.values(S[settingsTab]).flatMap(items=>items.map(item=>item.key)));
+  if(settingsTab==='theme'){keys.add('themePreset');keys.add('customTheme');keys.add('themeArtwork');themeDraft=null;scenePreview?.reset();}
+  for(const key of keys)if(key in DEFAULT_SETTINGS)settings[key]=JSON.parse(JSON.stringify(DEFAULT_SETTINGS[key]));
+  releaseInputs();saveSettings();renderSettings();
+};
 $('settings-overlay').addEventListener('click',e=>{ if(e.target===$('settings-overlay')) hideSettings(); });
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=(e)=>{ const btn=e.target.closest('[data-mode]'); if(!btn)return; if(playing) enterLobby(); if(btn.dataset.mode) updateMode(btn.dataset.mode); });
 document.querySelectorAll('.chat-tab').forEach(b=>b.onclick=()=>{ chatChannel=b.dataset.channel; updateChatTabs(); });
-document.querySelectorAll('#settings-tabs button').forEach(b=>b.onclick=()=>{ settingsTab=b.dataset.tab; settingsPage=Object.keys(S[settingsTab])[0]; renderSettings(); });
+document.querySelectorAll('#settings-tabs button').forEach(b=>b.onclick=()=>{settingsTab=b.dataset.tab;settingsPage=Object.keys(S[settingsTab])[0];$('settings-search').value='';renderSettings();});
 document.querySelectorAll('.soon-btn').forEach(btn=>btn.addEventListener('click',e=>{ const msg=btn.dataset.soon; if(msg){ e.preventDefault(); toast(msg); } }));
 document.querySelectorAll('.region-tab').forEach(btn=>btn.addEventListener('click',()=>{ if(btn.classList.contains('soon-btn')) return; document.querySelectorAll('.region-tab').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); }));
 $('nickname').addEventListener('input', updateProfileName);

@@ -1,0 +1,1847 @@
+{
+  "startedAt": "2026-10-22T20:54:07.926Z",
+  "browser": "Microsoft Edge / Playwright",
+  "console": [],
+  "pageErrors": [],
+  "httpErrors": [],
+  "requestFailures": [],
+  "websocketErrors": [],
+  "dialogs": [
+    {
+      "session": "demo",
+      "type": "confirm",
+      "message": "Switch server and leave your current match?",
+      "action": "accept"
+    },
+    {
+      "session": "demo",
+      "type": "confirm",
+      "message": "Switch server and leave your current match?",
+      "action": "accept"
+    },
+    {
+      "session": "websocket",
+      "type": "confirm",
+      "message": "Switch server and leave your current match?",
+      "action": "accept"
+    },
+    {
+      "session": "websocket",
+      "type": "confirm",
+      "message": "Switch server and leave your current match?",
+      "action": "accept"
+    }
+  ],
+  "actions": [],
+  "stages": [
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "requestedMs": 40000,
+      "actions": 57,
+      "elapsedMs": 40442
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "requestedMs": 10000,
+      "actions": 15,
+      "elapsedMs": 10612
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "requestedMs": 10000,
+      "actions": 15,
+      "elapsedMs": 10671
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "requestedMs": 40000,
+      "actions": 57,
+      "elapsedMs": 40479
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "requestedMs": 10000,
+      "actions": 15,
+      "elapsedMs": 10784
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "requestedMs": 10000,
+      "actions": 15,
+      "elapsedMs": 10649
+    }
+  ],
+  "samples": [
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 100,
+      "mass": "9,997",
+      "cells": "2 CELLS",
+      "fps": "2 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 682,
+      "mass": "9,963",
+      "cells": "3 CELLS",
+      "fps": "48 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 1611,
+      "mass": "9,876",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 2178,
+      "mass": "9,788",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 2996,
+      "mass": "9,761",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 3684,
+      "mass": "9,728",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 4420,
+      "mass": "9,678",
+      "cells": "5 CELLS",
+      "fps": "59 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 5119,
+      "mass": "9,629",
+      "cells": "5 CELLS",
+      "fps": "61 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 5699,
+      "mass": "9,596",
+      "cells": "5 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 6465,
+      "mass": "9,564",
+      "cells": "50 CELLS",
+      "fps": "59 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 7287,
+      "mass": "9,166",
+      "cells": "50 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 7866,
+      "mass": "8,918",
+      "cells": "112 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 9010,
+      "mass": "8,705",
+      "cells": "116 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 9583,
+      "mass": "8,534",
+      "cells": "91 CELLS",
+      "fps": "53 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 10505,
+      "mass": "8,482",
+      "cells": "73 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 11090,
+      "mass": "8,453",
+      "cells": "73 CELLS",
+      "fps": "47 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 11668,
+      "mass": "8,424",
+      "cells": "71 CELLS",
+      "fps": "47 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 12238,
+      "mass": "8,405",
+      "cells": "71 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 13153,
+      "mass": "8,355",
+      "cells": "65 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 13720,
+      "mass": "8,326",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 14539,
+      "mass": "8,284",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 15172,
+      "mass": "8,256",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 15893,
+      "mass": "8,214",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 16595,
+      "mass": "8,186",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 17172,
+      "mass": "8,158",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 17957,
+      "mass": "8,116",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 18776,
+      "mass": "8,075",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 19341,
+      "mass": "8,048",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 20343,
+      "mass": "8,007",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 20909,
+      "mass": "7,979",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 21792,
+      "mass": "7,937",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 22362,
+      "mass": "7,914",
+      "cells": "64 CELLS",
+      "fps": "47 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 22926,
+      "mass": "7,887",
+      "cells": "1 CELL",
+      "fps": "47 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 23496,
+      "mass": "7,861",
+      "cells": "2 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 24414,
+      "mass": "12,765",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 24980,
+      "mass": "12,667",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 25799,
+      "mass": "12,603",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 26486,
+      "mass": "12,539",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 27221,
+      "mass": "12,496",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 27921,
+      "mass": "12,432",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 28500,
+      "mass": "12,390",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 29284,
+      "mass": "12,327",
+      "cells": "4 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 30102,
+      "mass": "12,285",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 30667,
+      "mass": "12,240",
+      "cells": "2 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 31669,
+      "mass": "12,157",
+      "cells": "2 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 32253,
+      "mass": "12,115",
+      "cells": "2 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 33121,
+      "mass": "12,054",
+      "cells": "2 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 33688,
+      "mass": "12,019",
+      "cells": "2 CELLS",
+      "fps": "49 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 34276,
+      "mass": "11,978",
+      "cells": "16 CELLS",
+      "fps": "49 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 34877,
+      "mass": "11,937",
+      "cells": "32 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 35807,
+      "mass": "16,756",
+      "cells": "29 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 36374,
+      "mass": "16,681",
+      "cells": "22 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 37195,
+      "mass": "16,625",
+      "cells": "25 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 37914,
+      "mass": "16,557",
+      "cells": "20 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 38659,
+      "mass": "16,473",
+      "cells": "4 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 39364,
+      "mass": "16,434",
+      "cells": "4 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "MEGA",
+      "elapsedMs": 39942,
+      "mass": "16,378",
+      "cells": "4 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 61,
+      "mass": "16,266",
+      "cells": "64 CELLS",
+      "fps": "57 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 631,
+      "mass": "1,995",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 1547,
+      "mass": "1,961",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 2116,
+      "mass": "1,954",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 2932,
+      "mass": "1,948",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 3583,
+      "mass": "1,956",
+      "cells": "5 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 4303,
+      "mass": "1,950",
+      "cells": "5 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 4992,
+      "mass": "1,940",
+      "cells": "5 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 5567,
+      "mass": "1,933",
+      "cells": "5 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 6316,
+      "mass": "1,927",
+      "cells": "14 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 7137,
+      "mass": "1,743",
+      "cells": "14 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 7701,
+      "mass": "1,701",
+      "cells": "14 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 8703,
+      "mass": "1,671",
+      "cells": "14 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 9268,
+      "mass": "1,693",
+      "cells": "14 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "FFA",
+      "elapsedMs": 10111,
+      "mass": "1,685",
+      "cells": "14 CELLS",
+      "fps": "51 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 64,
+      "mass": "1,999",
+      "cells": "2 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 647,
+      "mass": "1,992",
+      "cells": "2 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 1564,
+      "mass": "1,682",
+      "cells": "2 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 2130,
+      "mass": "1,477",
+      "cells": "1 CELL",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 2951,
+      "mass": "1,470",
+      "cells": "4 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 3581,
+      "mass": "1,465",
+      "cells": "4 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 4301,
+      "mass": "1,473",
+      "cells": "4 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 4987,
+      "mass": "1,468",
+      "cells": "4 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 5549,
+      "mass": "1,463",
+      "cells": "4 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 6334,
+      "mass": "1,455",
+      "cells": "32 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 7158,
+      "mass": "586",
+      "cells": "13 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 7734,
+      "mass": "584",
+      "cells": "13 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 8737,
+      "mass": "581",
+      "cells": "13 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 9303,
+      "mass": "579",
+      "cells": "13 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "demo",
+      "mode": "DUAL",
+      "elapsedMs": 10169,
+      "mass": "594",
+      "cells": "13 CELLS",
+      "fps": "60 FPS",
+      "composer": false
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 81,
+      "mass": "1,996",
+      "cells": "2 CELLS",
+      "fps": "46 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 647,
+      "mass": "9,976",
+      "cells": "3 CELLS",
+      "fps": "46 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 1564,
+      "mass": "9,890",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 2132,
+      "mass": "9,853",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 2951,
+      "mass": "9,822",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 3605,
+      "mass": "9,800",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 4337,
+      "mass": "9,767",
+      "cells": "6 CELLS",
+      "fps": "59 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 5023,
+      "mass": "9,715",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 5601,
+      "mass": "9,683",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 6350,
+      "mass": "9,671",
+      "cells": "66 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 7170,
+      "mass": "9,631",
+      "cells": "66 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 7736,
+      "mass": "8,786",
+      "cells": "66 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 8788,
+      "mass": "8,665",
+      "cells": "66 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 9358,
+      "mass": "8,178",
+      "cells": "66 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 10293,
+      "mass": "8,139",
+      "cells": "63 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 10877,
+      "mass": "8,106",
+      "cells": "22 CELLS",
+      "fps": "47 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 11457,
+      "mass": "8,077",
+      "cells": "21 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 12022,
+      "mass": "8,035",
+      "cells": "37 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 12941,
+      "mass": "7,858",
+      "cells": "37 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 13507,
+      "mass": "7,816",
+      "cells": "37 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 14322,
+      "mass": "7,784",
+      "cells": "38 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 14978,
+      "mass": "7,752",
+      "cells": "38 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 15711,
+      "mass": "7,718",
+      "cells": "38 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 16401,
+      "mass": "7,701",
+      "cells": "38 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 16977,
+      "mass": "7,652",
+      "cells": "38 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 17760,
+      "mass": "7,620",
+      "cells": "38 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 18579,
+      "mass": "7,602",
+      "cells": "38 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 19144,
+      "mass": "7,551",
+      "cells": "35 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 20146,
+      "mass": "7,501",
+      "cells": "34 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 20712,
+      "mass": "7,472",
+      "cells": "32 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 21571,
+      "mass": "7,436",
+      "cells": "32 CELLS",
+      "fps": "49 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 22148,
+      "mass": "7,418",
+      "cells": "32 CELLS",
+      "fps": "49 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 22718,
+      "mass": "7,388",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 23301,
+      "mass": "7,352",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 24222,
+      "mass": "12,243",
+      "cells": "65 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 24803,
+      "mass": "12,163",
+      "cells": "64 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 25639,
+      "mass": "12,120",
+      "cells": "67 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 26437,
+      "mass": "12,064",
+      "cells": "67 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 27173,
+      "mass": "12,014",
+      "cells": "67 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 27886,
+      "mass": "11,983",
+      "cells": "67 CELLS",
+      "fps": "56 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 28454,
+      "mass": "11,910",
+      "cells": "67 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 29204,
+      "mass": "11,840",
+      "cells": "127 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 30025,
+      "mass": "11,833",
+      "cells": "127 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 30609,
+      "mass": "11,012",
+      "cells": "97 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 31659,
+      "mass": "10,581",
+      "cells": "103 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 32242,
+      "mass": "10,565",
+      "cells": "103 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 33231,
+      "mass": "10,480",
+      "cells": "103 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 33828,
+      "mass": "10,436",
+      "cells": "103 CELLS",
+      "fps": "45 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 34427,
+      "mass": "10,446",
+      "cells": "104 CELLS",
+      "fps": "45 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 34993,
+      "mass": "10,413",
+      "cells": "104 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 35911,
+      "mass": "10,198",
+      "cells": "86 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 36479,
+      "mass": "10,122",
+      "cells": "85 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 37310,
+      "mass": "10,074",
+      "cells": "85 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 37980,
+      "mass": "10,031",
+      "cells": "24 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 38715,
+      "mass": "9,996",
+      "cells": "24 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 39399,
+      "mass": "9,948",
+      "cells": "24 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "MEGA",
+      "elapsedMs": 39978,
+      "mass": "9,911",
+      "cells": "24 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 7200
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 72,
+      "mass": "9,846",
+      "cells": "24 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 655,
+      "mass": "2,056",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 1575,
+      "mass": "2,028",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 2156,
+      "mass": "1,949",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 2973,
+      "mass": "1,950",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 3642,
+      "mass": "1,952",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 4364,
+      "mass": "1,946",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 5065,
+      "mass": "1,935",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 5643,
+      "mass": "1,929",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 6425,
+      "mass": "1,918",
+      "cells": "18 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 7243,
+      "mass": "1,929",
+      "cells": "18 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 7810,
+      "mass": "1,610",
+      "cells": "18 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 8829,
+      "mass": "1,583",
+      "cells": "18 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 9393,
+      "mass": "1,634",
+      "cells": "18 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "FFA",
+      "elapsedMs": 10283,
+      "mass": "1,653",
+      "cells": "18 CELLS",
+      "fps": "49 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 74,
+      "mass": "1,645",
+      "cells": "18 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 641,
+      "mass": "1,995",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 1558,
+      "mass": "1,884",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 2139,
+      "mass": "1,478",
+      "cells": "3 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 2959,
+      "mass": "1,486",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 3591,
+      "mass": "1,482",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 4311,
+      "mass": "1,474",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 4995,
+      "mass": "1,467",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 5559,
+      "mass": "1,462",
+      "cells": "6 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 6343,
+      "mass": "1,458",
+      "cells": "10 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 7159,
+      "mass": "1,444",
+      "cells": "10 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 7727,
+      "mass": "1,442",
+      "cells": "10 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 8730,
+      "mass": "1,436",
+      "cells": "10 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 9295,
+      "mass": "1,432",
+      "cells": "9 CELLS",
+      "fps": "60 FPS",
+      "composer": false,
+      "worldSize": 4800
+    },
+    {
+      "session": "websocket",
+      "mode": "DUAL",
+      "elapsedMs": 10147,
+      "mass": "1,421",
+      "cells": "3 CELLS",
+      "fps": "51 FPS",
+      "composer": false,
+      "worldSize": 4800
+    }
+  ],
+  "driverErrors": [],
+  "activeGameplayMs": 123637,
+  "finishedAt": "2026-10-22T20:56:18.441Z",
+  "health": {
+    "status": "ok",
+    "uptime": 141,
+    "memoryMB": 88,
+    "rooms": {
+      "senpa-ffa": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "agar-ffa": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "vintage-ffa": {
+        "players": 0,
+        "bots": 9,
+        "spectators": 0,
+        "status": "online"
+      },
+      "senpa-dual": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "aster-domination": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "senpa-mega": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "aster-mega": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "arab-mega": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "venus-kota-mega": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "gota-mega": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "senpa-beta2": {
+        "players": 0,
+        "bots": 9,
+        "spectators": 0,
+        "status": "online"
+      },
+      "vintage-macro": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "og-vanilla": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "vintage-classic": {
+        "players": 0,
+        "bots": 9,
+        "spectators": 0,
+        "status": "online"
+      },
+      "na-classic": {
+        "players": 0,
+        "bots": 10,
+        "spectators": 0,
+        "status": "online"
+      },
+      "comp-ffa": {
+        "players": 0,
+        "bots": 0,
+        "spectators": 0,
+        "status": "online"
+      },
+      "comp-mega": {
+        "players": 0,
+        "bots": 0,
+        "spectators": 0,
+        "status": "online"
+      }
+    }
+  }
+}

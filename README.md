@@ -1,3 +1,17 @@
+# FFA update ? 23 October 2026
+
+See [FFA-2026-10-23.md](FFA-2026-10-23.md) for the current FFA-only tuning,
+22.5K automatic split, private tags, crystal reproduction, Vintage Atlas sectors,
+working border/glow controls, scalable animated sectors, Background Studio,
+live Scene Lab, the Vintage Control Room, validation and startup instructions.
+Tag-only voice is included; see [VOICE-SETUP.md](VOICE-SETUP.md) for controls and
+Internet HTTPS/WSS + TURN configuration.
+The latest bug fixes cover smooth virus launches/bursts, ordinary feed colors
+that stay fixed across Tab switches, eating your freshly respawned owned
+connection, and spawning that connection beside your nearby fragment.
+This supersedes earlier FFA feed/cap descriptions below. Mega and Dual keep
+the previous release profiles and await separate tuning.
+
 # Mega stability, input and chat — 22 October 2026
 
 See **MEGA-STABILITY-INPUT-CHAT.md** for the comparison of the two latest videos
@@ -180,4 +194,10 @@ Camera zoom preferences and other settings are stored in this browser's localSto
 node --test tests/*.test.cjs
 ```
 
-Automated tests cover isolated rooms, mass conservation, split direction, FPS-consistent launch motion, merging, eating, virus feeding/bursting, NPC counts, Mega multibox setup, and WebSocket spectator protocol handling (with a test double). **22 automated tests pass.** A full browser smoke-test was attempted but this sandbox blocks browser navigation to local test servers; browser interaction with v0.8 must still be verified after deploying it. Network integration with an externally hosted Node server was not tested in this environment; deploy the backend separately before claiming live multiplayer is verified.
+All **171 automated tests pass**. They cover isolated rooms, mass conservation,
+movement, merging/eating, virus reproduction and animation, multibox ownership,
+nearby spawning, stable feed colors, input, visibility, settings and voice.
+The browser scripts under `scripts/check-*-browser.py` exercise the actual
+local client and local WebSocket server. The latest regression evidence is
+`artifacts/ffa-2026-10-23/multi-virus-browser-check.json`. Public deployment and
+Internet TURN connectivity still need testing on the deployed hosts.

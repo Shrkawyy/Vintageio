@@ -4,6 +4,7 @@ const http=require('node:http');
 const {WebSocketServer,WebSocket}=require('ws');
 const core=require('./core.cjs');
 const {RestartCycle}=require('./restart.cjs');
+const {createVoiceHub,iceServersFromEnv}=require('./voice.cjs');
 const auth=require('./auth.cjs').createAuth();
 const fs=require('node:fs'),pathModule=require('node:path');
 const publicRoot=pathModule.resolve(__dirname,'../public');
@@ -20,6 +21,7 @@ const spectators=Object.fromEntries(Object.keys(rooms).map(id=>[id,new Set()]));
 const server=http.createServer(async (req,res)=>{
   try{if(await auth(req,res))return;}catch{res.writeHead(500);res.end('Request failed');return;}
   const path=new URL(req.url||'/',`http://${req.headers.host||'localhost'}`).pathname;
+  if(path==='/favicon.ico'){res.writeHead(302,{'Location':'/favicon.svg'});res.end();return;}
   if(path==='/health'||path==='/servers'){res.writeHead(200,{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'});const info=publicInfo();res.end(JSON.stringify(path==='/servers'?{categories:registry.categories,servers:info}:{status:'ok',uptime:Math.round(process.uptime()),memoryMB:Math.round(process.memoryUsage().rss/1048576),rooms:Object.fromEntries(info.map(r=>[r.id,{players:r.players,bots:r.bots,spectators:r.spectators,status:r.status}]))}));return;}
   const file=pathModule.resolve(publicRoot,'.'+(path==='/'?'/index.html':path));
   if(!file.startsWith(publicRoot+pathModule.sep)){res.writeHead(403);res.end();return;}
@@ -33,13 +35,14 @@ const maxPerIp=Number(process.env.MAX_CONN_PER_IP||8),trustProxy=process.env.TRU
 const ipCounts=new Map();
 const clientIp=req=>trustProxy&&req?.headers?.['x-forwarded-for']?String(req.headers['x-forwarded-for']).split(',')[0].trim():(req?.socket?.remoteAddress||'unknown');
 /** ALLOWED_ORIGINS (comma list) restricts which websites may connect; MAX_CONN_PER_IP caps sockets per address. */
-const wss=new WebSocketServer({server,maxPayload:4096,perMessageDeflate:false,verifyClient:({origin,req})=>{
+const wss=new WebSocketServer({server,maxPayload:16384,perMessageDeflate:false,verifyClient:({origin,req})=>{
   if(allowedOrigins.length&&!allowedOrigins.includes(origin))return false;
   return (ipCounts.get(clientIp(req))||0)<maxPerIp;
 }});
 function reply(ws,data){if(ws.readyState===WebSocket.OPEN){try{ws.send(JSON.stringify(data));}catch{}}}
+const voiceHub=createVoiceHub({send:reply,iceServers:iceServersFromEnv(process.env.VOICE_ICE_SERVERS_JSON)});
 wss.on('connection',(ws,req)=>{reply(ws,restartCycle.schedule());const ip=clientIp(req);ipCounts.set(ip,(ipCounts.get(ip)||0)+1);let current=null,watching=null;
-  const detach=()=>{if(current){current.room.players.delete(current.player.id);clients.delete(current.player.id);current=null;}if(watching){spectators[watching.id].delete(ws);watching=null;}};
+  const detach=()=>{voiceHub.leave(ws);if(current){current.room.players.delete(current.player.id);clients.delete(current.player.id);current=null;}if(watching){spectators[watching.id].delete(ws);watching=null;}};
   ws.on('message',data=>{let msg;try{msg=JSON.parse(data.toString());}catch{return;}if(!msg||typeof msg!=='object')return;
     if(msg.type==='spectate'){
       const rid=resolveRoom(msg);if(!rid){reply(ws,{type:'error',message:'Unknown server'});return;}
@@ -52,10 +55,13 @@ wss.on('connection',(ws,req)=>{reply(ws,restartCycle.schedule());const ip=client
       if(!rid){reply(ws,{type:'error',message:'Unknown server'});return;}
       const room=rooms[rid];
       if(room.crashed){reply(ws,{type:'error',message:'Server temporarily unavailable'});return;}
-      if(room.config&&[...room.players.values()].filter(p=>!p.npc).length>=room.config.maxPlayers){reply(ws,{type:'error',message:'Server full'});return;}const tag=core.cleanTag(msg.tag),name=core.cleanText(msg.name,18)||'Vintage Player';const player=core.join(room,name,tag,0);
+      if(room.config&&[...room.players.values()].filter(p=>!p.npc).length>=room.config.maxPlayers){reply(ws,{type:'error',message:'Server full'});return;}const tag=core.cleanTag(msg.tag),name=core.cleanText(msg.name,18)||'Vintage Player';
+      // Link ownership before choosing the second connection's spawn.
+      const player=core.join(room,name,tag,0,msg.multiKey);
       current={room,player};clients.set(player.id,ws);reply(ws,{type:'welcome',mode:room.mode,serverId:room.id,playerId:player.id,initialMass:room.initialMass,autoSplitMass:core.autoSplitMassFor(room.physics)});return;
     }
     if(msg.type==='ping'){reply(ws,{type:'pong',nonce:msg.nonce});return;}
+    if(voiceHub.handle(ws,current,msg))return;
     if(!current)return;
     const {room,player}=current;
     if(msg.type==='move'){core.point(room,player,Number(msg.x),Number(msg.y));return;}
@@ -75,7 +81,7 @@ wss.on('connection',(ws,req)=>{reply(ws,restartCycle.schedule());const ip=client
       const now=Date.now();if(player.lastChat>now-350)return;
       player.lastChat=now;const text=core.cleanText(msg.text,180),channel=msg.channel==='tag'?'tag':'all';if(!text)return;
       if(channel==='tag'&&!player.tag){reply(ws,{type:'error',message:'Set a team tag to use private Tag chat'});return;}
-      const packet={type:'chat',mode:room.mode,channel,playerId:player.id,name:player.name,tag:player.tag,text};
+      const packet={type:'chat',mode:room.mode,channel,playerId:player.id,name:player.name,teamId:core.publicTeamId(room,player.tag),text};
       for(const target of core.chatRecipients(room,player,channel))reply(clients.get(target.id),packet);return;
     }
   });
@@ -88,6 +94,7 @@ const restartWorker=setInterval(()=>{
     if(event.kind==='warning'){
       for(const ws of wss.clients)reply(ws,{type:'server_notice',message:`Server will restart in ${event.minutes} minutes`,minutes:event.minutes});
     }else if(event.kind==='restart'){
+      voiceHub.clear();
       for(const ws of wss.clients){reply(ws,{type:'server_restarted',message:'Server restarted • Match reset'});}
       for(const name of Object.keys(rooms)){
         // Keep each room object so existing WebSocket handlers cannot act on a stale room reference.
@@ -100,7 +107,17 @@ const restartWorker=setInterval(()=>{
     }
   }
 },1000);
-const updates=setInterval(()=>{for(const room of Object.values(rooms)){if(room.crashed)continue;const state=JSON.stringify(core.snapshot(room));for(const p of room.players.values()){if(p.npc)continue;const ws=clients.get(p.id);if(ws?.readyState===WebSocket.OPEN)try{ws.send(state);}catch{}}for(const ws of spectators[room.id]){if(ws.readyState===WebSocket.OPEN)try{ws.send(state);}catch{}}}},50);
+const updates=setInterval(()=>{
+  for(const room of Object.values(rooms)){
+    if(room.crashed)continue;
+    const state=core.snapshot(room);
+    for(const p of room.players.values()){
+      if(p.npc)continue;
+      const ws=clients.get(p.id);if(ws?.readyState===WebSocket.OPEN)reply(ws,core.viewSnapshot(room,p,state));
+    }
+    if(spectators[room.id].size){const wire=JSON.stringify(state);for(const ws of spectators[room.id])if(ws.readyState===WebSocket.OPEN)try{ws.send(wire);}catch{}}
+  }
+},50);
 server.listen(port,host,()=>console.log(`Vintage game server listening on http://${host}:${port}; servers: ${Object.keys(rooms).length}`));
-function shutDown(){clearInterval(tick);clearInterval(updates);clearInterval(restartWorker);wss.close();server.close(()=>process.exit(0));setTimeout(()=>process.exit(1),3000).unref();}
+function shutDown(){voiceHub.clear();clearInterval(tick);clearInterval(updates);clearInterval(restartWorker);wss.close();server.close(()=>process.exit(0));setTimeout(()=>process.exit(1),3000).unref();}
 process.on('SIGTERM',shutDown);process.on('SIGINT',shutDown);

@@ -1,9 +1,10 @@
 ﻿'use strict';
-const {makeVirus,stepViruses}=require('./virus.cjs');
-const {splitCell,splitCells,stepAutoSplit,findSplitHunt,moveCells,eatCells,absorbFood,autoSplitMassFor,findSafeSpawn,randomBotMass,maintainBots,decayMass,ejectMass,startSplitMacro,stepSplitMacro,physicsFor,mergeDelayFor,feedIntervalFor,findFoodRecipient,worldSizeFor}=require('./physics.cjs');
+const {makeVirus,stepViruses,VIRUS_MAX_COUNT}=require('./virus.cjs');
+const {splitCell,splitCells,findSplitHunt,moveCells,eatCells,absorbFood,autoSplitMassFor,findSafeSpawn,findPlayerSpawn,randomBotMass,maintainBots,decayMass,ejectMass,startSplitMacro,stepSplitMacro,physicsFor,mergeDelayFor,feedIntervalFor,findFoodRecipient,worldSizeFor,foodTargetFor,virusTargetFor,limitVisibility}=require('./physics.cjs');
 /** Authoritative, in-memory arena simulation. Three completely isolated rooms. */
 const MODES={ffa:{name:'FREE FOR ALL',initialMass:1000,bots:10},dual:{name:'DUAL',initialMass:1000,bots:10},mega:{name:'MEGA',initialMass:5000,bots:10}};
 const fs=require('node:fs'),pathMod=require('node:path');
+const {randomUUID}=require('node:crypto');
 const {PHYSICS_PRESETS}=require('./physics.cjs');
 /** Server registry: servers.config.json, validated at load so a typo can never start a broken room. */
 function loadRegistry(file=pathMod.join(__dirname,'servers.config.json')){
@@ -34,18 +35,26 @@ function createRoom(spec){
   if(!MODES[mode])throw Error('Unknown mode');
   const width=worldSizeFor(mode);
   const botCount=config?config.bots:MODES[mode].bots,initialMass=config?config.initialMass:MODES[mode].initialMass;
-  const room={worldSize:width,id:config?config.id:mode,mode,physics:config?config.physics:mode,config,initialMass,botCount,maxCells:config?.maxCells??MAX_CELLS,players:new Map(),cellIds:new WeakMap(),nextCellId:0,food:[],viruses:[],virusRespawns:[],time:0};
-  for(let i=0;i<8;i++)room.viruses.push(makeVirus(C.rand(120,width-120),C.rand(120,width-120)));
+  const room={worldSize:width,id:config?config.id:mode,mode,physics:config?config.physics:mode,config,initialMass,botCount,maxCells:Math.min(mode==='ffa'?16:MAX_CELLS,config?.maxCells??MAX_CELLS,physicsFor(config?config.physics:mode).maxCells??MAX_CELLS),players:new Map(),teamIds:new Map(),cellIds:new WeakMap(),nextCellId:0,food:[],viruses:[],virusRespawns:[],time:0};
+  for(let i=0;i<virusTargetFor(mode);i++)room.viruses.push(makeVirus(C.rand(120,width-120),C.rand(120,width-120)));
   for(let i=0;i<botCount;i++){
     const bot=makePlayer(mode,BOTS[i%BOTS.length],'',true,0,initialMass),point=findSafeSpawn([...room.players.values()],bot.cells[0].mass,width);
     if(point){Object.assign(bot.cells[0],point);bot.target={...point};}else{bot.cells=[];bot.respawnAt=0;}
     room.players.set(bot.id,bot);
   }
-  while(room.food.length<280){const point=newFood([...room.players.values()],width);if(!point)break;room.food.push(point);}
+  while(room.food.length<foodTargetFor(room.mode)){const point=newFood([...room.players.values()],width);if(!point)break;room.food.push(point);}
   return room;
 }
 function newFood(players=[],width=WIDTH){const mass=C.rand(8,23),point=findSafeSpawn(players,mass,width,8);return point?{...point,mass,color:COLORS[Math.floor(Math.random()*COLORS.length)]}:null;}
-function join(room,name,tag,slot=0){const p=makePlayer(room.mode,name,tag,false,slot,room.initialMass),point=findSafeSpawn([...room.players.values()],room.initialMass,room.worldSize,100,Math.random,{x:C.rand(room.worldSize/3,room.worldSize*2/3),y:C.rand(room.worldSize/3,room.worldSize*2/3)});if(point){Object.assign(p.cells[0],point);p.target={...point};}else p.cells=[];room.players.set(p.id,p);return p;}
+function join(room,name,tag,slot=0,multiKey=''){
+  const p=makePlayer(room.mode,name,tag,false,slot,room.initialMass);
+  if(typeof multiKey==='string'&&/^[a-f0-9]{32}$/.test(multiKey)&&[...room.players.values()].filter(other=>other.multiKey===multiKey).length<2)p.multiKey=multiKey;
+  const siblings=[...room.players.values()].filter(other=>p.multiKey&&other.multiKey===p.multiKey).flatMap(other=>other.cells);
+  const preferred=siblings.length?{x:siblings[0].x+1,y:siblings[0].y}:{x:C.rand(room.worldSize/3,room.worldSize*2/3),y:C.rand(room.worldSize/3,room.worldSize*2/3)};
+  const point=findPlayerSpawn([...room.players.values()],p,room.initialMass,room.worldSize,siblings.length?24:100,Math.random,preferred);
+  if(point){Object.assign(p.cells[0],point);p.target={...point};}else p.cells=[];
+  room.players.set(p.id,p);return p;
+}
 function point(room,p,x,y){if(Number.isFinite(x)&&Number.isFinite(y)){p.target.x=C.clamp(x,0,room.worldSize);p.target.y=C.clamp(y,0,room.worldSize);}}
 function stopMove(room,p,stopped){if(!p||typeof stopped!=='boolean')return false;p.movementStopped=stopped;return true;}
 function respawn(room,p,x,y){
@@ -53,7 +62,7 @@ function respawn(room,p,x,y){
   const mass=room.initialMass,r=C.radius(mass);
   const px=C.clamp(Number.isFinite(x)?x:room.worldSize/2,r,room.worldSize-r);
   const py=C.clamp(Number.isFinite(y)?y:room.worldSize/2,r,room.worldSize-r);
-  const point=findSafeSpawn([...room.players.values()].filter(other=>other!==p),mass,room.worldSize,24,Math.random,{x:px,y:py});
+  const point=findPlayerSpawn([...room.players.values()],p,mass,room.worldSize,24,Math.random,{x:px,y:py});
   if(!point)return false;
   p.cells=[cell(point.x,point.y,mass,p.color)];p.target={...point};
   p.lastRespawnAt=room.time;p.spawnShieldUntil=room.time+1.5;p.pendingSplits=[];
@@ -66,6 +75,7 @@ function trySplit(room,p,count=1){const t=room.time,last=p.splitRefillAt??t;p.sp
 function feed(room,p){return ejectMass(p,room.food,room.time,room.worldSize,room.physics);}
 function step(room,dt=1/30){
   dt=Math.min(.08,Math.max(0,dt));room.time+=dt;
+  const rules=physicsFor(room.physics),threshold=autoSplitMassFor(room.physics);
   for(const p of room.players.values()){
     if(!p.cells.length)continue;
     stepSplitMacro(p,room.time,room.worldSize,room.maxCells,room.physics);
@@ -101,13 +111,13 @@ function step(room,dt=1/30){
       }
     }
     moveCells(p,dt,room.time,room.worldSize,room.physics,p.npc?.73:1);
-    stepAutoSplit(p,room.time,room.worldSize,room.maxCells,room.physics);
+    if(!rules.autoSplitAfterEating)splitCells(p,room.time,room.worldSize,room.maxCells,room.physics,threshold);
   }
   // Check pending virus respawns
   for (let i = room.virusRespawns.length - 1; i >= 0; i--) {
     const resp = room.virusRespawns[i];
     if (room.time >= resp.time) {
-      for (let k = 0; k < resp.count && room.viruses.length < 32; k++) {
+      for (let k = 0; k < resp.count && room.viruses.length < VIRUS_MAX_COUNT; k++) {
         room.viruses.push(makeVirus(C.rand(120, room.worldSize - 120), C.rand(120, room.worldSize - 120)));
       }
       room.virusRespawns.splice(i, 1);
@@ -121,16 +131,31 @@ function step(room,dt=1/30){
   const all=[...room.players.values()];
   absorbFood(all,room.food,room.physics,room.time);
   eatCells(all,room.physics,room.time);
+  // Gains from food and other cells must trigger before proportional decay.
+  if(rules.autoSplitAfterEating)for(const p of all)splitCells(p,room.time,room.worldSize,room.maxCells,room.physics,threshold);
   decayMass(all,dt,room.physics);maintainBots(all,room.time,room.worldSize);
-  if(room.time>=(room.nextFoodSpawnAt||0))while(room.food.length<280){const point=newFood(all,room.worldSize);if(!point){room.nextFoodSpawnAt=room.time+1;break;}room.food.push(point);}
+  if(room.time>=(room.nextFoodSpawnAt||0))while(room.food.length<foodTargetFor(room.mode)){const point=newFood(all,room.worldSize);if(!point){room.nextFoodSpawnAt=room.time+1;break;}room.food.push(point);}
 }
 function cellSnapshot(room,c){
   let id=room.cellIds.get(c);
   if(!id){id=String(++room.nextCellId);room.cellIds.set(c,id);}
-  return{id,x:Math.round(c.x),y:Math.round(c.y),mass:Math.round(c.mass),color:c.color};
+  return{id,x:Math.round(c.x*100)/100,y:Math.round(c.y*100)/100,mass:Math.round(c.mass),color:c.color,...(Number.isFinite(c.originX)&&Number.isFinite(c.originY)?{originX:c.originX,originY:c.originY}:{})};
 }
-function snapshot(room){return {type:'state',mode:room.mode,autoSplitMass:autoSplitMassFor(room.physics),worldSize:room.worldSize,players:[...room.players.values()].map(p=>({id:p.id,name:p.name,tag:p.tag,color:p.color,npc:p.npc,movementStopped:!!p.movementStopped,cells:p.cells.map(c=>cellSnapshot(room,c))})),food:room.food,viruses:room.viruses};}
+// Opaque group ids preserve ally matching without distributing the private join tag.
+// Rebuild from current players to avoid retaining tags after the last member leaves.
+function publicTeamIds(room){
+  const previous=room.teamIds||new Map(),current=new Map();
+  for(const p of room.players.values())if(p.tag&&!current.has(p.tag))current.set(p.tag,previous.get(p.tag)||randomUUID());
+  room.teamIds=current;return current;
+}
+function publicTeamId(room,tag){return publicTeamIds(room).get(tag)||'';}
+function snapshot(room){const teams=publicTeamIds(room);return {type:'state',mode:room.mode,maxCells:room.maxCells,playerCount:[...room.players.values()].filter(p=>!p.npc).length,autoSplitMass:autoSplitMassFor(room.physics),worldSize:room.worldSize,players:[...room.players.values()].map(p=>({id:p.id,name:p.name,teamId:teams.get(p.tag)||'',color:p.color,npc:p.npc,movementStopped:!!p.movementStopped,cells:p.cells.map(c=>cellSnapshot(room,c))})),food:room.food,viruses:room.viruses};}
+function viewSnapshot(room,viewer,state=snapshot(room)){
+  const owned=[...room.players.values()].filter(p=>p===viewer||(viewer.multiKey&&p.multiKey===viewer.multiKey)).map(p=>p.id);
+  return limitVisibility(state,owned);
+}
 function cleanText(t,max=180){return String(t||'').replace(/[<>\u0000-\u001f\u007f]/g,'').trim().slice(0,max);}
 function cleanTag(t){return cleanText(String(t||'').normalize('NFKC'),8).toUpperCase();}
 function chatRecipients(room,p,channel){return [...room.players.values()].filter(x=>!x.npc&&(channel==='all'||(p.tag&&x.tag===p.tag)));}
-module.exports={loadRegistry,MODES,WIDTH,MAX_CELLS,AUTO_SPLIT_MASS,autoSplitMassFor,feedIntervalFor,createRoom,join,respawn,point,stopMove,split,trySplit,feed,step,snapshot,cleanText,cleanTag,chatRecipients};
+module.exports={loadRegistry,MODES,WIDTH,MAX_CELLS,AUTO_SPLIT_MASS,autoSplitMassFor,feedIntervalFor,createRoom,join,respawn,point,stopMove,split,trySplit,feed,step,snapshot,cleanText,cleanTag,chatRecipients,publicTeamId,viewSnapshot};
+

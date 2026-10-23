@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -6,7 +6,8 @@
   <meta name="theme-color" content="#10131b" />
   <meta name="description" content="Vintage — FFA, Dual and Mega cell game." />
   <title>VINTAGE.IO</title>
-  <link rel="stylesheet" href="/styles.css?v=25-world-ui" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/styles.css?v=31-tag-voice" />
 </head>
 <body class="show-lobby">
   <canvas id="arena" aria-label="Vintage game field"></canvas>
@@ -22,28 +23,13 @@
     </div>
   </header>
 
-  <section id="leaderboard" class="hud-panel leader">
-    <div class="hud-heading"><span id="allies-heading">SOLO PLAYERS</span><small id="player-count">0 VISIBLE</small></div>
-    <div id="board-entries"></div>
-  </section>
-
-  <section id="score-box" class="hud-panel status-card">
-    <div class="status-label">YOUR TOTAL MASS</div>
-    <div class="score-line"><strong id="mass-label">1,000</strong><span id="cell-label">1 CELL</span></div>
-    <div class="mini-progress"><span id="mass-progress"></span></div>
-    <div class="status-details"><span id="mode-label">FFA MODE</span><span id="fps-label">60 FPS</span></div>
-  </section>
-
-  <div id="live-stats" class="live-stats" aria-label="Live game statistics">
-    <div><small>FPS</small><strong id="stat-fps">—</strong></div>
-    <div><small>PING</small><strong id="stat-ping">LOCAL</strong></div>
-    <div><small>SCORE</small><strong id="stat-score">0</strong></div>
-    <div><small>MASS</small><strong id="stat-mass">0</strong></div>
-    <div><small>CELLS</small><strong id="stat-cells">0</strong></div>
-    <div><small>ONLINE</small><strong id="stat-online">0</strong></div>
+  <div id="own-connections" aria-label="Your connections"></div>
+  <aside id="tag-voice" class="tag-voice" hidden></aside>
+  <section id="leaderboard" aria-label="Leaderboard"><div id="board-entries"></div></section>
+  <div id="minimap" aria-label="Player map">
+    <div id="live-stats" aria-label="Connection statistics">FPS: <span id="stat-fps">?</span> | PING: <span id="stat-ping">?</span></div>
+    <canvas id="minimap-canvas" width="240" height="240"></canvas>
   </div>
-
-  <div id="minimap" class="hud-panel minimap"><div class="map-head"><strong>GRID MAP</strong><small id="map-sector">—</small></div><canvas id="minimap-canvas" width="240" height="240"></canvas><div class="map-foot"><span id="map-team">NO TAG</span><span>A1–E5 · LIVE</span></div></div>
   <div id="restart-status" class="restart-clock hidden"><span id="restart-label">SERVER RESTART</span><strong id="restart-countdown">03:00:00</strong></div>
   <div id="server-announcement" class="server-announcement hidden" role="status" aria-live="polite"></div>
   <div id="toast-area" aria-live="polite"></div>
@@ -84,33 +70,43 @@
     </div>
     <section class="v-launch-panel" aria-label="Start playing">
       <div class="v-launch-top"><div><span class="v-launch-kicker" id="world-status">CURRENT WORLD · LOCAL DEMO</span><h1 id="lobby-mode-name">FREE FOR ALL</h1><small id="lobby-mode-mass">STARTS AT 1,000 MASS</small></div><button type="button" class="v-launch-settings" id="lobby-settings-secondary" aria-label="Open settings" title="Settings">⚙</button></div>
-      <button id="server-picker-btn" class="server-picker-btn">SELECT SERVER <span>EU · FFA ▾</span></button><div class="v-launch-fields"><label><span>PLAYER NAME</span><input id="nickname" autocomplete="nickname" maxlength="18" value="Vintage Player" placeholder="Nickname" /></label><label><span>TAG</span><input id="team-tag" maxlength="8" placeholder="Tag" /></label></div>
+      <button id="server-picker-btn" class="server-picker-btn">SELECT SERVER <span>EU · FFA ▾</span></button><div class="v-launch-fields"><label><span>PLAYER NAME</span><input id="nickname" autocomplete="nickname" maxlength="18" value="Vintage Player" placeholder="Nickname" /></label><label><span>TAG</span><input id="team-tag" type="password" autocomplete="off" maxlength="8" placeholder="Private tag" aria-label="Private team tag" /></label></div>
       <div class="v-launch-actions"><button id="play-btn" class="v-play-button"><span>▶</span> PLAY NOW <span>↗</span></button><button id="spectate-btn" class="v-spectate-button">◉ SPECTATE</button></div>
       <div class="v-launch-foot"><span id="world-detail">10 AI PLAYERS</span><span id="multibox-status">MULTI ENABLED</span></div>
     </section>
     <div class="v-stage-bottom-note"><span>VINTAGE.IO ORIGINAL EXPERIENCE</span><span>FFA / DUAL / MEGA <b>•</b> INDEPENDENT WORLDS</span></div>
   </main>
 
-  <div id="zoom-panel" class="zoom-panel hidden" aria-label="Camera zoom controls"><button id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-value">100%</span><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-reset" aria-label="Reset zoom" title="Reset zoom">⟲</button></div>
   <section id="gameover" class="gameover hidden"><div class="gameover-card"><small>THE MATCH NEVER SLEEPS</small><h2>YOU WERE EATEN</h2><p id="death-score"></p><button id="respawn-btn" class="main-btn play-blue">Respawn</button><button id="back-to-lobby" class="link-button">BACK TO LOBBY</button></div></section>
 
   <div id="settings-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Game settings">
     <div class="settings-shell">
       <div class="settings-header">
-        <div class="settings-brand-wrap">
-          <div class="settings-brand"><img class="vintage-logo" src="/assets/vintage-logo.png" alt="VINTAGE"><small>SETTINGS</small></div>
+        <div class="settings-identity">
+          <div class="settings-kicker"><img src="/assets/vintage-logo.png" alt="Vintage"><span>VINTAGE / PERSONAL SETUP</span></div>
+          <h1>Control Room<span> / V</span></h1><p>Craft your scene. Set your pace.</p>
         </div>
+        <label class="settings-searchbox"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input id="settings-search" type="search" placeholder="Search settings…" aria-label="Search settings" autocomplete="off"></label>
         <button id="close-settings" class="icon-btn settings-close" aria-label="Close settings">✕</button>
       </div>
-      <div id="settings-tabs" class="settings-tabs"><button data-tab="game" class="active">Game</button><button data-tab="theme">Theme</button><button data-tab="controls">Controls</button><button data-tab="import">Import/Export</button></div>
-      <div class="settings-body"><nav id="settings-nav" class="settings-nav"></nav><div id="settings-content" class="settings-content"></div></div>
-      <div class="settings-foot"><span>VINTAGE.IO SETTINGS • SAVED LOCALLY</span><button id="settings-done">DONE ✓</button></div>
+      <div id="settings-tabs" class="settings-tabs" aria-label="Settings categories"><button data-tab="game" class="active">Gameplay</button><button data-tab="graphics">Graphics</button><button data-tab="theme">Theme</button><button data-tab="controls">Controls</button><button data-tab="chat">Chat</button><button data-tab="hud">HUD</button><button data-tab="import">Import / Export</button></div>
+      <div class="settings-body">
+        <div class="settings-list"><nav id="settings-nav" class="settings-nav" aria-label="Settings sections"></nav><div id="settings-content" class="settings-content"></div></div>
+        <aside class="settings-detail" aria-label="Selected setting details">
+          <span id="settings-detail-category" class="settings-detail-kicker">YOUR PLAYSTYLE</span>
+          <div id="settings-preview" class="settings-preview" aria-hidden="true"><div class="preview-grid"></div><div class="preview-orb preview-orb-other"></div><div class="preview-orb preview-orb-main"><span class="preview-name">Vintage</span><span class="preview-mass">22.5k</span></div><i class="preview-food"></i><i class="preview-food"></i><i class="preview-food"></i><span class="preview-caption">LIVE PREVIEW</span></div>
+          <h2 id="settings-detail-title">Camera</h2><p id="settings-detail-description">Choose a setting to explore your setup.</p>
+          <div class="settings-detail-values"><div><span>CURRENT</span><strong id="settings-detail-value">—</strong></div><div><span>DEFAULT</span><strong id="settings-detail-default">—</strong></div></div>
+          <small id="settings-detail-note" class="settings-detail-note">Changes apply immediately. Discard restores your setup from when this panel opened.</small>
+        </aside>
+      </div>
+      <div class="settings-foot"><div class="settings-footer-actions"><button id="settings-done"><span>←</span> Back <kbd>ESC</kbd></button><button id="settings-discard">Discard changes</button><button id="settings-reset-tab">Reset tab</button></div><span class="settings-save-state"><i></i> SAVED ON THIS DEVICE</span></div>
     </div>
   </div>
 
   <div id="servers-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Select server"><section class="server-dialog"><header><div><small>FIND YOUR WORLD</small><h2>VINTAGE SERVERS</h2></div><button id="close-servers" class="icon-btn" aria-label="Close servers">✕</button></header><nav id="server-regions"><button data-region="EU" class="active">EU</button><button data-region="NA">NA</button><button data-region="ASIA">ASIA</button></nav><div id="server-list"></div><p class="hint">Changing servers starts a new match. Your current match keeps running while menus are open.</p></section></div>
   <script src="/config.js"></script>
-  <script type="module" src="/client.js?v=25-world-ui"></script>
+  <script type="module" src="/client.js?v=35-multi-virus"></script>
 </body>
 </html>
 

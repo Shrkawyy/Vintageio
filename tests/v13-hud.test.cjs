@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const {RestartCycle,INTERVAL}=require('../server/restart.cjs');
@@ -6,14 +6,14 @@ async function game(){
  const base=path.resolve(__dirname,'../public');
  const encode=p=>'data:text/javascript;charset=utf-8,'+encodeURIComponent(fs.readFileSync(path.join(base,p),'utf8'));
  let src=fs.readFileSync(path.join(base,'game.js'),'utf8');
- src=src.replace("'./virus-rules.js?v=3-full-burst'",JSON.stringify(encode('virus-rules.js'))) .replace("'./physics.js?v=11-world-ui'",JSON.stringify(encode('physics.js')));
+ src=src.replace("'./virus-rules.js?v=5-smooth-launch'",JSON.stringify(encode('virus-rules.js'))) .replace("'./physics.js?v=16-multi-fixes'",JSON.stringify(encode('physics.js')));
  return import('data:text/javascript;charset=utf-8,'+encodeURIComponent(src));
 }
 test('sector boundaries A1 through E5',async()=>{
  const {sectorAt,WORLD_SIZE}=await game();
- assert.equal(sectorAt(0,0),'A1');assert.equal(sectorAt(1050,2000),'B3');
+ assert.equal(sectorAt(0,0),'A1');assert.equal(sectorAt(WORLD_SIZE*.22,WORLD_SIZE*.42),'B3');
  assert.equal(sectorAt(WORLD_SIZE,WORLD_SIZE),'E5');
- assert.equal(sectorAt(-1,9000),'A5');
+ assert.equal(sectorAt(-1,WORLD_SIZE*2),'A5');
 });
 test('tag peers are mutually visible, no-tag peers do not see tagged players',async()=>{
  const {getVisibleAllies}=await game();

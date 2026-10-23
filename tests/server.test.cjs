@@ -14,8 +14,8 @@ test('split follows cursor and retains mass',()=>{
  assert.equal(p.cells.reduce((n,c)=>n+c.mass,0),initial);
   assert.ok(p.cells[1].vx>0,'daughter launches toward the cursor from its overlapping spawn');
 });
-test('FFA automatic split begins at 25,500 mass and respects cell cap',()=>{
- const r=core.createRoom('ffa'),p=core.join(r,'Alpha','A');p.cells[0].mass=25500;
+test('FFA automatic split begins at 22,500 mass and respects cell cap',()=>{
+ const r=core.createRoom('ffa'),p=core.join(r,'Alpha','A');p.cells[0].mass=22500;
  r.players=new Map([[p.id,p]]);r.food=[];r.viruses=[];
  core.step(r,0.01);assert.ok(p.cells.length>=2);assert.ok(p.cells.length<=core.MAX_CELLS);
 });

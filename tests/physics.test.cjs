@@ -35,10 +35,10 @@ test('cells do not merge during cooldown but can really merge after cooldown',()
   assert.ok(near(p.cells[0].mass,2000));
 });
 
-test('split 16 / 32 / 64 respects cell cap and available mass',()=>{
+test('FFA split macros stop at the configured cap of 16 cells and conserve mass',()=>{
   const p=fixture(65536,4000);
   for(let n=0;n<6;n++)physics.splitCells(p,n*.02,4800,64,'ffa');
-  assert.equal(p.cells.length,64);
+  assert.equal(p.cells.length,16);
   assert.ok(near(p.cells.reduce((sum,c)=>sum+c.mass,0),65536));
   assert.equal(physics.splitCells(p,.13,4800,64,'ffa'),0);
 });

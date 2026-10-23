@@ -1,174 +1,112 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07131f">
-  <meta name="description" content="Vintage Arena local game preview">
-  <link rel="icon" href="data:,">
-  <title>VINTAGE.IO — Local Game</title>
-  <link rel="stylesheet" href="./styles.css?v=25-world-ui">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#10131b" />
+  <meta name="description" content="Vintage — FFA, Dual and Mega cell game." />
+  <title>VINTAGE.IO</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/styles.css?v=31-tag-voice" />
 </head>
 <body class="show-lobby">
-  <canvas id="arena" aria-label="Game arena"></canvas>
-  <div id="noise" aria-hidden="true"></div>
+  <canvas id="arena" aria-label="Vintage game field"></canvas>
+  <div id="noise"></div>
 
   <header class="topbar">
-    <div class="brand"><span class="brand-glyph">V</span><span>VINTAGE<small>ARENA</small></span></div>
-    <div id="top-mode" class="mode-pill">FFA · EU</div>
+    <div class="brand" aria-label="Vintage"><img class="vintage-logo" src="/assets/vintage-logo.png" alt="VINTAGE"></div>
+    <div id="top-mode" class="mode-pill">FFA · EUROPE</div>
     <div class="top-actions">
-      <div id="connection-status" class="connection-pill"><i></i> LOCAL DEMO</div>
-      <button id="server-picker-btn" class="icon-btn" type="button" title="Choose world"><span>EU · FFA ▾</span></button>
-      <button id="settings-btn" class="icon-btn" type="button" title="Settings">⚙</button>
-      <button id="menu-btn" class="icon-btn" type="button" title="Return to lobby">☰</button>
-      <div class="v-stage-account">
-        <button id="v-login-trigger" class="icon-btn" type="button" aria-expanded="false" aria-controls="auth-menu">👤</button>
-        <div id="auth-menu" class="auth-menu hidden">
-          <span id="account-name">LOCAL PLAYER</span>
-          <span id="auth-status">Local demo</span>
-          <button id="logout-btn" type="button">LOG OUT</button>
-        </div>
-      </div>
+      <span id="connection-status" class="connection-pill"><i></i> DEMO MODE</span>
+      <button id="menu-btn" class="icon-btn" title="Lobby" aria-label="Lobby">⌂</button>
+      <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings">⚙</button>
     </div>
   </header>
 
-  <section id="status-card" class="status-card hud-panel">
-    <div class="status-label">YOUR MASS</div>
-    <div class="score-line"><strong id="mass-label">0</strong><span id="cell-label">0 CELLS</span></div>
-    <div class="mini-progress"><span id="mass-progress"></span></div>
-    <div class="status-details"><span id="fps-label">0 FPS</span><span id="restart-status" class="hidden"><span id="restart-label"></span> <b id="restart-countdown"></b></span></div>
-    <div class="hidden" aria-hidden="true">
-      <span id="stat-fps"></span><span id="stat-ping"></span><span id="stat-score"></span>
-      <span id="stat-mass"></span><span id="stat-cells"></span><span id="stat-online"></span>
-    </div>
-  </section>
-
-  <section id="leaderboard" class="leader hud-panel">
-    <div class="hud-heading"><span id="allies-heading">SOLO PLAYERS</span><small id="player-count">LOCAL</small></div>
-    <div id="board-entries"></div>
-  </section>
-
-  <section id="minimap" class="minimap hud-panel">
-    <canvas id="minimap-canvas" width="146" height="146"></canvas>
-    <span id="map-sector">WORLD MAP</span>
-    <span id="map-team" class="hidden"></span>
-  </section>
-
-  <section id="chat" class="chatbox hud-panel">
-    <div class="chat-head"><span>ARENA CHAT</span><span id="chat-online">LOCAL DEMO</span></div>
-    <div class="chat-tabs">
-      <button class="chat-tab active" type="button" data-channel="all">ALL</button>
-      <button class="chat-tab" type="button" data-channel="tag">TEAM</button>
-      
-    </div>
-    <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
-    <form id="chat-form">
-      <input id="chat-input" type="text" maxlength="180" placeholder="Say something..." autocomplete="off">
-      <button id="emoji-toggle" type="button" aria-label="Open emoji picker" aria-expanded="false">☺</button>
-      <button type="submit">➤</button>
-    </form>
-    <div id="emoji-picker" class="emoji-picker hidden">
-      <div id="emoji-quick" class="emoji-quick"></div>
-      <input id="emoji-search" type="search" placeholder="Search emojis">
-      <div id="emoji-grid" class="emoji-grid"></div>
-    </div>
-  </section>
-
-  <div id="help-panel" class="help-panel"><span><b>Move</b> mouse</span><span><b>Split</b> Space</span><span><b>Feed</b> W</span><span><b>Settings</b> lobby</span></div>
-  <div id="zoom-panel" class="zoom-panel hidden">
-    <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
-    <span id="zoom-value">100%</span>
-    <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
-    <button id="zoom-reset" type="button">RESET</button>
+  <div id="own-connections" aria-label="Your connections"></div>
+  <aside id="tag-voice" class="tag-voice" hidden></aside>
+  <section id="leaderboard" aria-label="Leaderboard"><div id="board-entries"></div></section>
+  <div id="minimap" aria-label="Player map">
+    <div id="live-stats" aria-label="Connection statistics">FPS: <span id="stat-fps">?</span> | PING: <span id="stat-ping">?</span></div>
+    <canvas id="minimap-canvas" width="240" height="240"></canvas>
   </div>
-  <div id="server-announcement" class="server-announcement hidden"></div>
-  <div id="toast-area" class="toast-area" aria-live="polite"></div>
+  <div id="restart-status" class="restart-clock hidden"><span id="restart-label">SERVER RESTART</span><strong id="restart-countdown">03:00:00</strong></div>
+  <div id="server-announcement" class="server-announcement hidden" role="status" aria-live="polite"></div>
+  <div id="toast-area" aria-live="polite"></div>
 
-  <main id="lobby" class="lobby">
-    <div class="lobby-fx fx-one" aria-hidden="true"></div>
-    <div class="lobby-fx fx-two" aria-hidden="true"></div>
-    <div class="lobby-fx fx-three" aria-hidden="true"></div>
-    <h1 class="hero-logo">VINTAGE</h1>
-    <p id="world-status" class="world-status">CURRENT WORLD · LOCAL DEMO</p>
-    <div class="lobby-grid">
-      <section class="menu-panel">
-        <h2>PLAYER</h2>
-        <label class="profile-field">NICKNAME<input id="nickname" maxlength="18" value="Vintage Player" autocomplete="nickname"></label>
-        <label class="profile-field">TEAM TAG<input id="team-tag" maxlength="8" placeholder="Optional"></label>
-        <div class="profile-preview"><span>PLAYING AS</span><strong id="profile-name">Vintage Player</strong></div>
-        <div class="lobby-settings-actions">
-          <button id="lobby-settings-btn" type="button">BALL & GAME SETTINGS</button>
-          <button id="lobby-settings-secondary" type="button" title="Open settings">⚙</button>
-        </div>
-      </section>
-
-      <section class="menu-panel mode-panel">
-        <h2>CHOOSE YOUR MODE</h2>
-        <div class="mode-select">
-          <button type="button" data-mode="ffa" class="selected" aria-pressed="true">FFA</button>
-          <button type="button" data-mode="dual" aria-pressed="false">DUAL</button>
-          <button type="button" data-mode="mega" aria-pressed="false">MEGA</button>
-        </div>
-        <div class="mode-description"><strong id="lobby-mode-name">FREE FOR ALL</strong><span id="lobby-mode-mass">STARTS AT 1,000 MASS</span></div>
-        <button id="play-btn" class="play-btn" type="button"><span>▶</span> PLAY NOW <span>↗</span></button>
-        <button id="spectate-btn" class="spectate-btn" type="button">SPECTATE LOCAL WORLD</button>
-      </section>
-
-      <section class="menu-panel world-panel">
-        <h2>LOCAL PREVIEW</h2>
-        <p>Play against local AI bots. No multiplayer server is configured.</p>
-        <div class="world-status-card"><span>REGION</span><strong>EUROPE · LOCAL</strong></div>
-        <div class="lobby-actions"><span>Customize your cell from the settings panel.</span></div>
-      </section>
+  <aside id="chat" class="hud-panel chatbox">
+    <div class="chat-head"><b>VINTAGE CHAT</b><span id="chat-online">LOCAL</span></div>
+    <div class="chat-tabs"><button class="chat-tab active" data-channel="all">ALL</button><button class="chat-tab" data-channel="tag">TAG</button></div>
+    <div id="chat-messages" class="chat-messages"></div>
+    <div id="emoji-picker" class="emoji-picker hidden" aria-label="Choose an emoji">
+      <div class="emoji-toolbar"><strong>EMOJIS</strong><input id="emoji-search" aria-label="Find emoji" placeholder="Search emoji..." autocomplete="off" /></div>
+      <div id="emoji-grid" class="emoji-grid" role="group" aria-label="Emoji choices"></div>
     </div>
-    <div class="lobby-footer"><span id="mode-label">FREE FOR ALL MODE</span><span>LOCAL CLIENT PREVIEW</span></div>
+    <div class="chat-emoji-toolbar"><span>EMOJIS</span><div id="emoji-quick" class="emoji-quick" aria-label="Quick chat emojis"></div><span class="emoji-hint">OPEN ALL ↓</span></div>
+    <form id="chat-form"><button id="emoji-toggle" class="emoji-toggle" type="button" aria-label="Emoji picker" aria-expanded="false">☺</button><input id="chat-input" autocomplete="off" maxlength="180" placeholder="Enter message..." aria-label="Chat message"><button class="chat-send" type="submit" title="Send chat">➤</button></form>
+  </aside>
+
+  <main id="lobby" class="lobby vintage-stage" aria-label="Vintage home screen">
+    <div class="v-stage-light" aria-hidden="true"></div>
+    <div class="v-stage-noise" aria-hidden="true"></div>
+    <header class="v-stage-header">
+      <div class="v-stage-logo"><img class="vintage-logo" src="/assets/vintage-logo.png" alt="VINTAGE"></div>
+      <nav class="v-stage-nav" aria-label="Main navigation">
+        <button type="button" class="v-stage-nav-link" id="lobby-settings-btn">SETTINGS</button>
+      </nav>
+      <div class="v-stage-account"><span class="v-guest-indicator"></span><span id="account-name">GUEST ACCESS</span><button type="button" id="v-login-trigger" class="v-login-btn" aria-expanded="false" aria-controls="auth-menu">LOG IN <span>↗</span></button><div id="auth-menu" class="v-auth-menu hidden"><div>ACCOUNT CONNECTION</div><button class="v-auth-option" data-provider="discord">Discord <span>CONNECT ↗</span></button><button class="v-auth-option" data-provider="facebook">Facebook <span>CONNECT ↗</span></button><button id="logout-btn" class="v-auth-option hidden">Log out</button><small id="auth-status" role="status"></small></div></div>
+    </header>
+    <div class="v-stage-center">
+      <div class="v-halo v-halo-one"></div>
+      <div class="v-halo v-halo-two"></div>
+      <div class="v-center-orb">
+        <div class="v-center-orb-hemisphere left"><div class="v-orb-mark">V</div></div>
+        <div class="v-center-orb-hemisphere right"><span class="v-orb-number">26</span></div>
+        <div class="v-orb-sheen"></div>
+      </div>
+      <button class="v-skin-control v-skin-left soon-btn" type="button" data-soon="Vintage skin 01 is coming soon">SKIN 01 <small>SOON</small></button>
+      <button class="v-skin-control v-skin-right soon-btn" type="button" data-soon="Vintage skin 02 is coming soon">SKIN 02 <small>SOON</small></button>
+      <div class="v-center-caption"><span>YOUR CELL. YOUR RULES.</span><strong>MAKE YOUR MARK</strong></div>
+    </div>
+    <section class="v-launch-panel" aria-label="Start playing">
+      <div class="v-launch-top"><div><span class="v-launch-kicker" id="world-status">CURRENT WORLD · LOCAL DEMO</span><h1 id="lobby-mode-name">FREE FOR ALL</h1><small id="lobby-mode-mass">STARTS AT 1,000 MASS</small></div><button type="button" class="v-launch-settings" id="lobby-settings-secondary" aria-label="Open settings" title="Settings">⚙</button></div>
+      <button id="server-picker-btn" class="server-picker-btn">SELECT SERVER <span>EU · FFA ▾</span></button><div class="v-launch-fields"><label><span>PLAYER NAME</span><input id="nickname" autocomplete="nickname" maxlength="18" value="Vintage Player" placeholder="Nickname" /></label><label><span>TAG</span><input id="team-tag" type="password" autocomplete="off" maxlength="8" placeholder="Private tag" aria-label="Private team tag" /></label></div>
+      <div class="v-launch-actions"><button id="play-btn" class="v-play-button"><span>▶</span> PLAY NOW <span>↗</span></button><button id="spectate-btn" class="v-spectate-button">◉ SPECTATE</button></div>
+      <div class="v-launch-foot"><span id="world-detail">10 AI PLAYERS</span><span id="multibox-status">MULTI ENABLED</span></div>
+    </section>
+    <div class="v-stage-bottom-note"><span>VINTAGE.IO ORIGINAL EXPERIENCE</span><span>FFA / DUAL / MEGA <b>•</b> INDEPENDENT WORLDS</span></div>
   </main>
 
-  <section id="gameover" class="gameover hidden">
-    <div class="gameover-card menu-panel">
-      <span class="gameover-eyebrow">MATCH ENDED</span>
-      <h2>GAME OVER</h2>
-      <p id="death-score">Better luck next time.</p>
-      <button id="respawn-btn" class="play-btn" type="button">PLAY AGAIN</button>
-      <button id="back-to-lobby" type="button">BACK TO LOBBY</button>
-    </div>
-  </section>
+  <section id="gameover" class="gameover hidden"><div class="gameover-card"><small>THE MATCH NEVER SLEEPS</small><h2>YOU WERE EATEN</h2><p id="death-score"></p><button id="respawn-btn" class="main-btn play-blue">Respawn</button><button id="back-to-lobby" class="link-button">BACK TO LOBBY</button></div></section>
 
-  <section id="servers-overlay" class="overlay hidden" aria-label="World selection">
-    <div class="settings-shell servers-shell">
-      <header class="settings-header"><h2>CHOOSE WORLD</h2><button id="close-servers" class="settings-close" type="button">×</button></header>
-      <nav class="region-tabs" aria-label="Region">
-        <button type="button" class="region-tab active" data-region="EU">EUROPE</button>
-        <button type="button" class="region-tab soon-btn" data-region="NA" data-soon="No North America servers are configured.">N. AMERICA</button>
-        <button type="button" class="region-tab soon-btn" data-region="ASIA" data-soon="No Asia servers are configured.">ASIA</button>
-      </nav>
-      <div id="server-list" class="server-list"></div>
-    </div>
-  </section>
-
-  <section id="settings-overlay" class="overlay hidden" aria-label="Game settings">
+  <div id="settings-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Game settings">
     <div class="settings-shell">
-      <header class="settings-header">
-        <div class="settings-brand-wrap"><span class="settings-brand-glyph">V</span><div class="settings-brand">VINTAGE<small>CLIENT SETTINGS</small></div></div>
-        <button id="close-settings" class="settings-close" type="button" aria-label="Close settings">×</button>
-      </header>
-      <nav id="settings-tabs" class="settings-tabs" aria-label="Settings categories">
-        <button type="button" data-tab="game" class="active">GAME</button>
-        <button type="button" data-tab="render">RENDER</button>
-        <button type="button" data-tab="theme">THEME / BALLS</button>
-        <button type="button" data-tab="controls">CONTROLS</button>
-        <button type="button" data-tab="import">IMPORT / EXPORT</button>
-      </nav>
-      <div class="settings-body">
-        <nav id="settings-nav" class="settings-nav" aria-label="Settings pages"></nav>
-        <div id="settings-content" class="settings-content"></div>
+      <div class="settings-header">
+        <div class="settings-identity">
+          <div class="settings-kicker"><img src="/assets/vintage-logo.png" alt="Vintage"><span>VINTAGE / PERSONAL SETUP</span></div>
+          <h1>Control Room<span> / V</span></h1><p>Craft your scene. Set your pace.</p>
+        </div>
+        <label class="settings-searchbox"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input id="settings-search" type="search" placeholder="Search settings…" aria-label="Search settings" autocomplete="off"></label>
+        <button id="close-settings" class="icon-btn settings-close" aria-label="Close settings">✕</button>
       </div>
-      <footer class="settings-foot"><span>SETTINGS ARE SAVED IN THIS BROWSER</span><button id="settings-done" type="button">DONE</button></footer>
+      <div id="settings-tabs" class="settings-tabs" aria-label="Settings categories"><button data-tab="game" class="active">Gameplay</button><button data-tab="graphics">Graphics</button><button data-tab="theme">Theme</button><button data-tab="controls">Controls</button><button data-tab="chat">Chat</button><button data-tab="hud">HUD</button><button data-tab="import">Import / Export</button></div>
+      <div class="settings-body">
+        <div class="settings-list"><nav id="settings-nav" class="settings-nav" aria-label="Settings sections"></nav><div id="settings-content" class="settings-content"></div></div>
+        <aside class="settings-detail" aria-label="Selected setting details">
+          <span id="settings-detail-category" class="settings-detail-kicker">YOUR PLAYSTYLE</span>
+          <div id="settings-preview" class="settings-preview" aria-hidden="true"><div class="preview-grid"></div><div class="preview-orb preview-orb-other"></div><div class="preview-orb preview-orb-main"><span class="preview-name">Vintage</span><span class="preview-mass">22.5k</span></div><i class="preview-food"></i><i class="preview-food"></i><i class="preview-food"></i><span class="preview-caption">LIVE PREVIEW</span></div>
+          <h2 id="settings-detail-title">Camera</h2><p id="settings-detail-description">Choose a setting to explore your setup.</p>
+          <div class="settings-detail-values"><div><span>CURRENT</span><strong id="settings-detail-value">—</strong></div><div><span>DEFAULT</span><strong id="settings-detail-default">—</strong></div></div>
+          <small id="settings-detail-note" class="settings-detail-note">Changes apply immediately. Discard restores your setup from when this panel opened.</small>
+        </aside>
+      </div>
+      <div class="settings-foot"><div class="settings-footer-actions"><button id="settings-done"><span>←</span> Back <kbd>ESC</kbd></button><button id="settings-discard">Discard changes</button><button id="settings-reset-tab">Reset tab</button></div><span class="settings-save-state"><i></i> SAVED ON THIS DEVICE</span></div>
     </div>
-  </section>
+  </div>
 
-  <script src="./config.js"></script>
-  <script type="module" src="./client.js?v=25-world-ui"></script>
+  <div id="servers-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Select server"><section class="server-dialog"><header><div><small>FIND YOUR WORLD</small><h2>VINTAGE SERVERS</h2></div><button id="close-servers" class="icon-btn" aria-label="Close servers">✕</button></header><nav id="server-regions"><button data-region="EU" class="active">EU</button><button data-region="NA">NA</button><button data-region="ASIA">ASIA</button></nav><div id="server-list"></div><p class="hint">Changing servers starts a new match. Your current match keeps running while menus are open.</p></section></div>
+  <script src="/config.js"></script>
+  <script type="module" src="/client.js?v=35-multi-virus"></script>
 </body>
 </html>
 

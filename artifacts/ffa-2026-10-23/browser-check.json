@@ -1,0 +1,25 @@
+{
+  "local": {
+    "feedPrimary": true,
+    "feedSecondary": true,
+    "tab": true,
+    "tagHidden": true,
+    "chatNameOnly": true,
+    "vision": true,
+    "worldSize": 12000,
+    "maxSplit": 16,
+    "keyboardAndZoom": true,
+    "pageErrors": []
+  },
+  "online": {
+    "feedPrimary": true,
+    "feedSecondary": true,
+    "tab": true,
+    "tagHidden": true,
+    "chatNameOnly": true,
+    "vision": true,
+    "worldSize": 12000,
+    "maxSplit": 16,
+    "pageErrors": []
+  }
+}

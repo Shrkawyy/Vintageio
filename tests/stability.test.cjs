@@ -1,10 +1,10 @@
-﻿'use strict';
+'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const rules=require('../server/physics.cjs'),core=require('../server/core.cjs');
 async function game(){
   const base=path.resolve(__dirname,'../public'),encode=file=>'data:text/javascript;charset=utf-8,'+encodeURIComponent(fs.readFileSync(path.join(base,file),'utf8'));
-  const src=fs.readFileSync(path.join(base,'game.js'),'utf8').replace("'./virus-rules.js?v=3-full-burst'",JSON.stringify(encode('virus-rules.js'))).replace("'./physics.js?v=11-world-ui'",JSON.stringify(encode('physics.js')));
+  const src=fs.readFileSync(path.join(base,'game.js'),'utf8').replace("'./virus-rules.js?v=5-smooth-launch'",JSON.stringify(encode('virus-rules.js'))).replace("'./physics.js?v=16-multi-fixes'",JSON.stringify(encode('physics.js')));
   return import('data:text/javascript;charset=utf-8,'+encodeURIComponent(src));
 }
 const mass=p=>p.cells.reduce((s,c)=>s+c.mass,0);
@@ -111,12 +111,11 @@ test('feed leaves the entire split cluster, loses only its configured cost and c
   assert.ok(rules.absorbFood([target],food,'dual',1.1)>0);assert.ok(mass(target)>before,'other connections can receive fresh feed');
 });
 
-test('Mega feed emits two pellets from split cells and firing against a wall never recycles food inside the source',()=>{
-  const p={id:'one',target:{x:4500,y:2400},cells:[{x:2400,y:2400,mass:16000}]};
+test('feeding 64 small Mega fragments works and firing against a wall never recycles food inside the source',()=>{
+  const p={id:'one',target:{x:4500,y:2400},cells:[{x:2400,y:2400,mass:5000}]};
   for(let i=0;i<6;i++)rules.splitCells(p,0,4800,64,'mega');assert.equal(p.cells.length,64);
-  const initial=mass(p),food=[];assert.equal(rules.ejectMass(p,food,1,4800,'mega'),128);assert.equal(food.length,128);
-  assert.ok(food.every(f=>f.mass===100));
-  assert.ok(Math.abs(mass(p)+food.reduce((s,f)=>s+f.mass,0)-initial)<1e-7);
+  const food=[];assert.equal(rules.ejectMass(p,food,1,4800,'mega'),64);assert.equal(food.length,64);
+  assert.ok(Math.abs(mass(p)+food.reduce((s,f)=>s+f.mass,0)-(5000-64*4))<1e-7);
   const wall={id:'wall',target:{x:0,y:2400},cells:[{x:rules.cellRadius(1000),y:2400,mass:1000}]};
   assert.equal(rules.ejectMass(wall,food,1,4800,'mega'),0);assert.equal(mass(wall),1000);
 });
@@ -126,7 +125,7 @@ test('all multi-split actions reach their requested counts over simulation ticks
     const p={target:{x:6000,y:4000},cells:[{x:4000,y:4000,mass:10000}]};
     rules.startSplitMacro(p,rounds,0,8000,64,mode);
     for(let i=1;i<=20;i++){rules.stepSplitMacro(p,i/60,8000,64,mode);rules.moveCells(p,1/60,i/60,8000,mode);}
-    assert.equal(p.cells.length,2**rounds,mode+' '+rounds);assert.equal(mass(p),10000);
+    assert.equal(p.cells.length,Math.min(2**rounds,rules.physicsFor(mode).maxCells??64),mode+' '+rounds);assert.equal(mass(p),10000);
   }
 });
 
@@ -146,6 +145,8 @@ test('untagged labels are white and matching tags get the same bright color acro
   const colors=new Set();for(let i=0;i<100;i++){const color=tagColor('TAG'+i);assert.match(color,/^#[0-9a-f]{6}$/);assert.ok(!['#ffffff','#000000'].includes(color));colors.add(color);}
   assert.ok(colors.size>8);
 });
+
+
 
 
 

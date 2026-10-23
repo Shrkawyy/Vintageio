@@ -1,10 +1,10 @@
-﻿'use strict';
+'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const physics=require('../server/physics.cjs'),core=require('../server/core.cjs');
 async function game(){
  const base=path.resolve(__dirname,'../public'),encode=file=>'data:text/javascript;charset=utf-8,'+encodeURIComponent(fs.readFileSync(path.join(base,file),'utf8'));
- const src=fs.readFileSync(path.join(base,'game.js'),'utf8').replace("'./physics.js?v=11-world-ui'",JSON.stringify(encode('physics.js'))).replace("'./virus-rules.js?v=3-full-burst'",JSON.stringify(encode('virus-rules.js')));
+ const src=fs.readFileSync(path.join(base,'game.js'),'utf8').replace("'./physics.js?v=16-multi-fixes'",JSON.stringify(encode('physics.js'))).replace("'./virus-rules.js?v=5-smooth-launch'",JSON.stringify(encode('virus-rules.js')));
  return import('data:text/javascript;charset=utf-8,'+encodeURIComponent(src));
 }
 test('Stopmove persists through cursor updates and resumes only when switched off',()=>{

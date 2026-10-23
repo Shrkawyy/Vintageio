@@ -1,12 +1,12 @@
-﻿'use strict';
+'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 async function game(){
   const base=path.resolve(__dirname,'../public');
   const encode=file=>'data:text/javascript;charset=utf-8,'+encodeURIComponent(fs.readFileSync(path.join(base,file),'utf8'));
   const source=fs.readFileSync(path.join(base,'game.js'),'utf8')
-    .replace("'./virus-rules.js?v=3-full-burst'",JSON.stringify(encode('virus-rules.js')))
-    .replace("'./physics.js?v=11-world-ui'",JSON.stringify(encode('physics.js')));
+    .replace("'./virus-rules.js?v=5-smooth-launch'",JSON.stringify(encode('virus-rules.js')))
+    .replace("'./physics.js?v=16-multi-fixes'",JSON.stringify(encode('physics.js')));
   return import('data:text/javascript;charset=utf-8,'+encodeURIComponent(source));
 }
 function canvas(){
@@ -21,7 +21,7 @@ function canvas(){
 }
 async function scene(){
   const g=await game(),main=canvas(),radar=canvas();
-  const renderer=new g.ArenaRenderer(main.canvas,radar.canvas);renderer.screenW=1200;renderer.screenH=800;
+  const renderer=new g.ArenaRenderer(main.canvas,radar.canvas);renderer.screenW=1200;renderer.screenH=800;renderer.cam={x:2400,y:2400};
   const settings={...g.DEFAULT_SETTINGS,backgroundImage:false,showGrid:false,showSectors:false,showBorders:false,showMinimap:false,showFood:false,showViruses:false,animation:0};
   const snapshot={players:[
     {id:'one',name:'Main',color:'#00ffff',cells:[{id:'a',x:2200,y:2400,mass:34900}]},
@@ -65,6 +65,21 @@ test('natural colors stay independent of multibox in solo play, spectators and n
   assert.equal(cellAppearance(p,'one',['one','two'],{...s,ownCellColoring:'server'}).fill,p.color);
   assert.equal(cellAppearance(p,'one',['one','two'],{...s,activeCellBorderColor:'#123456'}).fill,'#123456');
   assert.equal(cellAppearance(p,'two',['one','two'],{...s,activeCellIndicatorColor:'#123456'}).fill,'#ffffff','inactive white is fixed');
+});
+
+test('feed keeps its stored food color when Tab changes the active multibox connection',async()=>{
+  const original={innerWidth:global.innerWidth,innerHeight:global.innerHeight};global.innerWidth=1200;global.innerHeight=800;
+  try{
+    const {main,renderer,settings,snapshot}=await scene();settings.showFood=true;settings.rainbowFood=true;
+    snapshot.mode='ffa';snapshot.food=[{feedId:1,ejected:true,ownerId:'one',x:2450,y:2400,mass:25,radius:9.5,color:'#d991ff'}];
+    for(const active of ['one','two']){
+      main.operations.length=0;renderer.draw(snapshot,active,settings,false,1/60,false,['one','two']);
+      assert.equal(main.operations.find(x=>x.method==='fill'&&x.circle.r===9.5).fillStyle,'#d991ff');
+    }
+    settings.rainbowFood=false;settings.foodColor='#123456';main.operations.length=0;
+    renderer.draw(snapshot,'two',settings,false,1/60,false,['one','two']);
+    assert.equal(main.operations.find(x=>x.method==='fill'&&x.circle.r===9.5).fillStyle,'#123456');
+  }finally{Object.assign(global,original);}
 });
 
 test('single-connection configuration creates one naturally colored player in every current mode',async()=>{
@@ -140,7 +155,7 @@ test('cell names and mass labels ignore deprecated user colors and interface col
     renderer.draw(snapshot,'one',{...settings,nickColor:'#123456',massColor:'#654321',textColor:'#ff0000',accentColor:'#0000ff'},false,0,false,['one','two']);
     const text=main.operations.filter(x=>x.method==='fillText');
     assert.equal(text.find(x=>x.args[0]==='Main').fillStyle,g.tagColor('Team'));
-    assert.equal(text.find(x=>x.args[0]==='[Team]').fillStyle,g.tagColor('Team'));
+    assert.ok(!text.some(x=>String(x.args[0]).includes('Team')),'private tag is never drawn above the name');
     assert.equal(text.find(x=>x.args[0]==='34.9k').fillStyle,g.tagColor('Team'));
     assert.equal(text.find(x=>x.args[0]==='Other').fillStyle,'#ffffff');
   }finally{Object.assign(global,original);}

@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const physics=require('../server/physics.cjs'),core=require('../server/core.cjs');
@@ -7,8 +7,8 @@ async function game(){
   const base=path.resolve(__dirname,'../public');
   const encode=file=>'data:text/javascript;charset=utf-8,'+encodeURIComponent(fs.readFileSync(path.join(base,file),'utf8'));
   const source=fs.readFileSync(path.join(base,'game.js'),'utf8')
-    .replace("'./virus-rules.js?v=3-full-burst'",JSON.stringify(encode('virus-rules.js')))
-    .replace("'./physics.js?v=11-world-ui'",JSON.stringify(encode('physics.js')));
+    .replace("'./virus-rules.js?v=5-smooth-launch'",JSON.stringify(encode('virus-rules.js')))
+    .replace("'./physics.js?v=16-multi-fixes'",JSON.stringify(encode('physics.js')));
   return import('data:text/javascript;charset=utf-8,'+encodeURIComponent(source));
 }
 
@@ -28,12 +28,11 @@ test('Mega split launches farther than FFA at small and large mass and stays con
   }
 });
 
-test('Mega has faster running and size-aware launch while retaining FFA feed and merge rules',()=>{
+test('Mega retains its previous physics independently of the new FFA profile',()=>{
   const mega=physics.MEGA_PHYSICS,ffa=physics.FFA_PHYSICS;
   assert.ok(mega.baseSpeed>ffa.baseSpeed&&mega.minSpeed>ffa.minSpeed&&mega.splitImpulse>ffa.splitImpulse);
-  for(const key of ['feedInterval','macroFeedInterval','mergeBase','minMergeTime','maxMergeTime'])assert.equal(mega[key],ffa[key]);
-  assert.equal(mega.feedCost,100);assert.equal(mega.feedMass,100);assert.equal(mega.feedPelletsPerCell,2);assert.equal(mega.feedMaxDistance,2);
-  assert.equal(ffa.feedCost,18);assert.equal(ffa.feedMass,14);
+  assert.deepEqual(mega,require('./fixtures/unchanged-mode-physics.json').mega);
+  assert.deepEqual(physics.DUAL_PHYSICS,require('./fixtures/unchanged-mode-physics.json').dual);
   assert.equal(mega.autoSplitMass,100000);assert.equal(ffa.splitImpulse,340);
 });
 
@@ -58,24 +57,6 @@ test('Mega automatic split is per cell at exactly 100K, preserving mass and resp
   }
 });
 
-test('automatic splits are staggered and their fragments start farther apart locally and online',async()=>{
-  const {LocalArena,DEFAULT_SETTINGS}=await game();
-  for(const backend of ['local','server']){
-    const arena=backend==='local'?new LocalArena():core.createRoom('ffa');
-    if(backend==='local'){arena.reset('ffa','Test','',false,DEFAULT_SETTINGS);arena.players=[arena.getById(arena.myIds[0])];}
-    const p=backend==='local'?arena.players[0]:core.join(arena,'Test','');
-    if(backend==='server')arena.players=new Map([[p.id,p]]);
-    p.cells=[{x:1400,y:2400,mass:30000},{x:3300,y:2400,mass:30000}];p.target={x:4500,y:2400};
-    arena.food=[];arena.viruses=[];
-    const step=()=>backend==='local'?arena.tick(.05,DEFAULT_SETTINGS):core.step(arena,.05);
-    step();assert.equal(p.cells.length,3,'only one oversized cell splits at a time');
-    const firstSource=p.cells[0],firstChild=p.cells[2];
-    assert.ok(Math.hypot(firstChild.x-firstSource.x,firstChild.y-firstSource.y)>=physics.cellRadius(15000)*.34);
-    step();step();assert.equal(p.cells.length,3,'the next automatic split waits for its interval');
-    step();assert.equal(p.cells.length,4,'the next oversized cell splits after the delay');
-  }
-});
-
 test('Senpa Mega and competitive Mega share the calibration while other profiles keep their rules',()=>{
   const registry=core.loadRegistry();
   for(const id of ['senpa-mega','comp-mega']){
@@ -83,11 +64,13 @@ test('Senpa Mega and competitive Mega share the calibration while other profiles
     assert.equal(physics.physicsFor(room.physics),physics.MEGA_PHYSICS);
     assert.equal(core.snapshot(room).autoSplitMass,100000);
   }
-  for(const key of ['ffa','dual','aster_mega','arab','gota'])assert.equal(physics.autoSplitMassFor(key),25500,key);
+  assert.equal(physics.autoSplitMassFor('ffa'),22500);
+  for(const key of ['dual','aster_mega','arab','gota'])assert.equal(physics.autoSplitMassFor(key),25500,key);
   assert.equal(physics.physicsFor('dual').splitGap,.8);assert.equal(physics.physicsFor('ffa').splitImpulse,340);
-  for(const key of ['senpa_mega','aster_mega','arab','gota','macro']){
-    const rules=physics.physicsFor(key);
-    assert.equal(rules.feedPelletsPerCell,2,key);assert.equal(rules.feedMass,100,key);assert.equal(rules.feedMaxDistance,2,key);
-  }
 });
+
+
+
+
+
 

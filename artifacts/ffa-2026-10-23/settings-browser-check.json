@@ -1,0 +1,19 @@
+{
+  "arenaSquare": {
+    "backgroundOutsideSightIsVisible": true,
+    "rgba": [
+      64,
+      131,
+      148,
+      255
+    ]
+  },
+  "desktop": {
+    "settingsStudio": true,
+    "noPageErrors": true
+  },
+  "mobile": {
+    "settingsStudio": true,
+    "noPageErrors": true
+  }
+}

@@ -15,7 +15,7 @@ test('one consumed virus schedules exactly one replacement; cap permits consumpt
  virus.stepViruses({viruses,food:[],players:[p],width:4800,maxCells:64,time:1,dt:0,addRespawn:(time,count)=>job={time,count}});
  assert.equal(viruses.length,0);assert.equal(p.cells.length,64);assert.equal(p.cells[0].mass,1100);assert.deepEqual(job,{time:21,count:1});
 });
-test('pending virus replacements cannot exceed cap',()=>{const r=core.createRoom('ffa');r.players.clear();r.viruses=Array.from({length:31},()=>virus.makeVirus(300,300));r.virusRespawns=[{time:0,count:8}];core.step(r,.01);assert.equal(r.viruses.length,32);});
+test('pending virus replacements cannot exceed cap',()=>{const r=core.createRoom('ffa');r.players.clear();r.viruses=Array.from({length:virus.VIRUS_MAX_COUNT-1},()=>virus.makeVirus(300,300));r.virusRespawns=[{time:0,count:8}];core.step(r,.01);assert.equal(r.viruses.length,virus.VIRUS_MAX_COUNT);});
 function response(){return{headers:{},setHeader(k,v){this.headers[k]=v;},writeHead(code,h){this.status=code;Object.assign(this.headers,h)},end(body){this.body=body;}}}
 const env={PUBLIC_ORIGIN:'https://api.example.com',FRONTEND_ORIGIN:'https://game.example.com',SESSION_SECRET:'x'.repeat(40),DISCORD_CLIENT_ID:'id',DISCORD_CLIENT_SECRET:'secret'};
 test('OAuth verifies state and browser cookie, exchanges code server-side and signs session',async()=>{
