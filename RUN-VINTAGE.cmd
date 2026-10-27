@@ -21,7 +21,7 @@ if not exist "node_modules\ws\package.json" (
     exit /b 1
   )
 )
-if not defined PORT set "PORT=3001"
+if not defined PORT set "PORT=3008"
 echo Open http://localhost:%PORT% in your browser.
 echo Keep this window open while playing. Press Ctrl+C to stop.
 node index.js

@@ -1,0 +1,47 @@
+{
+  "isolatedFixture": true,
+  "results": {
+    "local": {
+      "intro": {
+        "readyAt": 594.2999999970198,
+        "burstAt": 1706.5,
+        "endAt": 2664.7999999970198
+      },
+      "cachedIntro": {
+        "readyAt": 260.6000000014901,
+        "burstAt": 1513.6000000014901,
+        "endAt": 2475.300000000745
+      },
+      "dualRadius": 14.7,
+      "dualSmoothing": true,
+      "noDialogOnSwitch": true,
+      "correctServerIDs": true,
+      "spectatePreservesWorld": true,
+      "spectatePreservesCamera": true,
+      "noPageReloadOnWatchOrSwitch": true,
+      "pageErrors": []
+    },
+    "online": {
+      "intro": {
+        "readyAt": 613.8999999985099,
+        "burstAt": 1692.699999999255,
+        "endAt": 2647.89999999851
+      },
+      "cachedIntro": {
+        "readyAt": 337.3999999985099,
+        "burstAt": 1576.8999999985099,
+        "endAt": 2537.599999997765
+      },
+      "dualRadius": 14.7,
+      "dualSmoothing": true,
+      "noDialogOnSwitch": true,
+      "correctServerIDs": true,
+      "spectatePreservesWorld": true,
+      "spectatePreservesCamera": true,
+      "noPageReloadOnWatchOrSwitch": true,
+      "pageErrors": []
+    }
+  },
+  "reducedMotionSkipsBurst": true,
+  "passed": true
+}

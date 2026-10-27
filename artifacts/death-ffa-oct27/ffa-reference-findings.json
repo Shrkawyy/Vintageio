@@ -1,0 +1,48 @@
+{
+  "publicSource": {
+    "url": "https://senpa.io/web/assets/main-CYoq09wt.js",
+    "sha256": "f8f51c262fba6fc09fc69b9352be3120e0ada6ef967f63e981630948fb7a8670",
+    "bytes": 1237417
+  },
+  "findings": [
+    {
+      "claim": "Ejected-mass sprites use the particle radius directly for their texture scale.",
+      "byteOffset": 725352,
+      "observation": "ordinary static source inspection",
+      "sourceSha256": "f8f51c262fba6fc09fc69b9352be3120e0ada6ef967f63e981630948fb7a8670"
+    },
+    {
+      "claim": "Macro feed forwards a held/released state for the active connection.",
+      "byteOffset": 749311,
+      "observation": "ordinary static source inspection",
+      "sourceSha256": "f8f51c262fba6fc09fc69b9352be3120e0ada6ef967f63e981630948fb7a8670"
+    },
+    {
+      "claim": "Cell animation advances the current segment before retargeting, then interpolates linearly over cellAnimation.",
+      "observation": "ordinary static source inspection",
+      "sourceSha256": "f8f51c262fba6fc09fc69b9352be3120e0ada6ef967f63e981630948fb7a8670"
+    }
+  ],
+  "reaEvidenceId": "ev_b1e41dfdc544562eb245ad621408d062d0d9ef3525e3220b933c119ea66489da",
+  "reaLimitations": [
+    "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+    "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+    "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+    "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+    "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+    "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code.",
+    "main.js: Resource constraint during analyze_javascript_application: Owned JavaScript worker exhausted its heap while analyzing main.js during static"
+  ],
+  "unknowns": [
+    "The public client does not establish authoritative feed mass, cost, emission interval or flight constants.",
+    "The isolated public browser did not receive a live game world; no server constants were measured."
+  ],
+  "implementationScope": "FFA presentation only; Dual and Mega rules are preserved.",
+  "displayChange": {
+    "oldMultiplier": 1.65,
+    "newMultiplier": 1,
+    "extraSpawnFadeRemoved": true,
+    "massAndFlightUnchanged": true,
+    "animation": "linear tween over the chosen Animation delay, zero is immediate"
+  }
+}

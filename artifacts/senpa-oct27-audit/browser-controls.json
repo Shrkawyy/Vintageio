@@ -1,0 +1,64 @@
+{
+  "fixtureServer": true,
+  "referenceCalibrated": true,
+  "userServerUnmodified": true,
+  "results": {
+    "local-ffa": {
+      "activeSlot": 1,
+      "cells": [
+        16,
+        8
+      ],
+      "animation": 100,
+      "world": 5880,
+      "mode": "ffa",
+      "macroFeedVisiblePelletsDelta": 4,
+      "macroFeedMassDelta": 528,
+      "runSplitHoldAndRelease": true,
+      "pageErrors": []
+    },
+    "local-dual": {
+      "activeSlot": 1,
+      "cells": [
+        16,
+        8
+      ],
+      "animation": 100,
+      "world": 5880,
+      "mode": "dual",
+      "macroFeedVisiblePelletsDelta": 1,
+      "macroFeedMassDelta": 356,
+      "runSplitHoldAndRelease": true,
+      "pageErrors": []
+    },
+    "online-ffa": {
+      "activeSlot": 1,
+      "cells": [
+        16,
+        8
+      ],
+      "animation": 100,
+      "world": 5880,
+      "mode": "ffa",
+      "macroFeedVisiblePelletsDelta": 9,
+      "macroFeedMassDelta": 760,
+      "runSplitHoldAndRelease": true,
+      "pageErrors": []
+    },
+    "online-dual": {
+      "activeSlot": 1,
+      "cells": [
+        16,
+        8
+      ],
+      "animation": 100,
+      "world": 5880,
+      "mode": "dual",
+      "macroFeedVisiblePelletsDelta": 5,
+      "macroFeedMassDelta": 564,
+      "runSplitHoldAndRelease": true,
+      "pageErrors": []
+    }
+  },
+  "passed": true
+}

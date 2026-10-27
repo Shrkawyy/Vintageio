@@ -4,14 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const core=require('../server/core.cjs');
 
-async function game(){
-  const base=path.resolve(__dirname,'../public');
-  const encode=file=>'data:text/javascript;charset=utf-8,'+encodeURIComponent(fs.readFileSync(path.join(base,file),'utf8'));
-  const source=fs.readFileSync(path.join(base,'game.js'),'utf8')
-    .replace("'./virus-rules.js?v=5-smooth-launch'",JSON.stringify(encode('virus-rules.js')))
-    .replace("'./physics.js?v=16-multi-fixes'",JSON.stringify(encode('physics.js')));
-  return import('data:text/javascript;charset=utf-8,'+encodeURIComponent(source));
-}
+async function game(){return require("./helpers/game-module.cjs").game();}
 const player=(cells,id='p')=>({id,cells});
 const cell=(x=2000,mass=1000,id='c')=>({id,x,y:2000,mass});
 
@@ -60,8 +53,21 @@ test('local cell identities survive reordering and split daughters start at thei
   animator.sample([]);assert.equal(animator.cells.size,0);
 });
 
+test('split parents shrink with the chosen delay while mass stays authoritative and daughters start at actual size',async()=>{
+  const {CellAnimator,radius}=await game(),animator=new CellAnimator();
+  animator.sample([player([cell(2000,16000,'parent')])]);
+  const rendered=animator.sample([player([cell(2020,8000,'parent'),{...cell(2200,8000,'child'),originX:2000,originY:2000}])],120,1/60)[0].cells;
+  assert.ok(rendered[0].renderRadius>radius(8000)&&rendered[0].renderRadius<radius(16000));
+  assert.equal(rendered[0].mass,8000);assert.equal(rendered[1].mass,8000);
+  assert.equal(rendered[1].renderRadius,radius(8000));
+  assert.ok(rendered[0].x>2000&&rendered[0].x<2020);assert.ok(rendered[1].x>2000&&rendered[1].x<2200);
+  const instant=animator.sample([player([cell(2020,4000,'parent')])],0,1/60)[0].cells[0];
+  assert.equal(instant.mass,4000);assert.equal(instant.renderRadius,radius(4000));
+});
+
 test('invalid animation settings fall back or clamp, and large respawn corrections display immediately',async()=>{
   const {normalizeAnimation,DEFAULT_SETTINGS,CellAnimator}=await game();
+  assert.equal(DEFAULT_SETTINGS.animation,100);
   for(const value of [undefined,null,'120',NaN,Infinity])assert.equal(normalizeAnimation(value),DEFAULT_SETTINGS.animation);
   assert.equal(normalizeAnimation(-100),0);assert.equal(normalizeAnimation(9999),500);assert.equal(normalizeAnimation(123),120);
   const animator=new CellAnimator();animator.sample([player([cell()])]);

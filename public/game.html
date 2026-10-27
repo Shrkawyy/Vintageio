@@ -7,9 +7,19 @@
   <meta name="description" content="Vintage — FFA, Dual and Mega cell game." />
   <title>VINTAGE.IO</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="stylesheet" href="/styles.css?v=31-tag-voice" />
+  <link rel="stylesheet" href="/styles.css?v=33-transparent-lobby" />
+  <link rel="stylesheet" href="/replays.css?v=1" />
+  <link rel="stylesheet" href="/skins.css?v=3-flags" />
+  <link rel="stylesheet" href="/collection.css?v=dual-watch-intro-oct27-7" />
+  <link rel="stylesheet" href="/identity.css?v=dual-watch-intro-oct27-7" />
 </head>
-<body class="show-lobby">
+<body class="show-lobby booting">
+  <section id="boot-screen" class="boot-screen" aria-label="Loading Vintage" aria-live="polite">
+    <div class="boot-landscape" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="boot-header"><span>VINTAGE.IO</span><span>THE ORIGINAL CELL EXPERIENCE</span></div>
+    <div class="boot-center"><div class="boot-seal" aria-hidden="true"><div class="boot-orbit"></div><div class="boot-orbit boot-orbit-inner"></div><div class="boot-diamond"></div></div><img class="boot-logo" src="/assets/vintage-logo.png" alt="Vintage"><p class="boot-caption">A LEGACY IN MOTION</p><div class="boot-progress-head"><span id="boot-stage">PREPARING YOUR WORLD</span><output id="boot-percent">0%</output></div><div id="boot-progress" class="boot-progress" role="progressbar" aria-label="Preparing game files" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="boot-fill"></i></div><p id="boot-detail">Loading the Vintage experience...</p><button id="boot-retry" type="button" hidden>RETRY LOADING</button></div>
+    <div class="boot-footer"><span>FFA / DUAL / MEGA</span><span>YOUR NEXT CHAPTER STARTS HERE</span></div>
+  </section>
   <canvas id="arena" aria-label="Vintage game field"></canvas>
   <div id="noise"></div>
 
@@ -17,6 +27,9 @@
     <div class="brand" aria-label="Vintage"><img class="vintage-logo" src="/assets/vintage-logo.png" alt="VINTAGE"></div>
     <div id="top-mode" class="mode-pill">FFA · EUROPE</div>
     <div class="top-actions">
+      <button id="save-replay-btn" class="replay-toolbar-btn" type="button" title="Save the last 30 seconds">SAVE REPLAY</button>
+      <button id="replays-btn" class="replay-toolbar-btn" type="button">REPLAYS</button>
+      <button id="toolbar-collection-btn" class="replay-toolbar-btn" type="button">COLLECTION</button>
       <span id="connection-status" class="connection-pill"><i></i> DEMO MODE</span>
       <button id="menu-btn" class="icon-btn" title="Lobby" aria-label="Lobby">⌂</button>
       <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings">⚙</button>
@@ -52,24 +65,21 @@
     <header class="v-stage-header">
       <div class="v-stage-logo"><img class="vintage-logo" src="/assets/vintage-logo.png" alt="VINTAGE"></div>
       <nav class="v-stage-nav" aria-label="Main navigation">
+        <button type="button" class="v-stage-nav-link" id="lobby-replays-btn">REPLAYS</button>
         <button type="button" class="v-stage-nav-link" id="lobby-settings-btn">SETTINGS</button>
       </nav>
       <div class="v-stage-account"><span class="v-guest-indicator"></span><span id="account-name">GUEST ACCESS</span><button type="button" id="v-login-trigger" class="v-login-btn" aria-expanded="false" aria-controls="auth-menu">LOG IN <span>↗</span></button><div id="auth-menu" class="v-auth-menu hidden"><div>ACCOUNT CONNECTION</div><button class="v-auth-option" data-provider="discord">Discord <span>CONNECT ↗</span></button><button class="v-auth-option" data-provider="facebook">Facebook <span>CONNECT ↗</span></button><button id="logout-btn" class="v-auth-option hidden">Log out</button><small id="auth-status" role="status"></small></div></div>
     </header>
-    <div class="v-stage-center">
-      <div class="v-halo v-halo-one"></div>
-      <div class="v-halo v-halo-two"></div>
-      <div class="v-center-orb">
-        <div class="v-center-orb-hemisphere left"><div class="v-orb-mark">V</div></div>
-        <div class="v-center-orb-hemisphere right"><span class="v-orb-number">26</span></div>
-        <div class="v-orb-sheen"></div>
+    <div class="v-stage-center skin-stage">
+      <span class="skin-stage-kicker">YOUR STYLE / TWO CONNECTIONS</span>
+      <div class="skin-lobby-pair">
+        <button id="skin-lobby-0" class="skin-lobby-button" type="button" aria-label="Choose skin for connection 1"><span id="skin-lobby-preview-0" class="skin-lobby-cell"></span><span>SKIN 1</span></button>
+        <button id="skin-lobby-1" class="skin-lobby-button" type="button" aria-label="Choose skin for connection 2"><span id="skin-lobby-preview-1" class="skin-lobby-cell"></span><span>SKIN 2</span></button>
       </div>
-      <button class="v-skin-control v-skin-left soon-btn" type="button" data-soon="Vintage skin 01 is coming soon">SKIN 01 <small>SOON</small></button>
-      <button class="v-skin-control v-skin-right soon-btn" type="button" data-soon="Vintage skin 02 is coming soon">SKIN 02 <small>SOON</small></button>
-      <div class="v-center-caption"><span>YOUR CELL. YOUR RULES.</span><strong>MAKE YOUR MARK</strong></div>
+      <p class="skin-stage-hint">CLICK A CELL TO CHOOSE</p><div class="skin-stage-actions"><button id="reserved-names-btn" type="button">RESERVED NAMES</button><button id="title-shop-btn" type="button">PLAYER TITLES</button></div>
     </div>
     <section class="v-launch-panel" aria-label="Start playing">
-      <div class="v-launch-top"><div><span class="v-launch-kicker" id="world-status">CURRENT WORLD · LOCAL DEMO</span><h1 id="lobby-mode-name">FREE FOR ALL</h1><small id="lobby-mode-mass">STARTS AT 1,000 MASS</small></div><button type="button" class="v-launch-settings" id="lobby-settings-secondary" aria-label="Open settings" title="Settings">⚙</button></div>
+      <div class="v-launch-top"><div><span class="v-launch-kicker" id="world-status">CURRENT WORLD · LOCAL DEMO</span><h1 id="lobby-mode-name">FREE FOR ALL</h1></div><button type="button" class="v-launch-settings" id="lobby-settings-secondary" aria-label="Open settings" title="Settings">⚙</button></div>
       <button id="server-picker-btn" class="server-picker-btn">SELECT SERVER <span>EU · FFA ▾</span></button><div class="v-launch-fields"><label><span>PLAYER NAME</span><input id="nickname" autocomplete="nickname" maxlength="18" value="Vintage Player" placeholder="Nickname" /></label><label><span>TAG</span><input id="team-tag" type="password" autocomplete="off" maxlength="8" placeholder="Private tag" aria-label="Private team tag" /></label></div>
       <div class="v-launch-actions"><button id="play-btn" class="v-play-button"><span>▶</span> PLAY NOW <span>↗</span></button><button id="spectate-btn" class="v-spectate-button">◉ SPECTATE</button></div>
       <div class="v-launch-foot"><span id="world-detail">10 AI PLAYERS</span><span id="multibox-status">MULTI ENABLED</span></div>
@@ -77,7 +87,55 @@
     <div class="v-stage-bottom-note"><span>VINTAGE.IO ORIGINAL EXPERIENCE</span><span>FFA / DUAL / MEGA <b>•</b> INDEPENDENT WORLDS</span></div>
   </main>
 
-  <section id="gameover" class="gameover hidden"><div class="gameover-card"><small>THE MATCH NEVER SLEEPS</small><h2>YOU WERE EATEN</h2><p id="death-score"></p><button id="respawn-btn" class="main-btn play-blue">Respawn</button><button id="back-to-lobby" class="link-button">BACK TO LOBBY</button></div></section>
+  <section id="gameover" class="gameover hidden" role="dialog" aria-modal="false" aria-labelledby="death-title" aria-describedby="death-score">
+    <div class="gameover-card"><div class="death-brand"><img src="/assets/vintage-logo.png" alt="Vintage"><span id="death-mode">FFA / SERVER LIVE</span></div><div class="death-orbit" aria-hidden="true">&#9671;</div><small>THE ARENA KEEPS MOVING</small><h2 id="death-title">Your next move.</h2><div class="death-result"><span>PEAK SCORE</span><strong id="death-score">0</strong></div><div class="death-actions"><button id="respawn-btn" class="death-play" type="button"><span aria-hidden="true">&#9654;</span> PLAY <span aria-hidden="true">&#8599;</span></button><button id="death-spectate-btn" class="death-spectate" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg> SPECTATE</button></div><p class="death-live-note"><i></i> You are watching the live server</p></div>
+  </section>
+
+
+  <div id="collection-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="collection-title">
+    <section class="collection-shell">
+      <header class="collection-header"><div><small>VINTAGE / MAKE YOUR MARK</small><h1 id="collection-title">Signature Studio</h1></div><div class="collection-header-actions"><span id="collection-balance" class="collection-balance">0 COINS</span><button id="collection-close" class="icon-btn" type="button" aria-label="Close signature studio">&#10005;</button></div></header>
+      <div id="collection-names" class="collection-names">
+        <div><div class="collection-owned-heading"><h2>Your locked names</h2><small id="collection-free-changes">One free name change included</small></div><div id="reserved-names-list"></div><div class="signature-note"><span>01 / STATIC</span><p>One color. A lasting impression.</p><span>02 / MOTION</span><p>Four colors, moving together.</p></div></div>
+        <form id="reserved-name-form" class="reserved-name-editor"><small>DESIGN YOUR SIGNATURE</small><div id="reserved-name-preview" class="reserved-name-preview">Your signature</div><label>PLAYER NAME<input id="reserved-name-input" type="text" placeholder="Choose your name" minlength="2" maxlength="18" required autocomplete="off"></label><label>COLOR MODE<select id="reserved-name-mode"><option value="static">Static / one color</option><option value="animated">Animated / four colors</option></select></label><div class="signature-palette"><label>COLOR 1<input id="reserved-name-color" type="color" value="#70e0ff"></label><div id="signature-extra-colors" hidden><label>COLOR 2<input id="reserved-name-color-1" type="color" value="#b58aff"></label><label>COLOR 3<input id="reserved-name-color-2" type="color" value="#ff70b8"></label><label>COLOR 4<input id="reserved-name-color-3" type="color" value="#ffd580"></label></div></div><p id="reserved-style-hint"></p><button id="reserve-name-submit" class="collection-primary" type="submit">LOCK NAME / 15,000 COINS</button><button id="reserved-style-trial" class="collection-link" type="button" hidden>TRY FREE ON LOCALHOST</button><button id="reserved-name-cancel" class="collection-link" type="button" hidden>Cancel edit</button></form>
+      </div>
+      <footer class="collection-footer"><p>15,000 coins per locked name / one free name change<br>Both color modes are included. Color updates are free.</p><button id="collection-view-titles" class="collection-link" type="button">EXPLORE TITLES &#8599;</button></footer><p id="collection-status" role="status" aria-live="polite"></p>
+    </section>
+  </div>
+
+  <div id="skins-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="skins-heading">
+    <section class="skins-shell">
+      <header class="skins-header"><div><small>VINTAGE / PERSONAL COLLECTION</small><h1 id="skins-heading">Skin Library</h1></div><button id="close-skins" type="button" class="icon-btn" aria-label="Close skins">&#10005;</button></header>
+      <div id="skins-tabs" class="skins-tabs" role="tablist" aria-label="Skin categories"><button id="skins-tab-level" type="button" data-skin-tab="level" role="tab" aria-selected="true" class="active"><span aria-hidden="true">&#127941;</span> Level</button><button id="skins-tab-free" type="button" data-skin-tab="free" role="tab" aria-selected="false"><span aria-hidden="true">&#9787;</span> Free</button><button id="skins-tab-my" type="button" data-skin-tab="my" role="tab" aria-selected="false"><span aria-hidden="true">&#9673;</span> My Skins</button><button id="skins-tab-flags" type="button" data-skin-tab="flags" role="tab" aria-selected="false"><span aria-hidden="true">&#9873;</span> Flags</button><button id="skins-tab-titles" type="button" data-skin-tab="titles" role="tab" aria-selected="false"><span aria-hidden="true">&#10022;</span> Titles</button></div>
+      <div class="skins-body">
+        <div class="skins-content">
+          <div class="skins-content-heading"><div><h2 id="skins-section-title">Animated shields</h2><p id="skins-section-hint"></p></div><span id="skins-result-count"></span></div>
+          <div class="skins-filters"><input id="skins-search" type="search" aria-label="Search skins" placeholder="Search your next look..." autocomplete="off"><select id="skins-category" aria-label="Free skin collection" hidden></select></div>
+          <form id="skins-custom-form" class="skins-custom-form" hidden><input id="skins-custom-name" aria-label="Custom skin name" placeholder="Skin name" maxlength="60"><input id="skins-custom-url" type="url" aria-label="Custom skin URL" placeholder="https://.../skin.png" required maxlength="1200"><button id="skins-custom-add" type="submit">ADD &amp; EQUIP</button></form>
+          <div class="skins-scroll"><div id="skins-grid" class="skins-grid"></div><div id="title-catalog-grid" class="title-catalog-grid" hidden></div><p id="skins-empty" class="skins-empty" hidden></p><button id="skins-load-more" class="skins-load-more" type="button" hidden>LOAD MORE</button></div>
+        </div>
+        <aside class="skins-preview-panel" id="skins-preview-panel" aria-label="Equipped appearance"><span id="skins-current-slot">CONNECTION 1</span><div class="skin-slot-switch"><button id="skin-slot-0" type="button" class="active" aria-label="Edit connection 1" aria-pressed="true"><span id="skin-slot-preview-0" class="skin-mini-cell"></span><span>SKIN 1</span></button><button id="skin-slot-1" type="button" aria-label="Edit connection 2" aria-pressed="false"><span id="skin-slot-preview-1" class="skin-mini-cell"></span><span>SKIN 2</span></button></div><section id="title-studio" class="title-studio" hidden><small>YOUR INSIGNIA / YOUR POSITION</small><canvas id="title-position-canvas" width="600" height="600" tabindex="0" aria-label="Drag to position your title inside the cell. Arrow keys move the title." role="img"></canvas><h3 id="title-selected-name">Choose your title</h3><p id="title-selected-description">Drag inside the live cell to place your title.</p><button id="title-position-reset" type="button" class="title-studio-reset">RESET POSITION</button><button id="title-equip" type="button" class="collection-primary">EQUIP TITLE</button><button id="title-trial" type="button" class="collection-link" hidden>TRY FREE ON LOCALHOST</button><button id="title-remove" type="button" class="collection-link">REMOVE TITLE</button><p id="title-studio-status" role="status" aria-live="polite"></p><small>Drag or use arrow keys. Your position is saved for this connection.</small></section><div id="skin-live-preview" class="skin-live-preview"></div><strong id="skin-preview-name">No skin</strong><span id="skin-preview-shield">No shield</span><span id="skin-preview-flag" dir="auto">No flag</span><div class="skin-remove-actions"><button id="skin-remove-base" type="button">Remove skin</button><button id="skin-remove-shield" type="button">Remove shield</button><button id="skin-remove-flag" type="button">Remove flag</button></div><p>Mix a skin with a shield, or wear either on its own.</p></aside>
+      </div>
+      <footer class="skins-footer"><span><i></i> PREVIEW ACCESS / ALL LEVELS OPEN</span><button id="skins-done" type="button">DONE</button></footer>
+    </section>
+  </div>
+
+  <div id="replays-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="replays-heading">
+    <section class="replays-shell">
+      <header class="replays-header"><div><small>VINTAGE / YOUR MOMENTS</small><h1 id="replays-heading">Replay library <span id="replay-count">0 saved</span></h1></div><button id="close-replays" class="icon-btn" type="button" aria-label="Close replays">&#10005;</button></header>
+      <div class="replays-intro"><p>Keep the last 30 seconds. Watch here, download when you want.<small>Saved in this browser on this device. Your live match continues while watching.</small></p><button id="replay-save-current" type="button">SAVE LAST 30 SECONDS</button></div>
+      <div class="replays-body">
+        <aside class="replay-library" aria-label="Saved replays"><div id="replay-list"></div></aside>
+        <div class="replay-player">
+          <h2 id="replay-title">Select a replay</h2>
+          <div id="replay-stage" class="replay-stage"><canvas id="replay-canvas" aria-label="Replay playback"></canvas><p id="replay-empty-player">Your next great play.<br><span>Select a saved replay to watch.</span></p></div>
+          <div class="replay-transport"><button id="replay-play" type="button" disabled>Play</button><input id="replay-seek" type="range" min="0" max="1" value="0" step="1" aria-label="Replay timeline" disabled><output id="replay-time">0:00 / 0:00</output><select id="replay-speed" aria-label="Playback speed" disabled><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option></select></div>
+          <div class="replay-export"><button id="replay-download" type="button" disabled>DOWNLOAD VIDEO</button><button id="replay-cancel-export" type="button" hidden>Cancel export</button><small>Video only. Preparing a download takes the length of the clip.</small></div>
+          <p id="replay-message" class="replay-message" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <div id="settings-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Game settings">
     <div class="settings-shell">
@@ -106,7 +164,7 @@
 
   <div id="servers-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Select server"><section class="server-dialog"><header><div><small>FIND YOUR WORLD</small><h2>VINTAGE SERVERS</h2></div><button id="close-servers" class="icon-btn" aria-label="Close servers">✕</button></header><nav id="server-regions"><button data-region="EU" class="active">EU</button><button data-region="NA">NA</button><button data-region="ASIA">ASIA</button></nav><div id="server-list"></div><p class="hint">Changing servers starts a new match. Your current match keeps running while menus are open.</p></section></div>
   <script src="/config.js"></script>
-  <script type="module" src="/client.js?v=35-multi-virus"></script>
+  <script type="module" src="/boot.js?v=dual-watch-intro-oct27-7"></script>
 </body>
 </html>
 

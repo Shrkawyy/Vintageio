@@ -1,0 +1,271 @@
+{
+  "archiveSha256": "318f24bcc05aa5c3fc4b09110ac9c8be4cdc9bbc0c2753fd1cb257c95dc24aa3",
+  "method": "read regular source files only; no archive code executed",
+  "files": [
+    {
+      "path": "app/LICENSE.txt",
+      "bytes": 11357,
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+    },
+    {
+      "path": "app/README.md",
+      "bytes": 4154,
+      "sha256": "9cb15a2c8c306ffd6597a09c55ec9734d936944bdefe13a0fdeed62fabb22fab"
+    },
+    {
+      "path": "app/package.json",
+      "bytes": 732,
+      "sha256": "209bbe094ce7864d55718e5624b3997765de92f28a8af5590096676347add964"
+    },
+    {
+      "path": "app/src/GameServer.js",
+      "bytes": 57371,
+      "sha256": "e7e94401100d4a8d891f8797eaf7b81a4a195eb0a72e4a6715fc899e65de207d"
+    },
+    {
+      "path": "app/src/HttpsServer.js",
+      "bytes": 3223,
+      "sha256": "22a2f4015a4381c34b6ef732be842af2f5eb7f62fcf44a8e60c94ea14ed94a4e"
+    },
+    {
+      "path": "app/src/PacketHandler.js",
+      "bytes": 12722,
+      "sha256": "8abd5bc6138835c60d4d8acc5ecc4456cd321ab76d9003c6391ff4a0c9337832"
+    },
+    {
+      "path": "app/src/PlayerTracker.js",
+      "bytes": 15974,
+      "sha256": "8167a5589330ab366452534caba9ca368cd96d4270750cf4037eb3b8320912e1"
+    },
+    {
+      "path": "app/src/ai/BotLoader.js",
+      "bytes": 2253,
+      "sha256": "9b9b1d8db77fcc9f6a476443f55c9501660a15e2fc14f87bad7ddbfc0e9f286d"
+    },
+    {
+      "path": "app/src/ai/BotPlayer.js",
+      "bytes": 4644,
+      "sha256": "e399f022044c0c5a803bac030400c31c9f666663f24ffcb79e92e96c24a15c6a"
+    },
+    {
+      "path": "app/src/ai/FakeSocket.js",
+      "bytes": 360,
+      "sha256": "ff8ae0f68c4bbb4a5e5bbfa9a56b9894342fab2b60c6871f9b29f6d2b079be0a"
+    },
+    {
+      "path": "app/src/ai/MinionPlayer.js",
+      "bytes": 1943,
+      "sha256": "1165522e52b9a624f009ceb3980d325289321db70ba80e1ff89c63f71c988b96"
+    },
+    {
+      "path": "app/src/entity/Cell.js",
+      "bytes": 3064,
+      "sha256": "50bb87ca96105da6ca36e2f7b0b359996c1ea327a399d27adba850f9e3bf4e7b"
+    },
+    {
+      "path": "app/src/entity/EjectedMass.js",
+      "bytes": 601,
+      "sha256": "2d0548f53ae3c5f5d5b433bef954781ae1fd9e3c99d93081fabda648fb58c66a"
+    },
+    {
+      "path": "app/src/entity/Food.js",
+      "bytes": 515,
+      "sha256": "ce520aa1bea9ce08a543b8d54f79824a962e0f5c8041f12a7c8fd0fede7a94c5"
+    },
+    {
+      "path": "app/src/entity/MotherCell.js",
+      "bytes": 2406,
+      "sha256": "a2098ab87df102169aea20266da84d12b9a6b51f72bd7060e3151241e22d10c3"
+    },
+    {
+      "path": "app/src/entity/PlayerCell.js",
+      "bytes": 1336,
+      "sha256": "3f95445fd68d1da789d25525ae449029cbbee52c27ac3ea5f7e529d11a7401c0"
+    },
+    {
+      "path": "app/src/entity/Virus.js",
+      "bytes": 3041,
+      "sha256": "aa9f352efe9fee7004900bd0813e103fca51f8c7070a2a6a37ad0bd63b280d93"
+    },
+    {
+      "path": "app/src/entity/index.js",
+      "bytes": 236,
+      "sha256": "3a7ceb408b126c5bb6e99576faa84220f22c572c70e74c2fbfc83e47009546ab"
+    },
+    {
+      "path": "app/src/enum/LogLevelEnum.js",
+      "bytes": 303,
+      "sha256": "a6502a5fbfdc0c85cd3440ce80f021ff04393a43cfeb6a00115db2517fbb1a44"
+    },
+    {
+      "path": "app/src/enum/UserRoleEnum.js",
+      "bytes": 265,
+      "sha256": "9dae7a57c1e93b6c1be83c26505df71d72c4280672e3be138465651fea001a57"
+    },
+    {
+      "path": "app/src/gamemodes/Experimental.js",
+      "bytes": 2262,
+      "sha256": "041adfba533eb00070c1692986dd513a0c01fa54981482f28c2ff8602fb28951"
+    },
+    {
+      "path": "app/src/gamemodes/FFA.js",
+      "bytes": 8418,
+      "sha256": "6d3a009733a8c64f6e247a407804d9c9d50f2ad91dc2438596c7682530ed875d"
+    },
+    {
+      "path": "app/src/gamemodes/HungerGames.js",
+      "bytes": 6379,
+      "sha256": "37034f6c8fad2f84bdc91ac3431a0c1af797672a87f46450a4dd765720bd9f97"
+    },
+    {
+      "path": "app/src/gamemodes/Mode.js",
+      "bytes": 1553,
+      "sha256": "ee82133fbcacac82a454d81034ac178030261816a96e3fc2f1bb75075909a11f"
+    },
+    {
+      "path": "app/src/gamemodes/Rainbow.js",
+      "bytes": 1913,
+      "sha256": "e264bd8f2d4eea4d8b2d1e484eb6b138beb287314d050154472ac66241af3b08"
+    },
+    {
+      "path": "app/src/gamemodes/Teams.js",
+      "bytes": 4177,
+      "sha256": "c9abefd87e0c3c3f191d67a5e7fe2c28db87209e444d402dc2ff10004beea8d2"
+    },
+    {
+      "path": "app/src/gamemodes/Tournament.js",
+      "bytes": 8933,
+      "sha256": "8a5f4ac2eb640595d2922186e330e367ec266aca446642273e4b890f73c77104"
+    },
+    {
+      "path": "app/src/gamemodes/index.js",
+      "bytes": 988,
+      "sha256": "2e9d94789b36941fc2f870cc058e7b21d02cb0070267de065df748ca087ae0df"
+    },
+    {
+      "path": "app/src/gameserver.ini",
+      "bytes": 10275,
+      "sha256": "e9c79221040e8091103ba38ed5550e93ffbfbbf2b1262336d37c433f484a1d10"
+    },
+    {
+      "path": "app/src/index.js",
+      "bytes": 4686,
+      "sha256": "4b3cb009aa74c630f59d3c5c6be731732c78707e86fe564651520f4f9fd9a99c"
+    },
+    {
+      "path": "app/src/modules/CommandList.js",
+      "bytes": 55313,
+      "sha256": "1577d895158c61b7c7dad3b8372d83e8b24f998ca99cada7f2241d25a54e4664"
+    },
+    {
+      "path": "app/src/modules/Logger.js",
+      "bytes": 8089,
+      "sha256": "31c5e02d806ee31aba0ce4de59edfaca9b3891c1e21256fb4b2c69ee40bfb405"
+    },
+    {
+      "path": "app/src/modules/PlayerCommand.js",
+      "bytes": 14988,
+      "sha256": "2b19a85c3863230287e4ed1b7bbf5820576fc3bc0d1dbea2101460af9f9a07f4"
+    },
+    {
+      "path": "app/src/modules/QuadNode.js",
+      "bytes": 3314,
+      "sha256": "58f6f3aa9d61dd554eed71f956980ffb3a6f7870a61c04ba58bd6c7791251194"
+    },
+    {
+      "path": "app/src/modules/Vec2.js",
+      "bytes": 1151,
+      "sha256": "79a06859cfe000fc1b7f657277d125317721d93d13e8560b18dedf06a9f3d678"
+    },
+    {
+      "path": "app/src/modules/ini.js",
+      "bytes": 6778,
+      "sha256": "4769719fedd21fffde1c40bb0e8d4b7466160ca860e39aebad58b3276f988202"
+    },
+    {
+      "path": "app/src/packet/AddNode.js",
+      "bytes": 442,
+      "sha256": "3825b266747977235aa626a4693e79dc2801190252bae32e490e0ccd0e57bba2"
+    },
+    {
+      "path": "app/src/packet/BinaryReader.js",
+      "bytes": 1914,
+      "sha256": "ee6e95f6787715895d48bc7bb6172b5a9068fd279489dd4ae3ea908392351aa8"
+    },
+    {
+      "path": "app/src/packet/BinaryWriter.js",
+      "bytes": 1985,
+      "sha256": "1c5b0dfe0914e27ba357330a644d95b96f7f3269f81aea21c7849a3e46ca2f7b"
+    },
+    {
+      "path": "app/src/packet/ChatMessage.js",
+      "bytes": 1624,
+      "sha256": "ff7701ddf961e5ec9ab83443eba52bac4c5576a4a7fcdc2e34b04303753fe7f6"
+    },
+    {
+      "path": "app/src/packet/ClearAll.js",
+      "bytes": 248,
+      "sha256": "a893f03be4cdfdbb9b8d45e9a9eec59341ad22c9bd003818a1ec6b7cff4e1933"
+    },
+    {
+      "path": "app/src/packet/ClearOwned.js",
+      "bytes": 254,
+      "sha256": "4e75f445ad4290fbad45530bfea554513e3e2b2c24d2b25b2216605b70b930dd"
+    },
+    {
+      "path": "app/src/packet/LeaderboardPosition.js",
+      "bytes": 330,
+      "sha256": "1819ccc4db4b06ac9930fe506148c841b673b6e0a7068a2c6aee5d957e800949"
+    },
+    {
+      "path": "app/src/packet/PidActive.js",
+      "bytes": 402,
+      "sha256": "642e28f1dcafc37bb9af24909d653f83bedbc71f499c99c0e874cb6ce0153b3e"
+    },
+    {
+      "path": "app/src/packet/ServerStat.js",
+      "bytes": 1305,
+      "sha256": "0922cb704683a8ec609a8b9bf28fa0bb20b8ac72f6b6c880494429b9164e799f"
+    },
+    {
+      "path": "app/src/packet/SetBorder.js",
+      "bytes": 1434,
+      "sha256": "2dcac13827e8d5fb977123cfd3ffb0fa33058e656ed4147bd74c71454445d596"
+    },
+    {
+      "path": "app/src/packet/UpdateLeaderboard.js",
+      "bytes": 6766,
+      "sha256": "d2c7394f0bc84776bd01c71f798c3040f504608c3c5de83963d4a37ebb1f2dc1"
+    },
+    {
+      "path": "app/src/packet/UpdateNodes.js",
+      "bytes": 15957,
+      "sha256": "6fa8589849dd8364ab204fd3fee16f3a81e5a434af73766efbe2b1a28129e6fb"
+    },
+    {
+      "path": "app/src/packet/UpdatePosition.js",
+      "bytes": 547,
+      "sha256": "204a07ca688abedb31c28745b9f9b426a8fd4f35b968eeda1b2cf3531b93ec87"
+    },
+    {
+      "path": "app/src/packet/index.js",
+      "bytes": 592,
+      "sha256": "36f4823fbf99fe6726f45ad41121469310a938a4407725df1cdc0d4e15ddc714"
+    },
+    {
+      "path": "app/src/scripts/AgarMacros.js",
+      "bytes": 3382,
+      "sha256": "d38fd93c95475b6ba9e0d6ee66f0760ca7f7f685301a1a6134257f89c6943af5"
+    },
+    {
+      "path": "app/src/scripts/CustomSkins.js",
+      "bytes": 2905,
+      "sha256": "e22d9f81ef0a3a78db3f44ff6529d0f30b41facb0ce6b4b30a8447ed9ad7522e"
+    },
+    {
+      "path": "app/src/scripts/ERTPcontrol.js",
+      "bytes": 2139,
+      "sha256": "c89c4a67cb7ac7abe8a9a86f6ee9aecf36ed0d14c0d47ff03de894e04d1ca081"
+    }
+  ]
+}

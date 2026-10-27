@@ -1,9 +1,11 @@
-import {makeVirus, stepViruses, virusRadius, virusCharge, VIRUS_CHARGE_MASS, VIRUS_MAX_COUNT} from './virus-rules.js?v=5-smooth-launch';
-import {splitCell, splitCells, findSplitHunt, moveCells, eatCells, absorbFood, autoSplitMassFor as physicsAutoSplitMassFor, findSafeSpawn, findPlayerSpawn, randomBotMass, maintainBots, decayMass, ejectMass, startSplitMacro, stepSplitMacro, physicsFor, mergeDelayFor, feedIntervalFor, findFoodRecipient, worldSizeFor, foodTargetFor, virusTargetFor, limitVisibility} from './physics.js?v=16-multi-fixes';
+import {formatPlayerName,titleFor,titleBadgeUrl,normalizeTitlePosition} from './titles.js?v=dual-watch-intro-oct27-7';
+import {namePaint} from './identity.js?v=dual-watch-intro-oct27-7';
+import {makeVirus, stepViruses, virusRadius, virusCharge, VIRUS_CHARGE_MASS, VIRUS_MAX_COUNT} from './virus-rules.js?v=dual-watch-intro-oct27-7';
+import {PHYSICS_CONFIG, stepArenaPhysics, stepBotAI, splitCell, splitCells, autoSplitCells, respawnDelayFor, findSplitHunt, moveCells, eatCells, absorbFood, autoSplitMassFor as physicsAutoSplitMassFor, findSafeSpawn, findPlayerSpawn, randomBotMass, maintainBots, decayMass, ejectMass, setFeedHeld, requestFeedInput, stepHeldFeed, setRunSplitHeld, stepHeldRunSplit, startSplitMacro, stepSplitMacro, physicsFor, mergeDelayFor, feedIntervalFor, findFoodRecipient, worldSizeFor, foodTargetFor, virusTargetFor, limitVisibility} from './physics.js?v=dual-watch-intro-oct27-7';
 export {feedIntervalFor};
 export const MODES = Object.freeze({
   ffa: {title:'FREE FOR ALL',start:1000,color:'#73e5f1',botCount:10,multi:true},
-  dual:{title:'DUAL',start:1000,color:'#ae95ff',botCount:10,multi:true},
+  dual:{title:'DUAL',start:500,color:'#ae95ff',botCount:10,multi:true},
   mega:{title:'MEGA',start:5000,color:'#ffd28a',botCount:10,multi:true},
 });
 export const supportsMultibox=(mode,server={})=>server?.multi!==false&&MODES[mode]?.multi!==false;
@@ -33,19 +35,19 @@ export function getVisibleAllies(snapshot,selectedId){
 export const DEFAULT_SETTINGS={
   showGrid:false,showMass:true,showNames:true,showLeaderboard:true,showMinimap:true,showChat:true,showSectors:true,showSkins:true,
   autoSplit:true,autoRespawn:false,mouseSensitivity:1,zoom:1,wheelZoom:true,wheelZoomSensitivity:1,cameraSmoothing:0.10,
-  showFood:true,showViruses:true,showBorders:true,showHelp:true,cellOpacity:100,nickSize:1.1,massSize:1.1,animation:120,
+  showFood:true,showViruses:true,showBorders:true,showHelp:true,cellOpacity:100,nickSize:1.1,massSize:1.1,animation:100,
   bgColor:'#000000',gridColor:'#244051',accentColor:'#70e0ff',
   ownCellColoring:'multibox',shortMass:true,
   activeCellIndicatorColor:'#ffffff',activeCellIndicatorSize:100,activeCellBorderColor:'#09759d',activeCellBorderWidth:10,
   canvasCellEffects:false,sectorColor:'#7cabb9',sectorGridColor:'#286171',sectorGridWidth:1.5,sectorLabelSize:12,sectorLabelPosition:'corner',sectorScale:100,sectorRainbow:false,prismSpeed:1,visualStyleVersion:5,
   borderColor:'#70e0ff',borderWidth:3,borderStyle:'solid',borderGlow:false,borderGlowColor:'#70e0ff',borderGlowDistance:24,borderGlowStrength:60,
-  foodSize:1,rainbowFood:true,backgroundImage:true,backgroundUrl:'',worldLogoUrl:'',themePreset:'vintage',
+  foodSize:1,feedSize:1,rainbowFood:true,backgroundImage:true,backgroundUrl:'',worldLogoUrl:'',themePreset:'vintage',
   useDrawnBackground:false,backgroundDesign:null,
   showThemeArtwork:true,themeArtwork:null,
   panelColor:'#121c27',textColor:'#f5f9ff',foodColor:'#60cfe7',virusColor:'#f065b5',customTheme:null,
-  keySplit:'SPACE',keyDoubleSplit:'Q',keyTripleSplit:'R',keySplit16:'T',keySplit32:'F',keySplit64:'D',
+  keySplit:'SPACE',keyDoubleSplit:'Q',keyTripleSplit:'R',keySplit16:'T',keySplit32:'F',keySplit64:'D',keyRunSplit:'SHIFT',
   keyFeed:'W',keyMacroFeed:'E',keySwitch:'TAB',keyStopMove:'P',keyChat:'ENTER',keyMenu:'ESCAPE',keySettings:'NO KEY',
-  keyChatToggle:'C',keyHUD:'H',keySaveReplay:'NO KEY',keySpectateMode:'X',keyToggleNames:'N',keyToggleMass:'M',
+  keyChatToggle:'C',keyHUD:'H',keySaveReplay:'F8',keySpectateMode:'X',keyToggleNames:'N',keyToggleMass:'M',
   keyToggleSkin:'S',keyToggleChat:'V',keyToggleSectors:'B',keyCommand1:'1',keyCommand2:'2',keyCommand3:'3',
   keyCommand4:'4',keyCommand5:'5',keyCommand6:'6',keyCommand7:'7',keyCommand8:'8',keyCommand9:'9',keyCommand10:'0',
   keyZoom1:'ALT+1',keyZoom2:'ALT+2',keyZoom3:'ALT+3',keyZoom4:'ALT+4',keyZoom5:'ALT+5',
@@ -83,6 +85,7 @@ export function normalizeControlSettings(saved={},migrate=false){
     for(const key of CONTROL_KEYS)if(next[key]==='S'||(next[key]==='H'&&key!=='keyHUD'))next[key]='NO KEY';
     next.keyToggleSkin='S';next.keyHUD='H';
   }
+  if(saved.keyRunSplit===undefined&&Object.entries(saved).some(([key,value])=>key!=='keyRunSplit'&&CONTROL_KEYS.includes(key)&&value==='SHIFT'))next.keyRunSplit='NO KEY';
   const used=new Set();
   for(const key of CONTROL_KEYS){
     let binding=typeof next[key]==='string'?next[key].toUpperCase():DEFAULT_SETTINGS[key];
@@ -101,7 +104,7 @@ export function tagColor(tag){
 }
 export const DEFAULT_NAMES=['Nova','Orbit','Mercury','Sable','Helix','Cosmo','Vector','Astra','Vortex','Pulse','Quasar','Zenith','Echo','Drift','Neon'];
 export const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-export const radius=m=>Math.max(13,Math.sqrt(Math.max(1,m))*2.45);
+export const radius=m=>PHYSICS_CONFIG.distanceScale*10*Math.sqrt(Math.max(0,m));
 export function normalizeVisualSettings(saved={},migrate=false){
   const next={...saved};
   if(migrate&&!(saved.visualStyleVersion>=4)){next.showGrid=false;if(next.bgColor==='#07131f')next.bgColor='#000000';}
@@ -127,7 +130,7 @@ export function normalizeVisualSettings(saved={},migrate=false){
   for(const key of ['activeCellBorderColor','bgColor','gridColor','sectorColor','sectorGridColor','borderColor','borderGlowColor','foodColor','virusColor','accentColor','panelColor','textColor']){
     if(!/^#[0-9a-f]{6}$/i.test(String(next[key]||'')))next[key]=DEFAULT_SETTINGS[key];
   }
-  const limits={cellOpacity:[0,100],nickSize:[.1,3],massSize:[.1,3],activeCellIndicatorSize:[0,200],activeCellBorderWidth:[0,100],borderWidth:[1,24],borderGlowDistance:[0,100],borderGlowStrength:[0,100],sectorGridWidth:[.5,12],sectorLabelSize:[8,96],sectorScale:[50,250],prismSpeed:[.2,3]};
+  const limits={feedSize:[.5,2],cellOpacity:[0,100],nickSize:[.1,3],massSize:[.1,3],activeCellIndicatorSize:[0,200],activeCellBorderWidth:[0,100],borderWidth:[1,24],borderGlowDistance:[0,100],borderGlowStrength:[0,100],sectorGridWidth:[.5,12],sectorLabelSize:[8,96],sectorScale:[50,250],prismSpeed:[.2,3]};
   for(const [key,[min,max]] of Object.entries(limits))next[key]=typeof next[key]==='number'&&Number.isFinite(next[key])?clamp(next[key],min,max):DEFAULT_SETTINGS[key];
   if(next.ownCellColoring==='uniform')next.ownCellColoring='server';
   if(!['multibox','server'].includes(next.ownCellColoring))next.ownCellColoring=DEFAULT_SETTINGS.ownCellColoring;
@@ -170,7 +173,7 @@ export function respawnPosition(anchor,cursor,mass,worldSize=WORLD_SIZE){
   const dx=(cursor?.x??origin.x)-origin.x,dy=(cursor?.y??origin.y)-origin.y;
   const magnitude=Math.hypot(dx,dy);
   const ux=magnitude>0?dx/magnitude:1,uy=magnitude>0?dy/magnitude:0;
-  const clearance=32;
+  const clearance=32*PHYSICS_CONFIG.distanceScale;
   const separation=anchorRadius+spawnRadius+clearance;
   const directions=[[ux,uy],[-uy,ux],[uy,-ux],[-ux,-uy]];
   let selected=null;
@@ -190,47 +193,51 @@ const rand=(a,b)=>a+Math.random()*(b-a);
 const PLAYER_COLORS=['#20ff9f','#a938ff','#ff48df','#ff4038','#32d9f4','#ffbe32','#6d25ff'];
 const playerColor=()=>PLAYER_COLORS[Math.floor(Math.random()*PLAYER_COLORS.length)];
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-function foodPoint(players=[],width=WORLD_SIZE){const mass=rand(8,23),point=findSafeSpawn(players,mass,width,8);return point?{...point,mass,color:['#60cfe7','#d991ff','#f39dc8','#7fdfbc','#efca87'][Math.floor(Math.random()*5)]}:null;}
-function newCell(x,y,mass,color){return {x,y,mass,color,vx:0,vy:0,mergeAt:0};}
+const cellRadiusForFood=mass=>PHYSICS_CONFIG.distanceScale*10*Math.sqrt(mass);
+function foodPoint(players=[],width=WORLD_SIZE){const mass=PHYSICS_CONFIG.foodSize**2/100,point=findSafeSpawn(players,mass,width,8*PHYSICS_CONFIG.distanceScale);return point?{...point,mass,radius:cellRadiusForFood(mass),color:['#60cfe7','#d991ff','#f39dc8','#7fdfbc','#efca87'][Math.floor(Math.random()*5)]}:null;}
+function newCell(x,y,mass,color){return {x,y,mass,color,age:0,boost:0,boostX:0,boostY:0,vx:0,vy:0};}
 function player(id,name,tag,color,start,npc=false){const x=rand(700,WORLD_SIZE-700),y=rand(700,WORLD_SIZE-700);return {id,name,tag,color,npc,cells:[newCell(x,y,start,color)],target:{x,y},heading:rand(0,Math.PI*2),alive:true};}
 export class LocalArena{
   constructor(){this.mode='ffa';this.worldSize=worldSizeFor('ffa');this.players=[];this.food=[];this.viruses=[];this.myIds=[];this.elapsed=0;this.chat=[];this._id=0;}
   reset(mode,name,tag,multi=true,settings=DEFAULT_SETTINGS,spectator=false){
-    this.mode=MODES[mode]?mode:'ffa';this.worldSize=worldSizeFor(this.mode);this.elapsed=0;this._id=0;this.chat=[];
+    this.mode=MODES[mode]?mode:'ffa';this.worldSize=worldSizeFor(this.mode);this.elapsed=0;this.fixedCredit=0;this._id=0;this.chat=[];
     const conf=MODES[this.mode];
     this.food=[];
-    this.viruses=Array.from({length:virusTargetFor(this.mode)},()=>makeVirus(rand(120,this.worldSize-120),rand(120,this.worldSize-120)));
+    this.viruses=Array.from({length:virusTargetFor(this.mode)},()=>makeVirus(rand(120,this.worldSize-120),rand(120,this.worldSize-120),0,this.mode));
     this.virusRespawns=[];
     this.players=[];this.myIds=[];
     if(!spectator){
       const me=player('local-1',name||'Vintage Player',tag||'',playerColor(),conf.start);
       me.multiKey='local-owned';
       me.cells[0].x=this.worldSize/2;me.cells[0].y=this.worldSize/2;me.target={x:me.cells[0].x,y:me.cells[0].y};
+      const safe=findSafeSpawn([{cells:this.viruses}],conf.start,this.worldSize,PHYSICS_CONFIG.spawnGap,Math.random,me.target);
+      if(safe){Object.assign(me.cells[0],safe);me.target={...safe};}else me.cells=[];
       this.players.push(me);this.myIds=[me.id];
       if(multi&&supportsMultibox(this.mode)){const second=player('local-2',name||'Vintage Player',tag,playerColor(),conf.start);
         second.multiKey=me.multiKey;
-        Object.assign(second.cells[0],respawnPosition(me.cells[0],{x:me.cells[0].x+1000,y:me.cells[0].y},conf.start,this.worldSize));
-        second.target={x:second.cells[0].x,y:second.cells[0].y};
+        const spawn=findPlayerSpawn([...this.players,{cells:this.viruses}],second,conf.start,this.worldSize,PHYSICS_CONFIG.spawnGap);
+        if(spawn){Object.assign(second.cells[0],spawn);second.target={...spawn};}else second.cells=[];
         this.players.push(second);this.myIds.push(second.id);}
     }
     for(let i=0;i<conf.botCount;i++){
       const bot=player('npc-'+i,DEFAULT_NAMES[i],['','VX','RX','NV'][i%4],['#e59fe7','#ffb482','#87f4cd','#9eb3fa'][i%4],randomBotMass(),true);
-      const point=findSafeSpawn(this.players,bot.cells[0].mass,this.worldSize);
+      const point=findSafeSpawn([...this.players,{cells:this.viruses}],bot.cells[0].mass,this.worldSize);
       if(point){Object.assign(bot.cells[0],point);bot.target={...point};}else{bot.cells=[];bot.respawnAt=0;}
       this.players.push(bot);
     }
-    while(this.food.length<(this.mode==='ffa'?foodTargetFor(this.mode):260)){ const point=foodPoint(this.players,this.worldSize);if(!point)break;this.food.push(point);}
+    while(this.food.length<foodTargetFor(this.mode)){ const point=foodPoint(this.players,this.worldSize);if(!point)break;this.food.push(point);}
   }
   get snapshot(){return limitVisibility({type:'state',mode:this.mode,maxCells:physicsFor(this.mode).maxCells??MAX_CELLS,autoSplitMass:autoSplitMassFor(this.mode),players:this.players.filter(p=>p.cells.length||this.myIds.includes(p.id)),food:this.food,viruses:this.viruses,worldSize:this.worldSize},this.myIds);}
+  watch(){const owned=new Set(this.myIds);this.players=this.players.filter(p=>!owned.has(p.id));this.myIds=[];}
   getById(id){return this.players.find(p=>p.id===id);}
   respawn(id,x,y){
     if(!this.myIds.includes(id))return false;
     const p=this.getById(id);
-    if(!p||p.cells.length||this.elapsed<(p.lastRespawnAt??-100)+1.8)return false;
+    if(!p||p.cells.length||this.elapsed<(p.lastRespawnAt??-100)+respawnDelayFor(p,this.players,this.mode))return false;
     const mass=MODES[this.mode].start,r=radius(mass);
     const sx=clamp(Number.isFinite(x)?x:this.worldSize/2,r,this.worldSize-r);
     const sy=clamp(Number.isFinite(y)?y:this.worldSize/2,r,this.worldSize-r);
-    const point=findPlayerSpawn(this.players,p,mass,this.worldSize,24,Math.random,{x:sx,y:sy});
+    const point=findPlayerSpawn([...this.players,{cells:this.viruses}],p,mass,this.worldSize,PHYSICS_CONFIG.spawnGap,Math.random,{x:sx,y:sy});
     if(!point)return false;
     p.cells=[newCell(point.x,point.y,mass,p.color)];p.target={...point};
     p.lastRespawnAt=this.elapsed;p.spawnShieldUntil=this.elapsed+1.5;p.pendingSplits=[];
@@ -239,69 +246,39 @@ export class LocalArena{
   setTarget(id,x,y){const p=this.getById(id);if(p&&Number.isFinite(x)&&Number.isFinite(y))p.target={x:clamp(x,0,this.worldSize),y:clamp(y,0,this.worldSize)};}
   setMovementStopped(id,stopped){const p=this.getById(id);if(p&&typeof stopped==='boolean')p.movementStopped=stopped;}
   split(id,count=1){return startSplitMacro(this.getById(id),count,this.elapsed,this.worldSize,MAX_CELLS,this.mode);}
-  feed(id){return ejectMass(this.getById(id),this.food,this.elapsed,this.worldSize,this.mode);}
+  feed(id){return ejectMass(this.getById(id),this.food,this.elapsed,this.worldSize,this.mode,this.players);}
+  feedInput(id,macro=false){return requestFeedInput(this.getById(id),this.food,this.elapsed,this.worldSize,this.mode,this.players,macro);}
+  setFeedHeld(id,held,macro=false){const p=this.getById(id);if(!this.myIds.includes(id)||!p)return;const changed=setFeedHeld(p,held,macro,this.elapsed,this.mode);if(held&&changed)this.feedInput(id,macro);}
+  setRunSplitHeld(id,held){const p=this.getById(id);if(!this.myIds.includes(id)||!p)return;setRunSplitHeld(p,held,this.elapsed,this.mode);if(held)stepHeldRunSplit([p],this.elapsed,this.worldSize,MAX_CELLS,this.mode);}
   tick(dt,settings=DEFAULT_SETTINGS){
-    dt=Math.min(.05,Math.max(0,dt));this.elapsed+=dt;
+    const interval=1/physicsFor(this.mode).tickRate;
+    this.fixedCredit=(this.fixedCredit||0)+Math.min(.25,Math.max(0,Number(dt)||0));
+    while(this.fixedCredit+1e-9>=interval){this.fixedCredit-=interval;this.tickFixed(interval,settings);}
+  }
+  tickFixed(dt,settings=DEFAULT_SETTINGS){
+    dt=Math.max(0,Number(dt)||0);this.elapsed+=dt;
     const rules=physicsFor(this.mode),threshold=autoSplitMassFor(this.mode);
     for(const p of this.players){
       if(!p.cells.length)continue;
       stepSplitMacro(p,this.elapsed,this.worldSize,MAX_CELLS,this.mode);
-      if(p.npc){
-        const lead=p.cells[0];
-        const threat=this.players.filter(x=>x!==p&&x.cells.length&&x.cells[0].mass>lead.mass*1.3&&distance(x.cells[0],lead)<460)
-          .sort((a,b)=>distance(a.cells[0],lead)-distance(b.cells[0],lead))[0];
-        if(threat){
-          p.aiHuntUntil=0;
-          p.heading=Math.atan2(lead.y-threat.cells[0].y,lead.x-threat.cells[0].x);
-          p.target={x:clamp(lead.x+Math.cos(p.heading)*520,0,this.worldSize),y:clamp(lead.y+Math.sin(p.heading)*520,0,this.worldSize)};
-        }else{
-          let hunt=p.aiHuntUntil>this.elapsed
-            ? this.players.find(enemy=>enemy.id===p.aiHuntTargetId&&enemy.cells.length)
-            : null;
-          if(p.aiHuntUntil<=this.elapsed)p.aiHuntUntil=0;
-          const attack=hunt
-            ? {prey:hunt,target:hunt.cells.reduce((nearest,c)=>distance(c,lead)<distance(nearest,lead)?c:nearest,hunt.cells[0])}
-            : findSplitHunt(p,this.players,this.elapsed,this.worldSize,MAX_CELLS,this.mode);
-          if(attack){
-            p.target={x:attack.target.x,y:attack.target.y};
-            p.heading=Math.atan2(attack.target.y-lead.y,attack.target.x-lead.x);
-            if(!hunt){
-              p.aiHuntTargetId=attack.prey.id;
-              p.aiHuntUntil=this.elapsed+2.5;
-              const child=splitCell(p,lead,this.elapsed,this.worldSize,this.mode);
-              if(child)p.cells.push(child);
-            }
-          }else{
-            if(Math.random()<dt*.6)p.heading=rand(0,Math.PI*2);
-            p.target={x:clamp(lead.x+Math.cos(p.heading)*520,0,this.worldSize),y:clamp(lead.y+Math.sin(p.heading)*520,0,this.worldSize)};
-          }
-        }
-      }
-      moveCells(p,dt,this.elapsed,this.worldSize,this.mode,p.npc?.73:1);
-      if(!rules.autoSplitAfterEating)splitCells(p,this.elapsed,this.worldSize,MAX_CELLS,this.mode,threshold);
+      if(p.npc)stepBotAI(p,this.players,this.food,this.viruses,this.elapsed,dt,this.worldSize,MAX_CELLS,this.mode);
     }
     // Check pending virus respawns
     for (let i = this.virusRespawns.length - 1; i >= 0; i--) {
       const resp = this.virusRespawns[i];
       if (this.elapsed >= resp.time) {
         for (let k = 0; k < resp.count && this.viruses.length < VIRUS_MAX_COUNT; k++) {
-          this.viruses.push(makeVirus(rand(120, this.worldSize - 120), rand(120, this.worldSize - 120)));
+          this.viruses.push(makeVirus(rand(120, this.worldSize - 120), rand(120, this.worldSize - 120),0,this.mode));
         }
         this.virusRespawns.splice(i, 1);
       }
     }
-    stepViruses({viruses:this.viruses,food:this.food,players:this.players,width:this.worldSize,maxCells:Math.min(MAX_CELLS,physicsFor(this.mode).maxCells??MAX_CELLS),time:this.elapsed,dt,
-      physics:physicsFor(this.mode),mergeDelay:mass=>mergeDelayFor(mass,this.mode),
-      findFoodReceiver:pellet=>findFoodRecipient(pellet,this.players,this.elapsed),
-      spawnVirus:()=>makeVirus(rand(120,this.worldSize-120),rand(120,this.worldSize-120)),
-      addRespawn:(time,count)=>this.virusRespawns.push({time,count})});
-    absorbFood(this.players,this.food,this.mode,this.elapsed);
-    eatCells(this.players,this.mode,this.elapsed);
-    // Check after all mass gains and before decay, once per player per update.
-    if(rules.autoSplitAfterEating)for(const p of this.players)splitCells(p,this.elapsed,this.worldSize,MAX_CELLS,this.mode,threshold);
-    decayMass(this.players,dt,this.mode);maintainBots(this.players,this.elapsed,this.worldSize);
+    stepHeldRunSplit(this.players,this.elapsed,this.worldSize,MAX_CELLS,this.mode);
+    stepHeldFeed(this.players,this.food,this.elapsed,this.worldSize,this.mode);
+    stepArenaPhysics(this.players,this.food,this.viruses,dt,this.elapsed,this.worldSize,MAX_CELLS,this.mode);
+    maintainBots(this.players,this.elapsed,this.worldSize);
     if(this.elapsed>=(this.nextFoodSpawnAt||0)){
-      while(this.food.length<(this.mode==='ffa'?foodTargetFor(this.mode):270)){const point=foodPoint(this.players,this.worldSize);if(!point){this.nextFoodSpawnAt=this.elapsed+1;break;}this.food.push(point);}
+      while(this.food.length<foodTargetFor(this.mode)){const point=foodPoint(this.players,this.worldSize);if(!point){this.nextFoodSpawnAt=this.elapsed+1;break;}this.food.push(point);}
     }
   }
 }
@@ -337,7 +314,10 @@ export class CellAnimator{
       }
       // Respawns and large authoritative corrections should not fly across the map.
       const ratio=Math.hypot(cell.x-state.x,cell.y-state.y)>worldSize/4?1:alpha;
-      const visual={playerId:p.id,x:state.x+(cell.x-state.x)*ratio,y:state.y+(cell.y-state.y)*ratio,radius:state.radius+(targetRadius-state.radius)*ratio};
+      // The parent shrinks with the chosen delay, just like ordinary gains and
+      // losses. Instant shrinking made the first part of a split look too abrupt.
+      const visual={playerId:p.id,x:state.x+(cell.x-state.x)*ratio,y:state.y+(cell.y-state.y)*ratio,
+        radius:state.radius+(targetRadius-state.radius)*ratio};
       next.set(key,visual);
       return {...cell,x:visual.x,y:visual.y,renderRadius:visual.radius};
     })}));
@@ -365,7 +345,28 @@ export class VirusAnimator{
   }
 }
 
-/** Smooth only FFA feed presentation. Collection and flight stay authoritative. */
+/** Draw feed independently of map food; never change collision radius or mass. */
+export function drawFoodLayer(ctx,food,bounds,settings,mode,ownerColors=new Map()){
+  if(!settings.showFood)return;
+  const natural=mode==='ffa'||mode==='dual',mega=mode==='mega',calibrated=mega||natural;
+  const feedSize=Number.isFinite(settings.feedSize)?clamp(settings.feedSize,.5,2):1;
+  for(const f of food){
+    const base=f.radius??(f.ejected&&natural?radius(f.mass):Math.sqrt(f.mass)*1.7);
+    // Senpa's official client draws ejected mass at the received radius.
+    // Keep FFA/Dual independent of map-food sizing and cosmetic enlargement.
+    const r=f.ejected&&natural?base:f.ejected&&mega?physicsFor('mega').feedDrawRadius
+      :clamp(base*(settings.foodSize||1),3,15)*(f.ejected?feedSize:1);
+    if(f.x<bounds.left-r||f.x>bounds.right+r||f.y<bounds.top-r||f.y>bounds.bottom+r)continue;
+    const color=f.ejected&&calibrated?ownerColors.get(f.ownerId)||f.color:f.color;
+    ctx.fillStyle=settings.rainbowFood?(color||settings.foodColor):settings.foodColor;
+    ctx.globalAlpha=(f.ejected&&calibrated?1:.9)*(f.renderAlpha??1);
+    ctx.beginPath();ctx.arc(f.x,f.y,r,0,Math.PI*2);ctx.fill();
+    if(f.ejected&&f.radius&&!calibrated){ctx.lineWidth=r*.18;ctx.strokeStyle='rgba(255,255,255,.25)';ctx.stroke();}
+  }
+  ctx.globalAlpha=1;
+}
+
+/** Smooth feed presentation. Collection and flight stay authoritative. */
 export class FeedAnimator{
   constructor(){this.reset();}
   reset(){this.pellets=new Map();this.localIds=new WeakMap();this.nextLocalId=0;}
@@ -374,19 +375,31 @@ export class FeedAnimator{
     if(!this.localIds.has(pellet))this.localIds.set(pellet,++this.nextLocalId);
     return 'local:'+this.localIds.get(pellet);
   }
-  sample(food,dt=1/60,enabled=true,worldSize=WORLD_SIZE){
+  sample(food,dt=1/60,enabled=true,worldSize=WORLD_SIZE,fadeIn=true,durationMs=null){
     if(!enabled){this.pellets.clear();return food;}
     const elapsed=Number.isFinite(dt)?Math.max(0,dt):1/60;
     const alpha=-Math.expm1(-elapsed/.045),next=new Map();
     const rendered=food.map(pellet=>{
       if(!pellet.ejected)return pellet;
       const key=this.key(pellet),previous=this.pellets.get(key);
+      if(durationMs!==null){
+        // The official Senpa cell tween advances the current segment before
+        // retargeting, then interpolates linearly over the chosen animation delay.
+        const duration=Math.max(0,Math.min(500,Number(durationMs)||0))/1000;
+        const state=previous||{x:pellet.x,y:pellet.y,startX:pellet.x,startY:pellet.y,endX:pellet.x,endY:pellet.y,elapsed:0,age:0};
+        const time=(state.elapsed||0)+elapsed,t=duration?Math.min(1,time/duration):1;
+        const visual={...state,x:state.startX+(state.endX-state.startX)*t,y:state.startY+(state.endY-state.startY)*t,elapsed:time,age:state.age+elapsed};
+        const snap=!duration||Math.hypot(pellet.x-visual.x,pellet.y-visual.y)>worldSize/4;
+        if(snap){Object.assign(visual,{x:pellet.x,y:pellet.y,startX:pellet.x,startY:pellet.y,endX:pellet.x,endY:pellet.y,elapsed:0});}
+        else if(pellet.x!==state.endX||pellet.y!==state.endY){Object.assign(visual,{startX:visual.x,startY:visual.y,endX:pellet.x,endY:pellet.y,elapsed:0});}
+        next.set(key,visual);return {...pellet,x:visual.x,y:visual.y,renderAlpha:1};
+      }
       const state=previous||{x:pellet.x,y:pellet.y,age:0};
       // Do not interpolate a world reset or a large correction across the arena.
       const ratio=Math.hypot(pellet.x-state.x,pellet.y-state.y)>worldSize/4?1:alpha;
       const visual={x:state.x+(pellet.x-state.x)*ratio,y:state.y+(pellet.y-state.y)*ratio,age:state.age+elapsed};
       next.set(key,visual);
-      return {...pellet,x:visual.x,y:visual.y,renderAlpha:Math.min(1,visual.age/.08)};
+      return {...pellet,x:visual.x,y:visual.y,renderAlpha:fadeIn?Math.min(1,visual.age/.08):1};
     });
     this.pellets=next;return rendered;
   }
@@ -516,7 +529,7 @@ export class ArenaRenderer{
     this.skinImages??=new Map();
     if(!this.skinImages.has(source)){
       if(this.skinImages.size>=64)this.skinImages.delete(this.skinImages.keys().next().value);
-      const img=new Image();img.decoding='async';img.src=source;this.skinImages.set(source,img);
+      const img=new Image();img.decoding='async';img.crossOrigin='anonymous';img.src=source;this.skinImages.set(source,img);
     }
     return this.skinImages.get(source);
   }
@@ -526,8 +539,9 @@ export class ArenaRenderer{
   draw(snapshot,selectedId,settings=DEFAULT_SETTINGS,playing=false,dt=1/60,freeCamera=false,ownedIds=selectedId?[selectedId]:[]){const viewport=this.viewport();if(!this.screenW||this.screenW!==viewport.width||this.screenH!==viewport.height)this.resize();const ctx=this.ctx,W=this.screenW,H=this.screenH;
     const worldSize=snapshot?.worldSize||worldSizeFor(snapshot?.mode);
     const renderedPlayers=this.cellAnimator.sample(snapshot?.players||[],settings.animation,dt,worldSize);
-    const renderedFood=this.feedAnimator.sample(snapshot?.food||[],dt,snapshot?.mode==='ffa',worldSize);
-    const renderedViruses=this.virusAnimator.sample(snapshot?.viruses||[],dt,worldSize,Math.min(80,normalizeAnimation(settings.animation)));
+    const naturalFeed=['ffa','dual'].includes(snapshot?.mode);
+    const renderedFood=this.feedAnimator.sample(snapshot?.food||[],dt,['ffa','dual','mega'].includes(snapshot?.mode)&&!this.options.instantEffects,worldSize,false,naturalFeed?normalizeAnimation(settings.animation):null);
+    const renderedViruses=this.virusAnimator.sample(snapshot?.viruses||[],dt,worldSize,this.options.instantEffects?0:Math.min(80,normalizeAnimation(settings.animation)));
     ctx.clearRect(0,0,W,H);ctx.fillStyle=settings.bgColor;ctx.fillRect(0,0,W,H);
     const backgroundSource=settings.backgroundUrl || '/assets/vintage-background.png';
     const useDrawing=settings.useDrawnBackground&&settings.backgroundDesign;
@@ -616,18 +630,8 @@ export class ArenaRenderer{
     if(Array.isArray(snapshot?.vision)){
       ctx.beginPath();for(const v of snapshot.vision)ctx.rect(v.left,v.top,v.right-v.left,v.bottom-v.top);ctx.clip();
     }
-    if(settings.showFood){
-      for(const f of renderedFood){
-        if(f.x<left-20||f.x>right+20||f.y<top-20||f.y>bottom+20)continue;
-        const r=clamp((f.radius??Math.sqrt(f.mass)*1.7)*(settings.foodSize||1),3,15);
-        ctx.fillStyle=settings.rainbowFood?(f.color||settings.foodColor):settings.foodColor;
-        ctx.globalAlpha=.9*(f.renderAlpha??1);
-        ctx.beginPath();ctx.arc(f.x,f.y,r,0,Math.PI*2);ctx.fill();
-        // Keep FFA pellets clean and round without bright seams where they overlap.
-        if(f.ejected&&f.radius&&snapshot?.mode!=='ffa'){ctx.lineWidth=r*.18;ctx.strokeStyle='rgba(255,255,255,.25)';ctx.stroke();}
-      }
-      ctx.globalAlpha=1;
-    }
+    const feedColors=new Map(renderedPlayers.map(p=>[p.id,cellAppearance(p,selectedId,ownedIds,settings).fill]));
+    drawFoodLayer(ctx,renderedFood,{left,top,right,bottom},settings,snapshot?.mode,feedColors);
     if(snapshot?.viruses&&settings.showViruses){
       const tick=performance.now()/1000;
       for(const v of renderedViruses){
@@ -672,6 +676,15 @@ export class ArenaRenderer{
         ctx.beginPath();ctx.arc(cell.x,cell.y,Math.max(0,r-7),0,Math.PI*2);ctx.fillStyle='#08131d';ctx.globalAlpha=.18;ctx.fill();
         ctx.lineWidth=5;ctx.strokeStyle=fill;ctx.globalAlpha=.75;ctx.beginPath();ctx.arc(cell.x,cell.y,Math.max(0,r-4),0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
       }
+      if(settings.showSkins!==false&&/^shield(?:[1-46-9]|1[0-3])$/.test(p.shieldId||'')){
+        const shield=this.skinImage('/assets/shields/'+p.shieldId+'.webp');
+        if(shield?.complete&&shield.naturalWidth){
+          const time=this.options.time?this.options.time():performance.now()/1000;
+          ctx.save();ctx.globalAlpha=clamp(settings.cellOpacity??100,0,100)/100*(.88+.12*Math.sin(time*2.2));
+          ctx.beginPath();ctx.arc(cell.x,cell.y,r,0,Math.PI*2);ctx.clip();
+          ctx.translate(cell.x,cell.y);ctx.rotate(time*.6);ctx.drawImage(shield,-r,-r,r*2,r*2);ctx.restore();
+        }
+      }
       const border=r*style.borderRatio;
       const outlineRadius=r*(style.active?1:style.indicatorRatio);
       if(border>0&&outlineRadius>0){
@@ -682,20 +695,34 @@ export class ArenaRenderer{
       const readability=Math.max(this.zoom,.17);
       const fontSize=clamp(r*.23,8/readability,48/readability)*settings.nickSize;
       const massFont=clamp(r*.22,8/readability,40/readability)*settings.massSize;
-      const labelColor=tagColor(p.teamId??p.tag),nameVisible=settings.showNames&&r*this.zoom>=22;
+      const labelColor=/^#[0-9a-f]{6}$/i.test(p.nameColor||'')?p.nameColor:titleFor(p.titleId)?.color||tagColor(p.teamId??p.tag),nameVisible=settings.showNames&&r*this.zoom>=22;
       ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=labelColor;
       ctx.lineJoin='round';ctx.lineWidth=2.5/readability;ctx.strokeStyle='#000000';
       const hasMass=settings.showMass&&r*this.zoom>=14;
-      const name=(p.name||'Player').trim().slice(0,20)||'Player';
+      const name=String(p.name||'Player').trim().slice(0,20);
       const nameY=cell.y+(hasMass?-fontSize*.42:0);
       if(nameVisible){
-        ctx.font=`700 ${fontSize}px Arial, sans-serif`;ctx.strokeText(name,cell.x,nameY,r*1.8);ctx.fillText(name,cell.x,nameY,r*1.8);
+        ctx.font=`700 ${fontSize}px Arial, sans-serif`;
+        ctx.fillStyle=namePaint(ctx,p.nameStyle,p.nameColor||labelColor,cell.x,nameY,Math.min(r*1.8,ctx.measureText(name).width),performance.now()/1000);
+        const flagId=p.flagId||'';
+        const flag=flagId!=='1f1ee-1f1f1'&&flagId.length<=100&&/^[0-9a-f]+(?:-[0-9a-f]+)*$/.test(flagId)?this.skinImage('/assets/flags/'+flagId+'.svg'):null;
+        if(flag?.complete&&flag.naturalWidth){
+          const width=Math.min(fontSize*1.25,r*.5),height=width*flag.naturalHeight/flag.naturalWidth,gap=fontSize*.16;
+          const maxName=Math.max(1,r*1.8-width-gap),nameWidth=Math.min(maxName,ctx.measureText(name).width);
+          const left=cell.x-(nameWidth+width+gap)/2,nameX=cell.x+(width+gap)/2;
+          ctx.drawImage(flag,left,nameY-height/2,width,height);
+          ctx.strokeText(name,nameX,nameY,maxName);ctx.fillText(name,nameX,nameY,maxName);
+        }else{ctx.strokeText(name,cell.x,nameY,r*1.8);ctx.fillText(name,cell.x,nameY,r*1.8);}
       }
       if(hasMass){ctx.font=`700 ${massFont}px Arial, sans-serif`;ctx.fillStyle=labelColor;
         const label=formatCellMass(cell.mass,settings.shortMass),massY=cell.y+(nameVisible?massFont*.65:0);
         ctx.strokeText(label,cell.x,massY);ctx.fillText(label,cell.x,massY);
       }
       ctx.textBaseline='alphabetic';
+      if(nameVisible&&titleFor(p.titleId)){
+        const badge=this.skinImage(titleBadgeUrl(titleFor(p.titleId))),position=normalizeTitlePosition(p.titlePosition),width=r*1.25,height=width/4.2;
+        if(badge?.complete&&badge.naturalWidth)ctx.drawImage(badge,cell.x+position.x*r-width/2,cell.y+position.y*r-height/2,width,height);
+      }
     }
     ctx.restore();
     this.drawRadar(snapshot,selectedId,settings,ownedIds);
@@ -706,20 +733,22 @@ export class ArenaRenderer{
     const ctx=this.radarCtx,size=240,padding=5,inner=size-padding*2;
     ctx.clearRect(0,0,size,size);
     if(!settings.showMinimap||!snapshot)return;
-    const peers=getVisibleAllies(snapshot,id).sort((a,b)=>Number(a.id===id)-Number(b.id===id));
+    const priority=p=>p.id===id?2:ownedIds.includes(p.id)?1:0;
+    const peers=getVisibleAllies(snapshot,id).sort((a,b)=>priority(a)-priority(b));
     for(const p of peers){
       const total=totalMass(p),weight=Math.max(total,1);
       const x=p.cells.reduce((s,c)=>s+c.x*c.mass,0)/weight;
       const y=p.cells.reduce((s,c)=>s+c.y*c.mass,0)/weight;
       const px=padding+clamp(x/worldSize,0,1)*inner,py=padding+clamp(y/worldSize,0,1)*inner;
-      const mine=ownedIds.includes(p.id),r=p.id===id?3.5:3;
+      const r=p.id===id?3.5:3;
       ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fill();
-      if(!mine){
-        ctx.font='600 11px Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
-        ctx.lineWidth=2.5;ctx.strokeStyle='rgba(0,0,0,.8)';
-        const name=String(p.name||'Player').slice(0,18),labelX=clamp(px,35,size-35),labelY=py>size-22?py-16:py+6;
-        ctx.strokeText(name,labelX,labelY,inner);ctx.fillText(name,labelX,labelY,inner);
-      }
+      ctx.font='600 11px Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.lineWidth=2.5;ctx.strokeStyle='rgba(0,0,0,.8)';
+      const name=formatPlayerName(p,18);
+      const halfWidth=Math.min(inner,ctx.measureText(name)?.width??name.length*6)/2;
+      const labelX=clamp(px,padding+halfWidth,size-padding-halfWidth);
+      const labelY=clamp(py>size-padding-19?py-17:py+6,padding,size-padding-13);
+      ctx.strokeText(name,labelX,labelY,inner);ctx.fillText(name,labelX,labelY,inner);
     }
   }
 }

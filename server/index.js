@@ -3,9 +3,11 @@
 const http=require('node:http');
 const {WebSocketServer,WebSocket}=require('ws');
 const core=require('./core.cjs');
+const {setCosmetics}=require('./cosmetics.cjs');
 const {RestartCycle}=require('./restart.cjs');
 const {createVoiceHub,iceServersFromEnv}=require('./voice.cjs');
 const auth=require('./auth.cjs').createAuth();
+const collection=require('./collection.cjs').createCollection();
 const fs=require('node:fs'),pathModule=require('node:path');
 const publicRoot=pathModule.resolve(__dirname,'../public');
 const registry=core.loadRegistry();
@@ -19,13 +21,13 @@ const clients=new Map();
 const restartCycle=new RestartCycle();
 const spectators=Object.fromEntries(Object.keys(rooms).map(id=>[id,new Set()]));
 const server=http.createServer(async (req,res)=>{
-  try{if(await auth(req,res))return;}catch{res.writeHead(500);res.end('Request failed');return;}
+  try{if(await collection.handle(req,res)||await auth(req,res))return;}catch{res.writeHead(500);res.end('Request failed');return;}
   const path=new URL(req.url||'/',`http://${req.headers.host||'localhost'}`).pathname;
   if(path==='/favicon.ico'){res.writeHead(302,{'Location':'/favicon.svg'});res.end();return;}
   if(path==='/health'||path==='/servers'){res.writeHead(200,{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'});const info=publicInfo();res.end(JSON.stringify(path==='/servers'?{categories:registry.categories,servers:info}:{status:'ok',uptime:Math.round(process.uptime()),memoryMB:Math.round(process.memoryUsage().rss/1048576),rooms:Object.fromEntries(info.map(r=>[r.id,{players:r.players,bots:r.bots,spectators:r.spectators,status:r.status}]))}));return;}
   const file=pathModule.resolve(publicRoot,'.'+(path==='/'?'/index.html':path));
   if(!file.startsWith(publicRoot+pathModule.sep)){res.writeHead(403);res.end();return;}
-  const ext=pathModule.extname(file),types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml'};
+  const ext=pathModule.extname(file),types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.jpg':'image/jpeg','.jpeg':'image/jpeg','.gif':'image/gif'};
   if(!types[ext]||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end('Not found');return;}
   res.writeHead(200,{'Content-Type':types[ext],'X-Content-Type-Options':'nosniff'});fs.createReadStream(file).pipe(res);
 
@@ -55,15 +57,21 @@ wss.on('connection',(ws,req)=>{reply(ws,restartCycle.schedule());const ip=client
       if(!rid){reply(ws,{type:'error',message:'Unknown server'});return;}
       const room=rooms[rid];
       if(room.crashed){reply(ws,{type:'error',message:'Server temporarily unavailable'});return;}
-      if(room.config&&[...room.players.values()].filter(p=>!p.npc).length>=room.config.maxPlayers){reply(ws,{type:'error',message:'Server full'});return;}const tag=core.cleanTag(msg.tag),name=core.cleanText(msg.name,18)||'Vintage Player';
+      if(room.config&&[...room.players.values()].filter(p=>!p.npc).length>=room.config.maxPlayers){reply(ws,{type:'error',message:'Server full'});return;}const tag=core.cleanTag(msg.tag),requestedName=core.cleanText(msg.name,18)||'Vintage Player',appearance=collection.appearance(req,requestedName);
+      if(!appearance){reply(ws,{type:'error',message:'This name is reserved. Choose another nickname.'});return;}
+      const name=appearance.name;
       // Link ownership before choosing the second connection's spawn.
       const player=core.join(room,name,tag,0,msg.multiKey);
+      setCosmetics(player,msg);player.nameColor=appearance.nameColor;player.nameStyle=appearance.nameStyle;player.titleId=collection.activeTitle(req);
       current={room,player};clients.set(player.id,ws);reply(ws,{type:'welcome',mode:room.mode,serverId:room.id,playerId:player.id,initialMass:room.initialMass,autoSplitMass:core.autoSplitMassFor(room.physics)});return;
     }
     if(msg.type==='ping'){reply(ws,{type:'pong',nonce:msg.nonce});return;}
     if(voiceHub.handle(ws,current,msg))return;
     if(!current)return;
     const {room,player}=current;
+    if(msg.type==='title'){player.titleId=collection.activeTitle(req);const chosen=collection.appearance(req,collection.activeIdentity(req)?.name||player.name);if(chosen){player.name=chosen.name;player.nameColor=chosen.nameColor;player.nameStyle=chosen.nameStyle;}return;}
+    if(msg.type==='identity'){const chosen=collection.appearance(req,core.cleanText(msg.name,18)||'Vintage Player');if(!chosen){reply(ws,{type:'error',message:'This name is reserved. Choose another nickname.'});return;}player.name=chosen.name||'Vintage Player';player.nameColor=chosen.nameColor;player.nameStyle=chosen.nameStyle;return;}
+    if(msg.type==='cosmetics'){setCosmetics(player,msg);return;}
     if(msg.type==='move'){core.point(room,player,Number(msg.x),Number(msg.y));return;}
     if(msg.type==='stopMove'){core.stopMove(room,player,msg.stopped);return;}
     if(msg.type==='respawn'){
@@ -72,23 +80,21 @@ wss.on('connection',(ws,req)=>{reply(ws,restartCycle.schedule());const ip=client
       return;
     }
     if(msg.type==='split'){core.trySplit(room,player,msg.count);return;}
-    if(msg.type==='feed'){
-      const now=Date.now()/1000;
-      if(now-(player.lastFeedWallAt??-1e10)<(room.config?.feedInterval??core.feedIntervalFor(room.physics,true))-.002)return;
-      player.lastFeedWallAt=now;core.feed(room,player);return;
-    }
+    if(msg.type==='splitHold'){core.setRunSplitHeld(room,player,msg.held);return;}
+    if(msg.type==='feedHold'){core.setFeedHeld(room,player,msg.held,msg.macro);return;}
+    if(msg.type==='feed'){core.feedInput(room,player,!!msg.macro);return;}
     if(msg.type==='chat'){
       const now=Date.now();if(player.lastChat>now-350)return;
       player.lastChat=now;const text=core.cleanText(msg.text,180),channel=msg.channel==='tag'?'tag':'all';if(!text)return;
       if(channel==='tag'&&!player.tag){reply(ws,{type:'error',message:'Set a team tag to use private Tag chat'});return;}
-      const packet={type:'chat',mode:room.mode,channel,playerId:player.id,name:player.name,teamId:core.publicTeamId(room,player.tag),text};
+      const packet={type:'chat',mode:room.mode,channel,playerId:player.id,name:player.name,...(player.titleId?{titleId:player.titleId}:{}),...(player.nameColor?{nameColor:player.nameColor}:{}),...(player.nameStyle?{nameStyle:player.nameStyle}:{}),teamId:core.publicTeamId(room,player.tag),text};
       for(const target of core.chatRecipients(room,player,channel))reply(clients.get(target.id),packet);return;
     }
   });
   ws.on('close',()=>{detach();const n=(ipCounts.get(ip)||1)-1;if(n>0)ipCounts.set(ip,n);else ipCounts.delete(ip);});
   ws.on('error',()=>{});
 });
-let last=Date.now();const tick=setInterval(()=>{const now=Date.now(),dt=Math.min(.1,(now-last)/1000);last=now;for(const room of Object.values(rooms)){if(room.crashed)continue;try{core.step(room,dt);}catch(err){room.crashed=true;console.error(JSON.stringify({level:'error',room:room.id,msg:'room crashed, isolated',err:String(err&&err.stack||err)}));}}},50);
+let last=Date.now();const tick=setInterval(()=>{const now=Date.now(),dt=Math.max(0,(now-last)/1000);last=now;for(const room of Object.values(rooms)){if(room.crashed)continue;if(!spectators[room.id].size&&![...room.players.values()].some(p=>!p.npc))continue;try{core.step(room,dt);}catch(err){room.crashed=true;console.error(JSON.stringify({level:'error',room:room.id,msg:'room crashed, isolated',err:String(err&&err.stack||err)}));}}},1000/50);
 const restartWorker=setInterval(()=>{
   for(const event of restartCycle.poll(Date.now())){
     if(event.kind==='warning'){

@@ -1,0 +1,38 @@
+.replay-toolbar-btn{height:34px;padding:0 12px;border:1px solid #526b7e;border-radius:7px;background:#122433;color:#d9e9f4;font-size:10px;font-weight:700;letter-spacing:.06em}
+.replay-toolbar-btn:hover{border-color:var(--accent);color:#fff}
+#replays-overlay{z-index:40;backdrop-filter:blur(12px)}
+.replays-shell{width:min(1180px,96vw);max-height:94vh;display:flex;flex-direction:column;border:1px solid #ffffff28;border-radius:16px;background:#101822;box-shadow:0 30px 100px #000a;overflow:hidden}
+.replays-header{padding:25px 28px 18px;display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #ffffff10}
+.replays-header small{color:#99b4c4;font-size:9px;letter-spacing:.2em}
+.replays-header h1{font-size:26px;letter-spacing:-.04em;margin:8px 0 0;font-weight:600}
+#replay-count{margin-left:14px;color:#99adbd;font-size:11px;letter-spacing:0;font-weight:400}
+.replays-intro{padding:16px 28px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.replays-intro p{margin:0;font-size:12px;color:#e0e8ef;line-height:1.8}
+.replays-intro p small{display:block;font-size:10px;color:#95a8ba}
+.replays-shell button:not(.icon-btn){padding:10px 14px;border:1px solid #6f95a644;border-radius:6px;background:#223441;color:#d9e9f4;font-size:10px;font-weight:600}
+.replays-shell button:not(:disabled):hover{border-color:#b3dcf1;background:#294353}
+#replay-save-current,#replay-download{color:#0d1b25;background:#b3d9eb;white-space:nowrap}
+.replays-body{display:grid;grid-template-columns:275px minmax(0,1fr);min-height:0;overflow:auto;border-top:1px solid #ffffff12}
+.replay-library{padding:16px;background:#0c131c;border-right:1px solid #ffffff12;max-height:580px;overflow:auto}
+.replay-card{padding:15px 12px;border:1px solid #ffffff14;border-radius:8px;margin-bottom:10px;background:#131f2b}
+.replay-card.selected{border-color:#a6d9ee;background:#203443}
+.replays-shell .replay-card-title{display:block;border:0!important;padding:0!important;background:transparent!important;text-align:left;line-height:1.6;font-size:12px!important;word-break:break-word}
+.replay-card small{display:block;color:#91a8ba;font-size:9px;line-height:1.8;margin:8px 0 12px}
+.replay-card-actions{display:flex;gap:7px}
+.replays-shell .replay-delete{color:#e3aab0!important;background:transparent!important}
+.replay-empty{font-size:12px;color:#9cb0bf;line-height:1.9;padding:12px}
+.replay-player{padding:18px 22px 12px;min-width:0}
+.replay-player h2{font-size:13px;font-weight:500;margin:0 0 14px;color:#bed1df;overflow-wrap:anywhere}
+.replay-stage{position:relative;aspect-ratio:16/9;max-height:calc(94vh - 370px);display:grid;place-items:center;overflow:hidden;border:1px solid #ffffff18;border-radius:9px;background:#050b11}
+#replay-canvas{display:block;width:100%!important;height:100%!important;max-width:100%;min-height:0;object-fit:contain}
+#replay-empty-player{position:absolute;text-align:center;color:#d1e4f1;font-size:21px;line-height:1.8}
+#replay-empty-player span{font-size:11px;color:#8ca8bd}
+.replay-transport{display:flex;align-items:center;gap:12px;margin-top:14px}
+#replay-seek{min-width:20px;flex:1;accent-color:#b3d9eb;cursor:pointer}
+#replay-time{font-size:10px;color:#adbfcc;white-space:nowrap;font-variant-numeric:tabular-nums}
+#replay-speed{background:#172735;color:#d9e9f4;padding:7px 4px;border:1px solid #4b6373;border-radius:5px;font-size:11px}
+.replay-export{display:flex;align-items:center;gap:12px;margin-top:16px;flex-wrap:wrap}
+.replay-export small{color:#8ca3b5;font-size:9px;line-height:1.8}
+.replay-message{font-size:11px;color:#bfd6e6;line-height:1.7;min-height:20px;margin:14px 0 4px}
+@media(max-width:790px){.replays-body{grid-template-columns:210px minmax(0,1fr)}.replay-player{padding:15px 12px}.replay-transport{gap:6px}.replays-intro{padding:12px 18px}.replays-intro p{font-size:11px}.replays-header{padding:18px}.replays-header h1{font-size:22px}.replays-shell .replay-transport button{padding:8px}}
+@media(max-width:620px){.replays-shell{width:100%;max-height:94vh}.replays-body{display:flex;flex-direction:column-reverse}.replay-library{max-height:240px;border-right:0;border-top:1px solid #ffffff12}.replay-player{padding:14px 10px}.replay-stage{max-height:none}.replay-export{gap:8px}.replays-intro{align-items:flex-start;flex-direction:column;gap:10px}.replay-transport{flex-wrap:wrap}.replays-header h1{font-size:21px}.replay-toolbar-btn{padding:0 7px;font-size:8px}.top-actions{gap:5px}.top-actions .connection-pill{display:none}.brand .vintage-logo{width:100px}.replay-card{padding:12px}.replays-header{padding:16px}#replay-count{display:block;margin:5px 0 0}}

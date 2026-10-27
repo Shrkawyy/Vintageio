@@ -1,0 +1,54 @@
+{
+  "fixtureServer": true,
+  "results": {
+    "local-ffa": {
+      "transparentOverlay": true,
+      "worldKeepsMoving": true,
+      "oneDeadConnectionDoesNotEndMatch": true,
+      "spectatePreservesWorld": true,
+      "playRespawns": true,
+      "pageErrors": []
+    },
+    "local-dual": {
+      "transparentOverlay": true,
+      "worldKeepsMoving": true,
+      "oneDeadConnectionDoesNotEndMatch": true,
+      "spectatePreservesWorld": true,
+      "playRespawns": true,
+      "pageErrors": []
+    },
+    "local-mega": {
+      "transparentOverlay": true,
+      "worldKeepsMoving": true,
+      "oneDeadConnectionDoesNotEndMatch": true,
+      "spectatePreservesWorld": true,
+      "playRespawns": true,
+      "pageErrors": []
+    },
+    "online-ffa": {
+      "transparentOverlay": true,
+      "worldKeepsMoving": true,
+      "oneDeadConnectionDoesNotEndMatch": true,
+      "spectatePreservesWorld": true,
+      "playRespawns": true,
+      "pageErrors": []
+    },
+    "online-dual": {
+      "transparentOverlay": true,
+      "worldKeepsMoving": true,
+      "oneDeadConnectionDoesNotEndMatch": true,
+      "spectatePreservesWorld": true,
+      "playRespawns": true,
+      "pageErrors": []
+    },
+    "online-mega": {
+      "transparentOverlay": true,
+      "worldKeepsMoving": true,
+      "oneDeadConnectionDoesNotEndMatch": true,
+      "spectatePreservesWorld": true,
+      "playRespawns": true,
+      "pageErrors": []
+    }
+  },
+  "passed": true
+}

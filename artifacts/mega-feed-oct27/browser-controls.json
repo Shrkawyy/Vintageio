@@ -1,0 +1,33 @@
+{
+  "fixtureServer": true,
+  "userServerUnmodified": true,
+  "results": {
+    "local": {
+      "mode": "mega",
+      "cells": [
+        64,
+        2
+      ],
+      "animation": 100,
+      "activeSlot": 1,
+      "macroFeedPelletsDelta": 3,
+      "massDelta": 2436.6413936723984,
+      "feedCollisionRadius": 14.7,
+      "pageErrors": []
+    },
+    "online": {
+      "mode": "mega",
+      "cells": [
+        64,
+        2
+      ],
+      "animation": 100,
+      "activeSlot": 1,
+      "macroFeedPelletsDelta": 4,
+      "massDelta": 2466.0800000000163,
+      "feedCollisionRadius": 14.7,
+      "pageErrors": []
+    }
+  },
+  "passed": true
+}

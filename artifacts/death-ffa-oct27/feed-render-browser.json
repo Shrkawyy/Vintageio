@@ -1,0 +1,15 @@
+{
+  "before": {
+    "zoom": 0.2620206161140864,
+    "cellRadiusPx": 95,
+    "feedRadiusPx": 6.355310043847165,
+    "pelletCount": 21
+  },
+  "after": {
+    "zoom": 0.2620206161140864,
+    "cellRadiusPx": 95,
+    "feedRadiusPx": 3.85170305687707,
+    "pelletCount": 21
+  },
+  "pageErrors": []
+}

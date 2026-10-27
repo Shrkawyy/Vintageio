@@ -1,0 +1,132 @@
+{
+  "isolatedCollection": true,
+  "results": {
+    "local": {
+      "loadingProgress": [
+        0,
+        6,
+        13,
+        20,
+        26,
+        33,
+        40,
+        46,
+        53,
+        60,
+        66,
+        73,
+        80,
+        86,
+        93,
+        100
+      ],
+      "titles": 20,
+      "animatedChat": true,
+      "staticNames": true,
+      "placementPersists": true,
+      "replayMetadata": true,
+      "players": [
+        {
+          "titleId": "killer",
+          "titlePosition": {
+            "x": 0.42,
+            "y": 0.23
+          },
+          "nameStyle": {
+            "mode": "animated",
+            "colors": [
+              "#40DCFF",
+              "#B889FF",
+              "#FF70BA",
+              "#FFD880"
+            ]
+          },
+          "name": "Identity Pilot"
+        },
+        {
+          "titleId": "killer",
+          "titlePosition": {
+            "x": 0,
+            "y": -0.48
+          },
+          "nameStyle": {
+            "mode": "animated",
+            "colors": [
+              "#40DCFF",
+              "#B889FF",
+              "#FF70BA",
+              "#FFD880"
+            ]
+          },
+          "name": "Identity Pilot"
+        }
+      ],
+      "pageErrors": []
+    },
+    "online": {
+      "loadingProgress": [
+        0,
+        6,
+        13,
+        20,
+        26,
+        33,
+        40,
+        46,
+        53,
+        60,
+        66,
+        73,
+        80,
+        86,
+        93,
+        100
+      ],
+      "titles": 20,
+      "animatedChat": true,
+      "staticNames": true,
+      "placementPersists": true,
+      "replayMetadata": true,
+      "players": [
+        {
+          "titleId": "killer",
+          "titlePosition": {
+            "x": 0.42,
+            "y": 0.23
+          },
+          "nameStyle": {
+            "mode": "animated",
+            "colors": [
+              "#40DCFF",
+              "#B889FF",
+              "#FF70BA",
+              "#FFD880"
+            ]
+          },
+          "name": "Identity Pilot"
+        },
+        {
+          "titleId": "killer",
+          "titlePosition": {
+            "x": 0,
+            "y": -0.48
+          },
+          "nameStyle": {
+            "mode": "animated",
+            "colors": [
+              "#40DCFF",
+              "#B889FF",
+              "#FF70BA",
+              "#FFD880"
+            ]
+          },
+          "name": "Identity Pilot"
+        }
+      ],
+      "pageErrors": []
+    }
+  },
+  "mobileOverflow": false,
+  "loadingErrorDoesNotComplete": true,
+  "passed": true
+}
