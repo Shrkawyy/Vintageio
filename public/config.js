@@ -1,6 +1,8 @@
 // Put YOUR Vintage JSON WebSocket endpoint here, never a Senpa/ONYX endpoint.
 // One backend serves the three isolated game modes. Add separate NA endpoints when deployed.
 window.VINTAGE_CONFIG = {
+  // Free cosmetic previews on static hosting when /collection/profile is absent and no online world is configured.
+  browserCollectionTrial: true,
   wsUrl: ['localhost','127.0.0.1'].includes(location.hostname) && ['3001','3002','3008'].includes(location.port) ? 'ws://'+location.host : '',
   authBaseUrl: '', // e.g. https://api.your-domain.com; empty = same origin
   // Optional voiceIceServers override. Otherwise the backend supplies its configured STUN/TURN list.

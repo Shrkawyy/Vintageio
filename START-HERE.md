@@ -17,10 +17,10 @@ Node.js 20 or newer is required. Keep the server window open while playing. The 
 - Public free testing for all titles and reserved names, controlled by one server setting.
 - Tests, licenses, change notes and a SHA-256 file manifest in `checksums.json`.
 
-The latest validation passed 90 automated tests and local/online browser checks. Private user collections, account credentials and environment files are not bundled. The server creates its own local data store when needed.
+The latest validation passed 96 automated tests and browser checks. Private user collections, account credentials and environment files are not bundled. The server creates its own local data store when needed.
 
 ## Hosting later
 
 Online play uses the Node.js server and WebSocket connections. Configure the deployed endpoint in `public/config.js`. Uploading only the browser files to a static host does not deploy the game server.
 
-See `PUBLIC-FREE-TRIAL.md` for the current free testing period and how to restore paid access. The earlier gameplay and entrance changes are described in `DUAL-WATCH-INTRO-OCT27.md`.
+See `STATIC-HOSTING-TRIAL.md` for free cosmetic previews on Vercel's static hosting. See `PUBLIC-FREE-TRIAL.md` for the server-backed testing period and how to restore paid access. The earlier gameplay and entrance changes are described in `DUAL-WATCH-INTRO-OCT27.md`.

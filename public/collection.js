@@ -1,11 +1,12 @@
-import {normalizeNameStyle,applyNameStyle,SIGNATURE_COLORS} from './identity.js?v=public-free-trial-oct27-8';
+import {normalizeNameStyle,applyNameStyle,SIGNATURE_COLORS} from './identity.js?v=static-free-trial-oct27-9';
+import {createCollectionTransport} from './browser-collection.js?v=static-free-trial-oct27-9';
 export function mountCollection({releaseInputs,toast,onEquip,onTitleChange=()=>{},onOpenTitles=()=>{}}){
  const $=id=>document.getElementById(id),overlay=$('collection-overlay');
- let profile=null,editing=null,trigger=null,busy=false,revision=0,applied='';
+ let profile=null,editing=null,trigger=null,busy=false,revision=0,applied='';const transport=createCollectionTransport();
  const isOpen=()=>!overlay.classList.contains('hidden'),activeTitle=()=>profile?.activeTitle||'',activeIdentity=()=>profile?.activeIdentity||null;
  const appearance=name=>profile?.names.find(n=>n.name.toLowerCase()===String(name||'').trim().toLowerCase())||null;
  function status(text,error=false){$('collection-status').textContent=text;$('collection-status').classList.toggle('error',error);}
- async function request(endpoint,data){if(data)revision++;const response=await fetch('/collection/'+endpoint,{credentials:'same-origin',headers:data?{'Content-Type':'application/json'}:{},...(data?{method:'POST',body:JSON.stringify(data)}:{})});const body=await response.json();if(!response.ok)throw Error(body.error||'Please try again');return body;}
+ async function request(endpoint,data){if(data)revision++;return transport(endpoint,data);}
  function style(){return normalizeNameStyle({mode:$('reserved-name-mode').value,colors:Array.from({length:4},(_,i)=>$(i?'reserved-name-color-'+i:'reserved-name-color').value)});}
  function preview(){const animated=$('reserved-name-mode').value==='animated';$('signature-extra-colors').hidden=!animated;$('reserved-name-preview').textContent=$('reserved-name-input').value.trim()||'Your signature';applyNameStyle($('reserved-name-preview'),style());}
  function choose(item=null){
@@ -22,8 +23,8 @@ export function mountCollection({releaseInputs,toast,onEquip,onTitleChange=()=>{
  }
  function render(){
   $('collection-balance').textContent=profile?.freeTrial?'FREE TESTING PERIOD':Number(profile?.coins||0).toLocaleString('en-US')+' COINS';
-  $('collection-free-changes').textContent=profile?.freeTrial?'FREE TRIAL / NO COINS REQUIRED':(profile?.freeRenames??1)+' free name change remaining';
-  $('collection-terms').textContent=profile?.freeTrial?'Free testing period: names and both color modes are available to try. Trial access is temporary.':'15,000 coins per locked name / one free name change. Both color modes are included. Color updates are free.';
+  $('collection-free-changes').textContent=profile?.browserPreview?'BROWSER PREVIEW / THIS DEVICE ONLY':profile?.freeTrial?'FREE TRIAL / NO COINS REQUIRED':(profile?.freeRenames??1)+' free name change remaining';
+  $('collection-terms').textContent=profile?.browserPreview?'Free browser preview: saved on this device. Names are not reserved across players.':profile?.freeTrial?'Free testing period: names and both color modes are available to try. Trial access is temporary.':'15,000 coins per locked name / one free name change. Both color modes are included. Color updates are free.';
   const list=$('reserved-names-list');list.replaceChildren();
   for(const item of profile?.names||[]){
    const card=document.createElement('article');card.className='reserved-name-card';

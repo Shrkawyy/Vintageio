@@ -2,6 +2,8 @@
 
 All 20 titles, including VIP, GOAT and YT, and both reserved-name color modes are temporarily free for every player. This works on public servers and localhost. Use the normal buttons in **Player Titles** or **Reserved Names**; no coins are required or deducted.
 
+This document describes the Node.js collection server. For a static Vercel deployment with no collection API, see [browser previews on static hosting](STATIC-HOSTING-TRIAL.md); those previews are device-local and do not create global name reservations.
+
 Static signatures use one color; animated signatures use four. Name colors continue to appear in cells, chat and saved replays. A trial reservation protects the name from other players while testing is enabled. Trial names can be renamed without using the existing paid-name rename allowance.
 
 ## Close or reopen testing
@@ -30,7 +32,7 @@ Browser collection identity is stored in an HTTP-only cookie. Keep the same brow
 
 ## Validation
 
-- `node --test tests/*.test.cjs`: 90 tests, including free access, exclusive names, restoring paid prices, preserving previous purchases and blocking client-side pricing overrides.
+- `node --test tests/*.test.cjs`: 96 tests, including free access, exclusive names, restoring paid prices, preserving previous purchases, static hosting previews and blocking client-side pricing overrides.
 - `python scripts/check-public-free-trial-browser.py`: production-mode fixture with forwarded public requests; checks the normal UI, VIP/GOAT/YT, name reservation, reload, and closing testing on the same database.
 - `python scripts/check-identity-browser.py`: checks local and online name colors, chat, title placement, replays, mobile layout and loading.
 

@@ -1,14 +1,14 @@
-import {formatPlayerName,titleFor} from './titles.js?v=public-free-trial-oct27-8';
-import {applyNameStyle} from './identity.js?v=public-free-trial-oct27-8';
-import {mountCollection} from './collection.js?v=public-free-trial-oct27-8';
+import {formatPlayerName,titleFor} from './titles.js?v=static-free-trial-oct27-9';
+import {applyNameStyle} from './identity.js?v=static-free-trial-oct27-9';
+import {mountCollection} from './collection.js?v=static-free-trial-oct27-9';
 import {THEMES} from './themes.js';
 import {mountBackgroundStudio} from './background-studio.js?v=2-shapes';
 import {mountThemeScene} from './theme-scene.js?v=1-live-theme';
 import {TagVoice} from './tag-voice.js?v=2-audio';
-import {mountReplays} from './replays.js?v=public-free-trial-oct27-8';
-import {mountSkinLibrary} from './skins.js?v=public-free-trial-oct27-8';
-import {SETTING_HELP,SETTINGS_CATEGORIES} from './settings-help.js?v=public-free-trial-oct27-8';
-import {MODES, DEFAULT_SETTINGS, LocalArena, ArenaRenderer, drawArenaGuides, drawBackgroundDesign, normalizeBackgroundDesign, BACKGROUND_MAX_ELEMENTS, BACKGROUND_MAX_POINTS, autoSplitMassFor, WORLD_SIZE, radius, respawnPosition, sectorAt, totalMass, getVisibleAllies, normalizeAnimation, normalizeVisualSettings, supportsMultibox, INPUT_ACTIONS, CONTROL_KEYS, physicalKey, normalizeControlSettings, tagColor, feedIntervalFor, worldSizeFor, ZOOM_MIN, ZOOM_MAX} from './game.js?v=public-free-trial-oct27-8';
+import {mountReplays} from './replays.js?v=static-free-trial-oct27-9';
+import {mountSkinLibrary} from './skins.js?v=static-free-trial-oct27-9';
+import {SETTING_HELP,SETTINGS_CATEGORIES} from './settings-help.js?v=static-free-trial-oct27-9';
+import {MODES, DEFAULT_SETTINGS, LocalArena, ArenaRenderer, drawArenaGuides, drawBackgroundDesign, normalizeBackgroundDesign, BACKGROUND_MAX_ELEMENTS, BACKGROUND_MAX_POINTS, autoSplitMassFor, WORLD_SIZE, radius, respawnPosition, sectorAt, totalMass, getVisibleAllies, normalizeAnimation, normalizeVisualSettings, supportsMultibox, INPUT_ACTIONS, CONTROL_KEYS, physicalKey, normalizeControlSettings, tagColor, feedIntervalFor, worldSizeFor, ZOOM_MIN, ZOOM_MAX} from './game.js?v=static-free-trial-oct27-9';
 
 const $ = id => document.getElementById(id);
 const SETTINGS_KEY = 'vintage-settings-v2';

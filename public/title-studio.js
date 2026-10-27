@@ -1,5 +1,5 @@
-import {TITLE_CATALOG,titleFor,titleBadgeUrl,normalizeTitlePosition} from './titles.js?v=public-free-trial-oct27-8';
-import {namePaint} from './identity.js?v=public-free-trial-oct27-8';
+import {TITLE_CATALOG,titleFor,titleBadgeUrl,normalizeTitlePosition} from './titles.js?v=static-free-trial-oct27-9';
+import {namePaint} from './identity.js?v=static-free-trial-oct27-9';
 export function mountTitleStudio({getCollection,getSlot,setPosition,getQuery}){
  const $=id=>document.getElementById(id),canvas=$('title-position-canvas'),ctx=canvas.getContext('2d'),grid=$('title-catalog-grid');
  let visible=false,selected='killer',position=normalizeTitlePosition(),dragging=false,busy=false,frame=0;
@@ -13,7 +13,7 @@ export function mountTitleStudio({getCollection,getSlot,setPosition,getQuery}){
    const card=document.createElement('button');card.type='button';card.className='insignia-card';card.dataset.title=title.id;card.classList.toggle('selected',title.id===selected);card.setAttribute('aria-pressed',String(title.id===selected));card.style.setProperty('--insignia',title.color);
    const art=document.createElement('div'),img=document.createElement('img'),name=document.createElement('strong'),detail=document.createElement('small'),price=document.createElement('span');art.className='insignia-art';img.src=titleBadgeUrl(title);img.alt=title.label;art.append(img);name.textContent=title.label;detail.textContent=title.name;price.textContent=p?.activeTitle===title.id?'EQUIPPED':p?.ownedTitles.includes(title.id)?'OWNED':p?.freeTrial?'FREE TO TRY':title.price===null?'NOT ON SALE':title.price.toLocaleString('en-US')+' COINS';card.append(art,name,detail,price);card.onclick=()=>{selected=title.id;note('');render();};grid.append(card);
   }
-  $('skins-result-count').textContent=count+' TITLES';$('title-selected-name').textContent=item.label;$('title-selected-description').textContent=item.name;
+  $('skins-result-count').textContent=count+' TITLES';$('title-selected-name').textContent=item.label;$('title-selected-description').textContent=item.name+(p?.browserPreview?' / Free browser preview, saved on this device.':'');
   $('title-equip').textContent=owned?'EQUIP TITLE':p?.freeTrial?'TRY FOR FREE':item.price===null?'NOT ON SALE':'UNLOCK / '+item.price.toLocaleString('en-US')+' COINS';
   $('title-equip').disabled=busy||!p||(!p.freeTrial&&!owned&&item.price===null);$('title-remove').hidden=!p?.activeTitle;
  }
