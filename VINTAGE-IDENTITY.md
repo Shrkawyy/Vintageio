@@ -10,15 +10,15 @@ The later [burst intro update](DUAL-WATCH-INTRO-OCT27.md) gives this scene a bri
 
 ## Locked names
 
-Open **Reserved Names → Signature Studio**. Choose **Static** for one color or **Animated** for a blend of four editable colors. The same style is rendered in cells and chat, sent in authoritative snapshots and retained in replays. Both modes cost the existing 15,000 coins per reserved name; color changes are free. The existing single free rename is preserved.
+Open **Reserved Names → Signature Studio**. Choose **Static** for one color or **Animated** for a blend of four editable colors. The same style is rendered in cells and chat, sent in authoritative snapshots and retained in replays. During the public testing period both modes and reserved names are free; the paid price remains configured at 15,000 coins. Color changes are free, and trial renames do not consume the existing paid-name rename allowance.
 
-On localhost, **TRY FREE ON LOCALHOST** previews a signature without spending coins, granting a reservation or consuming the free rename. Forwarded/public requests and production mode cannot use trials. Existing reservations, balances and owned VIP/YT/GOAT titles are retained.
+The normal action buttons now work for all players during testing, including public deployments. Trial names are exclusive while testing is open. Closing testing removes trial privileges and restores paid access, while preserving previous purchases and balances. See [the free testing configuration](PUBLIC-FREE-TRIAL.md) for the single server setting.
 
 ## Original titles
 
 Open either skin circle and select **Titles**, next to **Flags**. **Player Titles** opens the same tab. The catalog has 20 original SVG banners, including The Killer, GOAT, Apex, Phantom, Reaper, Sovereign, Warlord, Venom, Eclipse, Nova, Tempest, Frostbite, Inferno, Vandal, Ronin, Mythic, Voidwalker and Vintage Legend, plus VIP and YT.
 
-VIP remains 75,000 coins and GOAT 100,000. New standard titles are configured at 20,000; Vintage Legend is 30,000. YT remains unavailable for purchase until a price is chosen. All designs support the existing localhost trial mechanism. Prices live in `public/titles.js`, synchronized to the server by `node scripts/sync-physics.cjs`.
+All 20 designs, including VIP, GOAT and YT, can be tried free during the public testing period. Their configured paid prices remain: VIP 75,000 coins, GOAT 100,000, standard titles 20,000 and Vintage Legend 30,000. YT remains unavailable for paid purchase until a price is chosen. Prices live in `public/titles.js`, synchronized to the server by `node scripts/sync-physics.cjs`.
 
 Select a banner, then drag inside the live cell to position it. Arrow keys move it when the preview is focused; Reset restores the default. Position is saved separately for connection 1 and connection 2, sent through validated cosmetics and rendered inside every piece. Titles are separate from the nickname label. The banner center is constrained to the cell's interior.
 

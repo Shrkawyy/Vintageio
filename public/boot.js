@@ -1,6 +1,6 @@
 // Progress reports completed critical resources, with 100 reserved for a ready app.
 const $=id=>document.getElementById(id),screen=$('boot-screen');
-const manifest=['/styles.css?v=33-transparent-lobby','/skins.css?v=3-flags','/collection.css?v=dual-watch-intro-oct27-7','/identity.css?v=dual-watch-intro-oct27-7','/assets/vintage-logo.png','/assets/skins/jax/featured-11.png','/game.js?v=dual-watch-intro-oct27-7','/physics.js?v=dual-watch-intro-oct27-7','/titles.js?v=dual-watch-intro-oct27-7','/identity.js?v=dual-watch-intro-oct27-7','/skins.js?v=dual-watch-intro-oct27-7','/collection.js?v=dual-watch-intro-oct27-7','/title-studio.js?v=dual-watch-intro-oct27-7'];
+const manifest=['/styles.css?v=33-transparent-lobby','/skins.css?v=3-flags','/collection.css?v=public-free-trial-oct27-8','/identity.css?v=public-free-trial-oct27-8','/assets/vintage-logo.png','/assets/skins/jax/featured-11.png','/game.js?v=public-free-trial-oct27-8','/physics.js?v=public-free-trial-oct27-8','/titles.js?v=public-free-trial-oct27-8','/identity.js?v=public-free-trial-oct27-8','/skins.js?v=public-free-trial-oct27-8','/collection.js?v=public-free-trial-oct27-8','/title-studio.js?v=public-free-trial-oct27-8'];
 let running=false;const introStarted=performance.now();
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function burst(){
@@ -28,7 +28,7 @@ async function load(){
  try{
   await Promise.all(manifest.map(async url=>{const response=await fetch(url,{cache:'force-cache'});if(!response.ok)throw Error('A game file could not be loaded.');await response.arrayBuffer();completed++;if(!failed)progress(Math.floor(completed/(manifest.length+2)*100),'Preparing files '+completed+' / '+manifest.length);}));
   await document.fonts.ready;progress(Math.floor((manifest.length+1)/(manifest.length+2)*100),'Starting the Vintage interface...');
-  await import('./client.js?v=dual-watch-intro-oct27-7');
+  await import('./client.js?v=public-free-trial-oct27-8');
   await Promise.all([...screen.querySelectorAll('img')].map(img=>img.decode()));
   progress(100,'Your world is ready.');$('boot-stage').textContent='WELCOME TO VINTAGE';
   if(!matchMedia('(prefers-reduced-motion: reduce)').matches){

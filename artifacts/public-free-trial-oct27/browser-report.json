@@ -1,0 +1,17 @@
+{
+  "isolatedCollection": true,
+  "productionMode": true,
+  "forwardedPublicRequests": true,
+  "allTwentyTitlesFree": true,
+  "vipGoatYtUsable": true,
+  "animatedNameFree": true,
+  "exclusiveNames": true,
+  "reloadPersists": true,
+  "zeroCoinCharge": true,
+  "noPaidTitleGrant": true,
+  "closingRevokesTrial": true,
+  "paidPricesRestored": true,
+  "localhostBypassBlocked": true,
+  "pageErrors": [],
+  "passed": true
+}

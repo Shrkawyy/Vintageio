@@ -1,7 +1,7 @@
-import {formatPlayerName,titleFor,titleBadgeUrl,normalizeTitlePosition} from './titles.js?v=dual-watch-intro-oct27-7';
-import {namePaint} from './identity.js?v=dual-watch-intro-oct27-7';
-import {makeVirus, stepViruses, virusRadius, virusCharge, VIRUS_CHARGE_MASS, VIRUS_MAX_COUNT} from './virus-rules.js?v=dual-watch-intro-oct27-7';
-import {PHYSICS_CONFIG, stepArenaPhysics, stepBotAI, splitCell, splitCells, autoSplitCells, respawnDelayFor, findSplitHunt, moveCells, eatCells, absorbFood, autoSplitMassFor as physicsAutoSplitMassFor, findSafeSpawn, findPlayerSpawn, randomBotMass, maintainBots, decayMass, ejectMass, setFeedHeld, requestFeedInput, stepHeldFeed, setRunSplitHeld, stepHeldRunSplit, startSplitMacro, stepSplitMacro, physicsFor, mergeDelayFor, feedIntervalFor, findFoodRecipient, worldSizeFor, foodTargetFor, virusTargetFor, limitVisibility} from './physics.js?v=dual-watch-intro-oct27-7';
+import {formatPlayerName,titleFor,titleBadgeUrl,normalizeTitlePosition} from './titles.js?v=public-free-trial-oct27-8';
+import {namePaint} from './identity.js?v=public-free-trial-oct27-8';
+import {makeVirus, stepViruses, virusRadius, virusCharge, VIRUS_CHARGE_MASS, VIRUS_MAX_COUNT} from './virus-rules.js?v=public-free-trial-oct27-8';
+import {PHYSICS_CONFIG, stepArenaPhysics, stepBotAI, splitCell, splitCells, autoSplitCells, respawnDelayFor, findSplitHunt, moveCells, eatCells, absorbFood, autoSplitMassFor as physicsAutoSplitMassFor, findSafeSpawn, findPlayerSpawn, randomBotMass, maintainBots, decayMass, ejectMass, setFeedHeld, requestFeedInput, stepHeldFeed, setRunSplitHeld, stepHeldRunSplit, startSplitMacro, stepSplitMacro, physicsFor, mergeDelayFor, feedIntervalFor, findFoodRecipient, worldSizeFor, foodTargetFor, virusTargetFor, limitVisibility} from './physics.js?v=public-free-trial-oct27-8';
 export {feedIntervalFor};
 export const MODES = Object.freeze({
   ffa: {title:'FREE FOR ALL',start:1000,color:'#73e5f1',botCount:10,multi:true},

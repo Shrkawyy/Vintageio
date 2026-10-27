@@ -1,5 +1,5 @@
-import {TITLE_CATALOG,titleFor,titleBadgeUrl,normalizeTitlePosition} from './titles.js?v=dual-watch-intro-oct27-7';
-import {namePaint} from './identity.js?v=dual-watch-intro-oct27-7';
+import {TITLE_CATALOG,titleFor,titleBadgeUrl,normalizeTitlePosition} from './titles.js?v=public-free-trial-oct27-8';
+import {namePaint} from './identity.js?v=public-free-trial-oct27-8';
 export function mountTitleStudio({getCollection,getSlot,setPosition,getQuery}){
  const $=id=>document.getElementById(id),canvas=$('title-position-canvas'),ctx=canvas.getContext('2d'),grid=$('title-catalog-grid');
  let visible=false,selected='killer',position=normalizeTitlePosition(),dragging=false,busy=false,frame=0;
@@ -11,11 +11,11 @@ export function mountTitleStudio({getCollection,getSlot,setPosition,getQuery}){
   for(const title of TITLE_CATALOG){
    if(!(title.label+' '+title.name).toLowerCase().includes(query))continue;count++;
    const card=document.createElement('button');card.type='button';card.className='insignia-card';card.dataset.title=title.id;card.classList.toggle('selected',title.id===selected);card.setAttribute('aria-pressed',String(title.id===selected));card.style.setProperty('--insignia',title.color);
-   const art=document.createElement('div'),img=document.createElement('img'),name=document.createElement('strong'),detail=document.createElement('small'),price=document.createElement('span');art.className='insignia-art';img.src=titleBadgeUrl(title);img.alt=title.label;art.append(img);name.textContent=title.label;detail.textContent=title.name;price.textContent=p?.activeTitle===title.id?'EQUIPPED':p?.ownedTitles.includes(title.id)?'OWNED':title.price===null?'NOT ON SALE':title.price.toLocaleString('en-US')+' COINS';card.append(art,name,detail,price);card.onclick=()=>{selected=title.id;note('');render();};grid.append(card);
+   const art=document.createElement('div'),img=document.createElement('img'),name=document.createElement('strong'),detail=document.createElement('small'),price=document.createElement('span');art.className='insignia-art';img.src=titleBadgeUrl(title);img.alt=title.label;art.append(img);name.textContent=title.label;detail.textContent=title.name;price.textContent=p?.activeTitle===title.id?'EQUIPPED':p?.ownedTitles.includes(title.id)?'OWNED':p?.freeTrial?'FREE TO TRY':title.price===null?'NOT ON SALE':title.price.toLocaleString('en-US')+' COINS';card.append(art,name,detail,price);card.onclick=()=>{selected=title.id;note('');render();};grid.append(card);
   }
   $('skins-result-count').textContent=count+' TITLES';$('title-selected-name').textContent=item.label;$('title-selected-description').textContent=item.name;
-  $('title-equip').textContent=owned?'EQUIP TITLE':item.price===null?'NOT ON SALE':'UNLOCK / '+item.price.toLocaleString('en-US')+' COINS';
-  $('title-equip').disabled=busy||!p||(!owned&&item.price===null);$('title-trial').hidden=!p?.localTitlePreview;$('title-trial').disabled=busy;$('title-remove').hidden=!p?.activeTitle;
+  $('title-equip').textContent=owned?'EQUIP TITLE':p?.freeTrial?'TRY FOR FREE':item.price===null?'NOT ON SALE':'UNLOCK / '+item.price.toLocaleString('en-US')+' COINS';
+  $('title-equip').disabled=busy||!p||(!p.freeTrial&&!owned&&item.price===null);$('title-remove').hidden=!p?.activeTitle;
  }
  function draw(now){
   if(!visible)return;const r=235,cx=300,cy=300+(dragging?0:Math.sin(now/1400)*4),slot=getSlot(),item=titleFor(selected);
@@ -31,8 +31,8 @@ export function mountTitleStudio({getCollection,getSlot,setPosition,getQuery}){
  canvas.onpointermove=e=>{if(dragging)place(e);};canvas.onpointerup=()=>{if(dragging){dragging=false;savePosition();}};canvas.onpointercancel=()=>{dragging=false;};
  canvas.onkeydown=e=>{const direction={ArrowLeft:[-.04,0],ArrowRight:[.04,0],ArrowUp:[0,-.04],ArrowDown:[0,.04]}[e.key];if(!direction)return;e.preventDefault();position=normalizeTitlePosition({x:position.x+direction[0],y:position.y+direction[1]});savePosition();};
  $('title-position-reset').onclick=()=>{position=normalizeTitlePosition();savePosition();};
- async function equip(trial=false,id=selected){if(busy)return;busy=true;render();try{await getCollection().setTitle(id,trial);note(trial?'Local trial active. Your title is ready in-game.':id?'Title equipped.':'Title removed.');render();}catch(e){note(e.message,true);}finally{busy=false;render();}}
- $('title-equip').onclick=()=>equip();$('title-trial').onclick=()=>equip(true);$('title-remove').onclick=()=>equip(false,'');
+ async function equip(id=selected){if(busy)return;busy=true;render();try{await getCollection().setTitle(id);note(id?(profile()?.freeTrial?'Free trial title equipped.':'Title equipped.'):'Title removed.');render();}catch(e){note(e.message,true);}finally{busy=false;render();}}
+ $('title-equip').onclick=()=>equip();$('title-remove').onclick=()=>equip('');
  async function show(next){visible=next;$('title-studio').hidden=!next;grid.hidden=!next;cancelAnimationFrame(frame);if(!next)return;position=normalizeTitlePosition(getSlot().titlePosition);selected=profile()?.activeTitle||selected;render();frame=requestAnimationFrame(draw);await getCollection().refresh();render();}
  return {show,render,updateSlot(){position=normalizeTitlePosition(getSlot().titlePosition);render();}};
 }

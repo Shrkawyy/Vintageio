@@ -1,7 +1,7 @@
 import {SKIN_CATALOG} from './skin-catalog.js?v=1';
 import {FLAGS} from './flag-catalog.js?v=2';
-import {normalizeTitlePosition} from './titles.js?v=dual-watch-intro-oct27-7';
-import {mountTitleStudio} from './title-studio.js?v=dual-watch-intro-oct27-7';
+import {normalizeTitlePosition} from './titles.js?v=public-free-trial-oct27-8';
+import {mountTitleStudio} from './title-studio.js?v=public-free-trial-oct27-8';
 export {FLAGS};
 
 const STORAGE_KEY = 'vintage-cosmetics-v1';

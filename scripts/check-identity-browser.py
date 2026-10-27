@@ -32,11 +32,11 @@ with tempfile.TemporaryDirectory(prefix='vintage-identity-browser-') as temp:
                         print(json.dumps({'boot':page.locator('#boot-detail').inner_text(),'errors':errors}));raise
                     progress=page.evaluate('window.__loading');assert progress[-1]==100 and progress==sorted(progress),progress
                     assert page.locator('#coin-shop-btn,#collection-coins,#coin-packages').count()==0
-                    page.locator('#reserved-names-btn').click();page.locator('#reserved-name-input').fill('Identity Pilot');page.locator('#reserved-name-mode').select_option('animated')
-                    chosen=['#40DCFF','#B889FF','#FF70BA','#FFD880'];colors(page,chosen);page.locator('#reserved-style-trial').click()
+                    page.locator('#reserved-names-btn').click();page.locator('#reserved-name-input').fill('IdentityOnline' if online else 'IdentityLocal');page.locator('#reserved-name-mode').select_option('animated')
+                    chosen=['#40DCFF','#B889FF','#FF70BA','#FFD880'];colors(page,chosen);page.locator('#reserve-name-submit').click()
                     page.wait_for_function('__identity.collection.activeIdentity()?.nameStyle.mode==="animated"');assert page.locator('#reserved-name-preview').evaluate('(el)=>el.classList.contains("signature-animated")')
                     page.screenshot(path=str(OUT/('signature-'+key+'.png')));page.locator('#collection-close').click();page.locator('#title-shop-btn').click()
-                    page.wait_for_function('document.querySelectorAll(".insignia-card").length===20');page.locator('[data-title="killer"]').click();page.locator('#title-trial').click();page.wait_for_function('__identity.collection.activeTitle()==="killer"')
+                    page.wait_for_function('document.querySelectorAll(".insignia-card").length===20');page.locator('[data-title="killer"]').click();page.locator('#title-equip').click();page.wait_for_function('__identity.collection.activeTitle()==="killer"')
                     canvas=page.locator('#title-position-canvas');rect=canvas.bounding_box();page.mouse.move(rect['x']+rect['width']*.5,rect['y']+rect['height']*.3);page.mouse.down();page.mouse.move(rect['x']+rect['width']*.68,rect['y']+rect['height']*.59,steps=8);page.mouse.up()
                     pos0=page.evaluate('__identity.skins.getSlots()[0].titlePosition');assert pos0['x']>.3 and pos0['y']>0,pos0
                     page.locator('#skin-slot-1').click();pos1=page.evaluate('__identity.skins.getSlots()[1].titlePosition');assert pos0!=pos1
@@ -52,7 +52,7 @@ with tempfile.TemporaryDirectory(prefix='vintage-identity-browser-') as temp:
                     assert replay and replay['nameStyle']['mode']=='animated' and replay['titlePosition'],replay
                     page.reload(wait_until='domcontentloaded');page.wait_for_function('Boolean(window.__identity)&&!document.body.classList.contains("booting")&&__identity.collection.activeTitle()==="killer"')
                     assert page.evaluate('__identity.skins.getSlots()[0].titlePosition')==moved
-                    page.locator('#reserved-names-btn').click();page.locator('#reserved-name-mode').select_option('static');colors(page,['#FFCC88']);page.locator('#reserved-style-trial').click();page.wait_for_function('__identity.collection.activeIdentity()?.nameStyle.mode==="static"');assert not page.locator('#reserved-name-preview').evaluate('(el)=>el.classList.contains("signature-animated")')
+                    page.locator('#reserved-names-btn').click();page.locator('#reserved-name-mode').select_option('static');colors(page,['#FFCC88']);page.locator('#reserve-name-submit').click();page.wait_for_function('__identity.collection.activeIdentity()?.nameStyle.mode==="static"');assert not page.locator('#reserved-name-preview').evaluate('(el)=>el.classList.contains("signature-animated")')
                     assert not errors,errors
                     report['results'][key]={'loadingProgress':progress,'titles':20,'animatedChat':True,'staticNames':True,'placementPersists':True,'replayMetadata':True,'players':state,'pageErrors':errors};context.close()
                 context=browser.new_context(viewport={'width':430,'height':900});page=context.new_page();page.goto(BASE,wait_until='domcontentloaded');page.wait_for_function('document.getElementById("boot-screen").hidden');page.locator('#title-shop-btn').click();page.wait_for_selector('.insignia-card');page.screenshot(path=str(OUT/'titles-mobile.png'));report['mobileOverflow']=page.evaluate('document.documentElement.scrollWidth>innerWidth');assert not report['mobileOverflow'];context.close()
